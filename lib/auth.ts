@@ -101,15 +101,18 @@ export function podeAdministrar(papel: Papel): boolean {
   return papel === "owner" || papel === "admin";
 }
 
-export function podeEscrever(papel: Papel): boolean {
-  return papel !== "leitura_ampla";
-}
-
 /**
- * Quem cria, edita e arquiva a estrutura da carteira. Gêmeo em TypeScript
- * da função pode_gerir_carteiras do banco: o ponto focal opera dentro da
- * carteira, mas não redesenha a estrutura dela.
+ * Quem cria, edita e arquiva a estrutura da carteira. Gemeo em TypeScript
+ * da funcao pode_gerir_carteiras do banco: o ponto focal opera dentro da
+ * carteira, mas nao redesenha a estrutura dela.
+ *
+ * Manter os dois lados alinhados importa — tela mais restritiva que a
+ * politica esconde botao de quem o banco deixaria usar.
  */
 export function podeGerirCarteiras(papel: Papel): boolean {
   return papel === "owner" || papel === "admin" || papel === "analista";
+}
+
+export function podeEscrever(papel: Papel): boolean {
+  return papel !== "leitura_ampla";
 }

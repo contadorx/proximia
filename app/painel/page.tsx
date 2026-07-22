@@ -1,59 +1,23 @@
 import Link from "next/link";
-import { exigirOrg } from "@/lib/auth";
-import { criarClienteServidor } from "@/lib/supabase/server";
-import { rotuloPapel, type Papel } from "@/lib/tipos";
+import { ArrowRight } from "lucide-react";
+import { exigirOrg, exigirUsuario } from "@/lib/auth";
 import { listarCarteiras } from "@/lib/carteiras";
-import { formatarData, listarContas } from "@/lib/contas";
+import { formatarData, formatarValor, listarContas } from "@/lib/contas";
 import { classeSelo, listarContratos, urgencia } from "@/lib/contratos";
-import { classeStatus, listarFrentes, rotuloStatus, totais } from "@/lib/frentes";
-import {
-  classeSituacao,
-  listarCompromissos,
-  precisaAtencao,
-  situacao,
-} from "@/lib/compromissos";
+import { listarFrentes, totais } from "@/lib/frentes";
+import { FASES, listarOportunidades, rotuloFase } from "@/lib/oportunidades";
+import { classeSituacao, listarCompromissos, precisaAtencao, situacao } from "@/lib/compromissos";
+import { ROTULO_TIPO, classeSeveridade, listarAlertas } from "@/lib/alertas";
+import { capturaMensal, capturaSemData, variacao } from "@/lib/captura";
+import { faixa } from "@/lib/maturidade";
 import { caminhoEntidade } from "@/lib/registros";
 import { mudarStatusCompromisso } from "@/app/acoes/compromissos";
+import { silenciarAlerta } from "@/app/acoes/alertas";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { PrimeirosPassos, type Passo } from "@/components/primeiros-passos";
-import { ROTULO_TIPO, classeSeveridade, listarAlertas } from "@/lib/alertas";
-import { silenciarAlerta } from "@/app/acoes/alertas";
+import { BarrasMensais, Distribuicao, Funil } from "@/components/graficos";
 
 export const dynamic = "force-dynamic";
-
-type Pessoa = { user_id: string; papel: Papel; nome: string | null; email: string | null };
-
-async function pessoasDaOrg(orgId: string): Promise<Pessoa[]> {
-  const supabase = criarClienteServidor();
-
-  const { data: vinculos } = await supabase
-    .from("memberships")
-    .select("user_id, papel")
-    .eq("org_id", orgId)
-    .eq("ativo", true);
-
-  if (!vinculos?.length) return [];
-
-  const { data: perfis } = await supabase
-    .from("perfis")
-    .select("id, nome, email")
-    .in(
-      "id",
-      vinculos.map((v) => v.user_id as string),
-    );
-
-  const porId = new Map((perfis ?? []).map((p) => [p.id as string, p]));
-
-  return vinculos.map((v) => {
-    const perfil = porId.get(v.user_id as string);
-    return {
-      user_id: v.user_id as string,
-      papel: v.papel as Papel,
-      nome: (perfil?.nome as string) ?? null,
-      email: (perfil?.email as string) ?? null,
-    };
-  });
-}
 
 export default async function PaginaPainel({
   searchParams,
@@ -61,33 +25,151 @@ export default async function PaginaPainel({
   searchParams: { erro?: string; ok?: string };
 }) {
   const org = await exigirOrg();
+  const usuario = await exigirUsuario();
 
-  const [pessoas, carteiras, contas, contratos, frentes, compromissos, alertas] = await Promise.all([
-    pessoasDaOrg(org.orgId),
-    listarCarteiras(org.orgId),
-    listarContas({ orgId: org.orgId }),
-    listarContratos({ orgId: org.orgId }),
-    listarFrentes({ orgId: org.orgId }),
-    listarCompromissos({ orgId: org.orgId, status: "aberto" }),
-    listarAlertas({ orgId: org.orgId, status: "aberto" }),
-  ]);
+  const [carteiras, contas, contratos, frentes, oportunidades, compromissos, alertas, serie, semData] =
+    await Promise.all([
+      listarCarteiras(org.orgId),
+      listarContas({ orgId: org.orgId }),
+      listarContratos({ orgId: org.orgId }),
+      listarFrentes({ orgId: org.orgId }),
+      listarOportunidades({ orgId: org.orgId }),
+      listarCompromissos({ orgId: org.orgId, status: "aberto" }),
+      listarAlertas({ orgId: org.orgId, status: "aberto" }),
+      capturaMensal(org.orgId),
+      capturaSemData(org.orgId),
+    ]);
 
-  const compromissosAtencao = compromissos.filter(precisaAtencao).slice(0, 8);
-
-  const emAndamento = frentes
-    .filter((f) => f.status === "em_execucao" || f.status === "em_analise")
-    .slice(0, 6);
-  const totalFrentes = totais(frentes);
   const nomeCarteira = (id: string) => carteiras.find((c) => c.id === id)?.nome ?? "—";
-
-  const urgentes = contratos
-    .map((c) => ({ contrato: c, u: urgencia(c) }))
-    .filter((x) => x.u.chave === "vencido" || x.u.chave === "janela")
-    .slice(0, 6);
-
   const nomeConta = (id: string) => contas.find((c) => c.id === id)?.nome ?? "conta removida";
 
-  // Detecção real: cada etapa fica marcada porque o dado existe.
+  /* ---------- números do topo ---------- */
+
+  const mesAtual = serie[serie.length - 1]?.valor ?? 0;
+  const mesAnterior = serie[serie.length - 2]?.valor ?? 0;
+  const varCaptura = variacao(mesAtual, mesAnterior);
+  const t = totais(frentes);
+  const potencialTotal =
+    t.potencial + contas.reduce((soma, c) => soma + Number(c.potencial_bruto ?? 0), 0);
+
+  const alta = alertas.filter((a) => a.severidade === "alta").length;
+  const meus = alertas.filter((a) => a.dono_id === usuario.id).length;
+  const atrasados = compromissos.filter((c) => situacao(c).chave === "vencido");
+  const proximos = compromissos.filter((c) => precisaAtencao(c) && situacao(c).chave !== "vencido");
+
+  /* ---------- distribuição de maturidade ---------- */
+
+  const avaliadas = carteiras.filter((c) => c.score_maturidade !== null);
+  const faixas = [
+    { rotulo: "Avançada", classe: "ok", quantidade: 0 },
+    { rotulo: "Intermediária", classe: "neutra", quantidade: 0 },
+    { rotulo: "Em estruturação", classe: "atencao", quantidade: 0 },
+    { rotulo: "Inicial", classe: "alerta", quantidade: 0 },
+  ];
+  for (const c of avaliadas) {
+    const nome = faixa(c.score_maturidade).rotulo;
+    const alvo = faixas.find((f) => f.rotulo === nome);
+    if (alvo) alvo.quantidade += 1;
+  }
+
+  /* ---------- funil de oportunidades ---------- */
+
+  const etapas = FASES.filter((f) => f.valor !== "descartada" && f.valor !== "concluida").map((f) => {
+    const daFase = oportunidades.filter((o) => o.fase === f.valor);
+    return {
+      rotulo: f.rotulo,
+      quantidade: daFase.length,
+      valor: daFase.reduce((soma, o) => soma + Number(o.investimento ?? 0), 0),
+    };
+  });
+
+  /* ---------- pendências, agrupadas ---------- */
+
+  const contratosAtencao = contratos.filter((c) => {
+    const chave = urgencia(c).chave;
+    return chave === "vencido" || chave === "janela";
+  });
+
+  const porTipoAlerta = alertas.reduce<Record<string, typeof alertas>>((mapa, a) => {
+    (mapa[a.tipo] ??= []).push(a);
+    return mapa;
+  }, {});
+
+  const grupos = [
+    {
+      chave: "alertas",
+      titulo: "Alertas em aberto",
+      quantidade: alertas.length,
+      grave: alta > 0,
+      link: "/alertas",
+      subgrupos: Object.entries(porTipoAlerta).map(([tipo, lista]) => ({
+        titulo: ROTULO_TIPO[tipo as keyof typeof ROTULO_TIPO] ?? tipo,
+        itens: lista.map((a) => ({
+          id: a.id,
+          texto: a.titulo,
+          detalhe: `${nomeCarteira(a.carteira_id)}${a.detalhe ? ` · ${a.detalhe}` : ""}`,
+          href: a.entidade_tipo && a.entidade_id ? caminhoEntidade(a.entidade_tipo, a.entidade_id) : null,
+          selo: a.severidade === "alta" ? "Alta" : a.severidade === "atencao" ? "Atenção" : "Info",
+          classe: classeSeveridade(a.severidade),
+          acao: { tipo: "silenciar" as const, id: a.id },
+        })),
+      })),
+    },
+    {
+      chave: "compromissos",
+      titulo: "Compromissos que pedem ação",
+      quantidade: atrasados.length + proximos.length,
+      grave: atrasados.length > 0,
+      link: "/compromissos",
+      subgrupos: [
+        { titulo: "Atrasados", lista: atrasados },
+        { titulo: "Nos próximos dias", lista: proximos },
+      ]
+        .filter((s) => s.lista.length > 0)
+        .map((s) => ({
+          titulo: s.titulo,
+          itens: s.lista.map((c) => {
+            const sit = situacao(c);
+            return {
+              id: c.id,
+              texto: c.titulo,
+              detalhe: `${formatarData(c.vence_em)} · ${sit.detalhe} · ${nomeCarteira(c.carteira_id)}`,
+              href: caminhoEntidade(c.entidade_tipo, c.entidade_id),
+              selo: sit.rotulo,
+              classe: classeSituacao(sit.tom),
+              acao: { tipo: "concluir" as const, id: c.id },
+            };
+          }),
+        })),
+    },
+    {
+      chave: "contratos",
+      titulo: "Contratos que exigem decisão",
+      quantidade: contratosAtencao.length,
+      grave: contratosAtencao.some((c) => urgencia(c).chave === "vencido"),
+      link: "/contratos",
+      subgrupos: [
+        {
+          titulo: "Vencidos e em janela",
+          itens: contratosAtencao.map((c) => {
+            const u = urgencia(c);
+            return {
+              id: c.id,
+              texto: `${c.numero ? `${c.numero} · ` : ""}${nomeConta(c.conta_id)}`,
+              detalhe: `${c.fim ? `vence ${formatarData(c.fim)} · ` : ""}${u.detalhe}`,
+              href: `/contratos/${c.id}`,
+              selo: u.rotulo,
+              classe: classeSelo(u.tom),
+              acao: null,
+            };
+          }),
+        },
+      ],
+    },
+  ].filter((g) => g.quantidade > 0);
+
+  /* ---------- primeiros passos ---------- */
+
   const passos: Passo[] = [
     {
       chave: "carteira",
@@ -114,29 +196,20 @@ export default async function PaginaPainel({
       feito: contratos.length > 0,
     },
     {
+      chave: "responsavel",
+      titulo: "Diga quem responde por cada carteira",
+      descricao: "Sem isso, o alerta nasce sem dono e vira aviso que ninguém precisa resolver.",
+      cta: "Definir responsáveis",
+      href: "/carteiras",
+      feito: alertas.length === 0 || alertas.some((a) => a.dono_id !== null),
+    },
+    {
       chave: "frente",
       titulo: "Registre as frentes em andamento",
-      descricao: "Uma linha por tema de volume, com dono e próxima etapa — é o que responde \u201Co que está rodando?\u201D.",
+      descricao: "Uma linha por tema de volume, com dono e próxima etapa.",
       cta: "Criar frente",
       href: "/frentes",
       feito: frentes.length > 0,
-    },
-    {
-      chave: "clausula",
-      titulo: "Marque o que precisa ser acompanhado",
-      descricao: "Cláusula monitorada com data de referência é o que vira aviso.",
-      cta: "Abrir contratos",
-      href: "/contratos",
-      feito: contratos.some((c) => c.janela_renegociacao !== null),
-      opcional: true,
-    },
-    {
-      chave: "equipe",
-      titulo: "Inclua quem acompanha com você",
-      descricao: "A gestão entra como acompanhamento: vê tudo, não altera nada.",
-      cta: "Incluir pessoa",
-      href: "/painel",
-      feito: pessoas.length > 1,
       opcional: true,
     },
   ];
@@ -156,8 +229,8 @@ export default async function PaginaPainel({
       </div>
 
       <IntroSecao>
-        Você está como <strong>{rotuloPapel(org.papel).toLowerCase()}</strong>. Esta tela reúne o
-        que precisa de atenção agora e quem tem acesso à organização.
+        O retrato do dia: <strong>o que mudou</strong> nos números e <strong>o que pede ação</strong>{" "}
+        agora. As pendências vêm agrupadas por tipo — abra a que você for resolver.
       </IntroSecao>
 
       {searchParams.erro && <p className="aviso aviso-erro">{searchParams.erro}</p>}
@@ -165,188 +238,168 @@ export default async function PaginaPainel({
 
       <PrimeirosPassos passos={passos} />
 
-      {alertas.length > 0 && (
-        <section className="painel painel-alerta">
+      <div className="cartoes">
+        <div className="cartao">
+          <p className="olho">Capturado no mês</p>
+          <p className="cartao-valor capturado">{formatarValor(mesAtual)}</p>
+          <p className={varCaptura?.tom === "alerta" ? "cartao-nota texto-alerta" : "cartao-nota"}>
+            {varCaptura?.texto ?? "sem captura confirmada no período"}
+          </p>
+        </div>
+        <div className="cartao">
+          <p className="olho">Potencial em aberto</p>
+          <p className="cartao-valor teto">{formatarValor(potencialTotal)}</p>
+          <p className="cartao-nota">{t.ativas} frentes e {contas.length} contas</p>
+        </div>
+        <div className="cartao">
+          <p className="olho">Alertas</p>
+          <p className={alta > 0 ? "cartao-valor alerta" : "cartao-valor"}>{alertas.length}</p>
+          <p className="cartao-nota">
+            {alta > 0 ? `${alta} de severidade alta · ` : ""}
+            {meus} {meus === 1 ? "seu" : "seus"}
+          </p>
+        </div>
+        <div className="cartao">
+          <p className="olho">Compromissos atrasados</p>
+          <p className={atrasados.length ? "cartao-valor alerta" : "cartao-valor"}>
+            {atrasados.length}
+          </p>
+          <p className="cartao-nota">{compromissos.length} em aberto no total</p>
+        </div>
+      </div>
+
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>Captura confirmada por mês</h2>
+          <span className="passos-contagem">últimos 12 meses</span>
+        </div>
+
+        {serie.every((p) => p.valor === 0) ? (
+          <Vazio>
+            Nada confirmado com data ainda. O valor entra nesta curva quando você preenche a data de
+            confirmação na conta, na frente ou na oportunidade.
+          </Vazio>
+        ) : (
+          <BarrasMensais serie={serie} />
+        )}
+
+        {semData > 0 && (
+          <p className="nota" style={{ marginTop: 12, marginBottom: 0 }}>
+            <span className="dado">{formatarValor(semData)}</span> de captura registrada{" "}
+            <strong>sem data de confirmação</strong> não aparece aqui. Preencher a data coloca o
+            valor no mês certo, em vez de somar tudo hoje e criar um pico falso.
+          </p>
+        )}
+      </section>
+
+      <div className="duas-colunas">
+        <section className="painel">
           <div className="linha-titulo">
-            <h2>Alertas</h2>
-            <Link className="link-acao" href="/alertas">
-              Ver todos os {alertas.length}
+            <h2>Maturidade das carteiras</h2>
+            <Link className="link-acao" href="/maturidade">
+              Ver avaliações
             </Link>
           </div>
-          <ul className="lista-estado">
-            {alertas.slice(0, 5).map((a) => (
-              <li key={a.id}>
-                <span className="rotulo">
-                  {a.entidade_tipo && a.entidade_id ? (
-                    <Link href={caminhoEntidade(a.entidade_tipo, a.entidade_id)}>{a.titulo}</Link>
-                  ) : (
-                    a.titulo
-                  )}
-                  <span className="dica">
-                    {ROTULO_TIPO[a.tipo]} · {nomeCarteira(a.carteira_id)}
-                    {a.detalhe ? ` · ${a.detalhe}` : ""}
-                  </span>
-                </span>
-                <span className={classeSeveridade(a.severidade)}>
-                  {a.severidade === "alta" ? "Alta" : a.severidade === "atencao" ? "Atenção" : "Info"}
-                </span>
-                <form action={silenciarAlerta}>
-                  <input type="hidden" name="id" value={a.id} />
-                  <input type="hidden" name="volta" value="/painel" />
-                  <button className="link-acao" type="submit">
-                    Silenciar
-                  </button>
-                </form>
-              </li>
-            ))}
-          </ul>
+          {avaliadas.length === 0 ? (
+            <Vazio>Nenhuma carteira avaliada ainda.</Vazio>
+          ) : (
+            <>
+              <Distribuicao faixas={faixas} />
+              <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
+                {avaliadas.length} de {carteiras.length} carteiras avaliadas.
+              </p>
+            </>
+          )}
         </section>
-      )}
 
-      <section className={compromissosAtencao.length ? "painel painel-alerta" : "painel"}>
-        <div className="linha-titulo">
-          <h2>Compromissos do período</h2>
-          {compromissos.length > 0 && (
-            <Link className="link-acao" href="/compromissos">
-              Ver todos
+        <section className="painel">
+          <div className="linha-titulo">
+            <h2>Oportunidades por fase</h2>
+            <Link className="link-acao" href="/oportunidades">
+              Ver todas
             </Link>
+          </div>
+          {oportunidades.length === 0 ? (
+            <Vazio>Nenhuma oportunidade registrada.</Vazio>
+          ) : (
+            <>
+              <Funil etapas={etapas} />
+              <p className="nota" style={{ marginTop: 12, marginBottom: 0 }}>
+                O valor é o investimento previsto em cada fase — estimativa, não compromisso.
+              </p>
+            </>
           )}
+        </section>
+      </div>
+
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>Precisa de ação</h2>
+          <span className="passos-contagem">
+            {grupos.reduce((soma, g) => soma + g.quantidade, 0)} itens
+          </span>
         </div>
 
-        {compromissosAtencao.length === 0 ? (
+        {grupos.length === 0 ? (
           <Vazio>
-            {compromissos.length === 0
-              ? "Nenhum compromisso em aberto. Contratos com vigência geram os seus sozinhos."
-              : "Nada vencido nem vencendo nos próximos dias."}
+            Nada fora do trilho. Contratos, compromissos e frentes estão dentro do prazo.
           </Vazio>
         ) : (
-          <ul className="lista-estado">
-            {compromissosAtencao.map((c) => {
-              const s = situacao(c);
-              return (
-                <li key={c.id}>
-                  <span className="rotulo">
-                    <Link href={caminhoEntidade(c.entidade_tipo, c.entidade_id)}>{c.titulo}</Link>
-                    <span className="dica">
-                      {formatarData(c.vence_em)} · {s.detalhe} ·{" "}
-                      {nomeCarteira(c.carteira_id)}
-                    </span>
-                  </span>
-                  <span className={classeSituacao(s.tom)}>{s.rotulo}</span>
-                  <form action={mudarStatusCompromisso}>
-                    <input type="hidden" name="id" value={c.id} />
-                    <input type="hidden" name="status" value="concluido" />
-                    <input type="hidden" name="volta" value="/painel" />
-                    <button className="link-acao" type="submit">
-                      Concluir
-                    </button>
-                  </form>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-
-      <section className={urgentes.length ? "painel painel-alerta" : "painel"}>
-        <div className="linha-titulo">
-          <h2>Contratos que precisam de atenção</h2>
-          {contratos.length > 0 && (
-            <Link className="link-acao" href="/contratos">
-              Ver todos os contratos
-            </Link>
-          )}
-        </div>
-
-        {urgentes.length === 0 ? (
-          <Vazio>
-            {contratos.length === 0
-              ? "Nenhum contrato registrado ainda. Quando houver, os prazos vencidos e as janelas abertas aparecem aqui."
-              : "Nenhum contrato vencido nem com janela aberta. O que estava combinado está em dia."}
-          </Vazio>
-        ) : (
-          <ul className="lista-estado">
-            {urgentes.map(({ contrato, u }) => (
-              <li key={contrato.id}>
-                <span className="rotulo">
-                  <Link href={`/contratos/${contrato.id}`}>
-                    {contrato.numero ? `${contrato.numero} · ` : ""}
-                    {nomeConta(contrato.conta_id)}
-                  </Link>
-                  <span className="dica">
-                    {contrato.fim ? `vence ${formatarData(contrato.fim)} · ` : ""}
-                    {u.detalhe}
-                  </span>
+          grupos.map((g) => (
+            <details className="grupo-pendencia" key={g.chave}>
+              <summary>
+                <span className="grupo-titulo">{g.titulo}</span>
+                <span className={g.grave ? "selo selo-falta" : "selo selo-neutro"}>
+                  {g.quantidade}
                 </span>
-                <span className={classeSelo(u.tom)}>{u.rotulo}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+                <Link className="link-acao grupo-link" href={g.link}>
+                  abrir tela <ArrowRight size={12} />
+                </Link>
+              </summary>
 
-      <section className="painel">
-        <div className="linha-titulo">
-          <h2>Em andamento</h2>
-          {frentes.length > 0 && (
-            <Link className="link-acao" href="/frentes">
-              Ver todas as frentes
-            </Link>
-          )}
-        </div>
-
-        {emAndamento.length === 0 ? (
-          <Vazio>
-            Nenhuma frente em análise ou execução. Quando houver, aparece aqui quem conduz e qual é
-            a próxima etapa.
-          </Vazio>
-        ) : (
-          <>
-            <ul className="lista-estado">
-              {emAndamento.map((f) => (
-                <li key={f.id}>
-                  <span className="rotulo">
-                    <Link href={`/frentes/${f.id}`}>{f.titulo}</Link>
-                    <span className="dica">
-                      {[
-                        nomeCarteira(f.carteira_id),
-                        f.qtd_casos !== null ? `${f.qtd_casos.toLocaleString("pt-BR")} casos` : null,
-                        f.proxima_etapa,
-                        f.prazo ? `prazo ${formatarData(f.prazo)}` : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </span>
-                  </span>
-                  <span className={classeStatus(f.status)}>{rotuloStatus(f.status)}</span>
-                </li>
+              {g.subgrupos.map((s) => (
+                <div className="subgrupo" key={s.titulo}>
+                  <p className="olho">{s.titulo}</p>
+                  <ul className="lista-estado">
+                    {s.itens.slice(0, 8).map((i) => (
+                      <li key={i.id}>
+                        <span className="rotulo">
+                          {i.href ? <Link href={i.href}>{i.texto}</Link> : i.texto}
+                          <span className="dica">{i.detalhe}</span>
+                        </span>
+                        <span className={i.classe}>{i.selo}</span>
+                        {i.acao?.tipo === "concluir" && (
+                          <form action={mudarStatusCompromisso}>
+                            <input type="hidden" name="id" value={i.acao.id} />
+                            <input type="hidden" name="status" value="concluido" />
+                            <input type="hidden" name="volta" value="/painel" />
+                            <button className="link-acao" type="submit">
+                              Concluir
+                            </button>
+                          </form>
+                        )}
+                        {i.acao?.tipo === "silenciar" && (
+                          <form action={silenciarAlerta}>
+                            <input type="hidden" name="id" value={i.acao.id} />
+                            <input type="hidden" name="volta" value="/painel" />
+                            <button className="link-acao" type="submit">
+                              Silenciar
+                            </button>
+                          </form>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                  {s.itens.length > 8 && (
+                    <p className="nota" style={{ marginBottom: 0 }}>
+                      e mais {s.itens.length - 8} — veja na tela cheia.
+                    </p>
+                  )}
+                </div>
               ))}
-            </ul>
-            <p className="nota" style={{ marginTop: 14 }}>
-              {totalFrentes.ativas} frentes em aberto representando{" "}
-              <span className="dado">{totalFrentes.casos.toLocaleString("pt-BR")}</span> casos.
-            </p>
-          </>
+            </details>
+          ))
         )}
-      </section>
-
-      <section className="painel">
-        <h2>Pessoas com acesso</h2>
-        <ul className="lista-estado">
-          {pessoas.map((p) => (
-            <li key={p.user_id}>
-              <span className="rotulo">
-                {p.nome ?? p.email ?? "Pessoa sem perfil"}
-                {p.email && p.nome && <span className="dica">{p.email}</span>}
-              </span>
-              <span className="selo selo-neutro">{rotuloPapel(p.papel)}</span>
-            </li>
-          ))}
-        </ul>
-
-        <p className="nota" style={{ marginTop: 16, marginBottom: 0 }}>
-          Alcance e inclusão de pessoas ficam em <Link href="/configuracoes">configurações</Link>.
-        </p>
       </section>
     </>
   );
