@@ -14,6 +14,8 @@ import {
 import { classeSelo, listarContratos, urgencia } from "@/lib/contratos";
 import { atualizarConta, criarContato, excluirContato } from "@/app/acoes/contas";
 import { Vazio } from "@/components/intro-secao";
+import { Modal } from "@/components/modal";
+import { Pencil } from "lucide-react";
 import { Historico } from "@/components/historico";
 
 export const dynamic = "force-dynamic";
@@ -179,8 +181,7 @@ export default async function PaginaConta({
       </section>
 
       {editavel && (
-        <section className="painel">
-          <h2>Dados da conta</h2>
+        <Modal rotulo="Editar conta" titulo="Editar conta" descricao="Potencial exige origem declarada." largo icone={<Pencil size={15} />} variante="secundario">
           <form action={atualizarConta} className="formulario">
             <input type="hidden" name="id" value={conta.id} />
 
@@ -304,7 +305,7 @@ export default async function PaginaConta({
               Salvar alterações
             </button>
           </form>
-        </section>
+        </Modal>
       )}
 
       <Historico

@@ -96,6 +96,10 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 
 **Carga não grava sem conferência.** A importação acontece em duas etapas: o arquivo é lido e validado linha a linha, gerando um relatório com o motivo de cada recusa, e só então a pessoa confirma. Linhas boas entram mesmo que outras tenham sido recusadas — não é tudo ou nada. Importar é operação de quem administra carteiras.
 
+**Formulário aparece quando é pedido.** As telas mostram o que existe; criar e editar abre em modal, disparado por botão. O que é ajuste da operação — pessoas, alcance, catálogo de tipos — fica em Configurações, fora do caminho do trabalho do dia.
+
+**Números têm formato.** Valor, quantidade, CNPJ e score usam campos com máscara: a pessoa lê formatado e o servidor recebe o valor cru num campo oculto.
+
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
 ## Rotas
@@ -115,6 +119,7 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 | `/panorama` | Todas as carteiras em uma tela, ordenadas por atenção |
 | `/carteiras/[id]/situacao` | Extrato de uma página, pronto para imprimir ou salvar em PDF |
 | `/importacao`, `/importacao/[id]` | Envio de CSV, conferência linha a linha e confirmação |
+| `/configuracoes` | Pessoas e alcance, tipos de frente e dados da organização |
 | `/instalacao` | Estado da configuração e trilha de construção |
 | `/diagnostico` | Testa configuração, conexão, sessão e banco |
 | `/api/saude` | Verificação de saúde |
@@ -156,6 +161,6 @@ supabase/
 
 ## Trilha de construção
 
-F0 esqueleto ✓ · F1 acesso, organizações e papéis ✓ · F2 carteiras ✓ · F3 contas nomeadas ✓ · F4 contratos e cláusulas ✓ · F5 frentes ✓ · F6 timeline e memória institucional ✓ · F7 compromissos e alertas ✓ · F8 painel multi-carteira ✓ · F9 situação da carteira ✓ · F10 importação ✓ — **fatia 1 completa**.
+F0 esqueleto ✓ · F1 acesso, organizações e papéis ✓ · F2 carteiras ✓ · F3 contas nomeadas ✓ · F4 contratos e cláusulas ✓ · F5 frentes ✓ · F6 timeline e memória institucional ✓ · F7 compromissos e alertas ✓ · F8 painel multi-carteira ✓ · F9 situação da carteira ✓ · F10 importação ✓ · F11 camada de interface ✓ — **fatia 1 completa**.
 
 Uma feature por vez, com build passando entre cada uma.

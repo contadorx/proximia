@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Plus, Search } from "lucide-react";
 import { exigirOrg, podeEscrever } from "@/lib/auth";
 import { listarCarteiras } from "@/lib/carteiras";
 import {
@@ -11,6 +12,8 @@ import {
 } from "@/lib/contas";
 import { criarConta } from "@/app/acoes/contas";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
+import { Modal } from "@/components/modal";
+import { CampoCnpj } from "@/components/campos";
 
 export const dynamic = "force-dynamic";
 
@@ -36,12 +39,81 @@ export default async function PaginaContas({
 
   return (
     <>
-      <p className="olho">{org.nome}</p>
-      <h1>Contas</h1>
+      <div className="cabeca-pagina">
+        <div>
+          <p className="olho">{org.nome}</p>
+          <h1>Contas</h1>
+        </div>
+        {podeCriar && (
+          <div className="cabeca-acoes">
+            <Modal
+              rotulo="Nova conta"
+              titulo="Nova conta"
+              descricao="Potencial, capturado e contatos você registra depois, na ficha."
+              icone={<Plus size={15} />}
+            >
+              <form action={criarConta} className="formulario">
+                <div className="formulario-linha">
+                  <label className="campo">
+                    <span>Nome</span>
+                    <input type="text" name="nome" required maxLength={160} autoFocus />
+                  </label>
+                  <label className="campo">
+                    <span>Carteira</span>
+                    <select name="carteira_id" required defaultValue="">
+                      <option value="" disabled>
+                        Escolha
+                      </option>
+                      {carteiras.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div className="formulario-linha">
+                  <CampoCnpj />
+                  <label className="campo">
+                    <span>Segmento</span>
+                    <input type="text" name="segmento" maxLength={80} placeholder="opcional" />
+                  </label>
+                </div>
+                <div className="formulario-linha">
+                  <label className="campo">
+                    <span>Relação</span>
+                    <select name="relacao" defaultValue="estrategica">
+                      {RELACOES.map((r) => (
+                        <option key={r.valor} value={r.valor}>
+                          {r.rotulo} — {r.explicacao}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="campo">
+                    <span>Criticidade</span>
+                    <select name="criticidade" defaultValue="media">
+                      {CRITICIDADES.map((c) => (
+                        <option key={c.valor} value={c.valor}>
+                          {c.rotulo}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <button className="botao botao-primario" type="submit">
+                  Criar conta
+                </button>
+              </form>
+            </Modal>
+          </div>
+        )}
+      </div>
+
       <IntroSecao>
         Aqui ficam as contas que merecem <strong>gestão individual</strong>: as maiores, as com
         contrato, as em prospecção e as que precisam ser defendidas. Volume de baixo valor unitário
-        não entra conta a conta — vira frente agregada na carteira, mais adiante na construção.
+        não entra conta a conta — vira frente agregada na carteira.
       </IntroSecao>
 
       {searchParams.erro && <p className="aviso aviso-erro">{searchParams.erro}</p>}
@@ -79,6 +151,7 @@ export default async function PaginaContas({
           </select>
         </label>
         <button className="botao botao-secundario" type="submit">
+          <Search size={14} />
           Filtrar
         </button>
         {filtrando && (
@@ -92,14 +165,15 @@ export default async function PaginaContas({
         <Vazio>
           {filtrando
             ? "Nenhuma conta encontrada com esses filtros."
-            : "Nenhuma conta cadastrada ainda. Comece pelas maiores de cada carteira — o formulário abaixo pede só o essencial."}
+            : "Nenhuma conta cadastrada ainda. Comece pelas maiores de cada carteira."}
         </Vazio>
       ) : (
         <section className="painel">
-          <p className="olho" style={{ marginBottom: 4 }}>
-            <span className="dado">{contas.length}</span>{" "}
-            {contas.length === 1 ? "conta" : "contas"}
-          </p>
+          <div className="linha-titulo">
+            <h2>
+              {contas.length} {contas.length === 1 ? "conta" : "contas"}
+            </h2>
+          </div>
           <ul className="lista-estado">
             {contas.map((c) => (
               <li key={c.id}>
@@ -129,71 +203,6 @@ export default async function PaginaContas({
               </li>
             ))}
           </ul>
-        </section>
-      )}
-
-      {podeCriar && (
-        <section className="painel">
-          <h2>Nova conta</h2>
-          <form action={criarConta} className="formulario">
-            <div className="formulario-linha">
-              <label className="campo">
-                <span>Nome</span>
-                <input type="text" name="nome" required maxLength={160} />
-              </label>
-              <label className="campo">
-                <span>Carteira</span>
-                <select name="carteira_id" required defaultValue="">
-                  <option value="" disabled>
-                    Escolha
-                  </option>
-                  {carteiras.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nome}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="campo">
-                <span>CNPJ</span>
-                <input type="text" name="documento" placeholder="opcional" maxLength={20} />
-              </label>
-            </div>
-
-            <div className="formulario-linha">
-              <label className="campo">
-                <span>Relação</span>
-                <select name="relacao" defaultValue="estrategica">
-                  {RELACOES.map((r) => (
-                    <option key={r.valor} value={r.valor}>
-                      {r.rotulo} — {r.explicacao}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="campo">
-                <span>Criticidade</span>
-                <select name="criticidade" defaultValue="media">
-                  {CRITICIDADES.map((c) => (
-                    <option key={c.valor} value={c.valor}>
-                      {c.rotulo}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="campo">
-                <span>Segmento</span>
-                <input type="text" name="segmento" maxLength={80} placeholder="opcional" />
-              </label>
-            </div>
-
-            <button className="botao" type="submit">
-              Criar conta
-            </button>
-            <p className="nota" style={{ marginTop: 4 }}>
-              Potencial, valor capturado e contatos você registra na ficha da conta.
-            </p>
-          </form>
         </section>
       )}
 

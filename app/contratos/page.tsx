@@ -1,15 +1,13 @@
 import Link from "next/link";
+import { Plus, Search } from "lucide-react";
 import { exigirOrg, podeEscrever } from "@/lib/auth";
 import { listarCarteiras } from "@/lib/carteiras";
 import { formatarData, formatarValor, listarContas } from "@/lib/contas";
-import {
-  PERIODICIDADES,
-  classeSelo,
-  listarContratos,
-  urgencia,
-} from "@/lib/contratos";
+import { PERIODICIDADES, classeSelo, listarContratos, urgencia } from "@/lib/contratos";
 import { criarContrato } from "@/app/acoes/contratos";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
+import { Modal } from "@/components/modal";
+import { CampoValor } from "@/components/campos";
 
 export const dynamic = "force-dynamic";
 
@@ -27,27 +25,122 @@ export default async function PaginaContratos({
   searchParams: { erro?: string; carteira?: string; situacao?: string };
 }) {
   const org = await exigirOrg();
-  const [contratos, contas, carteiras] = await Promise.all([
-    listarContratos({
-      orgId: org.orgId,
-      carteiraId: searchParams.carteira,
-      situacao: searchParams.situacao,
-    }),
+  const [todos, contas, carteiras] = await Promise.all([
+    listarContratos({ orgId: org.orgId }),
     listarContas({ orgId: org.orgId }),
     listarCarteiras(org.orgId),
   ]);
 
+  const contratos = todos.filter((c) => {
+    if (searchParams.carteira && c.carteira_id !== searchParams.carteira) return false;
+    if (searchParams.situacao && urgencia(c).chave !== searchParams.situacao) return false;
+    return true;
+  });
+
   const nomeConta = (id: string) => contas.find((c) => c.id === id)?.nome ?? "conta removida";
   const podeCriar = podeEscrever(org.papel) && contas.length > 0;
-
-  const todos = await listarContratos({ orgId: org.orgId });
   const vencidos = todos.filter((c) => urgencia(c).chave === "vencido").length;
   const emJanela = todos.filter((c) => urgencia(c).chave === "janela").length;
 
   return (
     <>
-      <p className="olho">{org.nome}</p>
-      <h1>Contratos</h1>
+      <div className="cabeca-pagina">
+        <div>
+          <p className="olho">{org.nome}</p>
+          <h1>Contratos</h1>
+        </div>
+        {podeCriar && (
+          <div className="cabeca-acoes">
+            <Modal
+              rotulo="Novo contrato"
+              titulo="Novo contrato"
+              descricao="As cláusulas você registra depois, na ficha do contrato."
+              icone={<Plus size={15} />}
+              largo
+            >
+              <form action={criarContrato} className="formulario">
+                <input type="hidden" name="volta" value="/contratos" />
+                <div className="formulario-linha">
+                  <label className="campo">
+                    <span>Conta</span>
+                    <select name="conta_id" required defaultValue="" autoFocus>
+                      <option value="" disabled>
+                        Escolha
+                      </option>
+                      {contas.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="campo">
+                    <span>Número</span>
+                    <input type="text" name="numero" maxLength={60} placeholder="opcional" />
+                  </label>
+                  <label className="campo">
+                    <span>Tipo</span>
+                    <input
+                      type="text"
+                      name="tipo"
+                      maxLength={60}
+                      placeholder="como sua operação chama"
+                    />
+                  </label>
+                </div>
+
+                <div className="formulario-linha">
+                  <label className="campo">
+                    <span>Início</span>
+                    <input type="date" name="inicio" />
+                  </label>
+                  <label className="campo">
+                    <span>Fim</span>
+                    <input type="date" name="fim" />
+                  </label>
+                  <label className="campo campo-numerico">
+                    <span>Aviso prévio (dias)</span>
+                    <input type="number" name="aviso_previa_dias" min={0} max={730} defaultValue={90} />
+                    <small>Quantos dias antes do fim a conversa precisa começar.</small>
+                  </label>
+                  <label className="campo campo-marcador">
+                    <input type="checkbox" name="renovacao_automatica" />
+                    <span>Renovação automática</span>
+                  </label>
+                </div>
+
+                <div className="formulario-linha">
+                  <CampoValor nome="valor_base" rotulo="Valor base" />
+                  <label className="campo">
+                    <span>Periodicidade</span>
+                    <select name="periodicidade" defaultValue="">
+                      <option value="">Não definida</option>
+                      {PERIODICIDADES.map((p) => (
+                        <option key={p.valor} value={p.valor}>
+                          {p.rotulo}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="campo">
+                    <span>Natureza do benefício</span>
+                    <input
+                      type="text"
+                      name="natureza_beneficio"
+                      maxLength={120}
+                      placeholder="o que foi concedido e com que fundamento"
+                    />
+                  </label>
+                </div>
+
+                <button className="botao botao-primario" type="submit">
+                  Registrar contrato
+                </button>
+              </form>
+            </Modal>
+          </div>
+        )}
+      </div>
 
       <IntroSecao>
         Cada contrato guarda vigência, o que foi concedido e as cláusulas que precisam de
@@ -97,6 +190,7 @@ export default async function PaginaContratos({
           </select>
         </label>
         <button className="botao botao-secundario" type="submit">
+          <Search size={14} />
           Filtrar
         </button>
         {(searchParams.carteira || searchParams.situacao) && (
@@ -110,15 +204,15 @@ export default async function PaginaContratos({
         <Vazio
           acao={
             contas.length === 0 ? (
-              <Link className="botao" href="/contas">
+              <Link className="botao botao-secundario" href="/contas">
                 Cadastrar uma conta
               </Link>
             ) : undefined
           }
         >
           {contas.length === 0
-            ? "Todo contrato pertence a uma conta. Cadastre a conta primeiro e o contrato vem em seguida."
-            : "Nenhum contrato com esses filtros. Registre o primeiro no formulário abaixo — comece pelos que vencem este ano."}
+            ? "Todo contrato pertence a uma conta. Cadastre a conta primeiro."
+            : "Nenhum contrato com esses filtros. Comece pelos que vencem este ano."}
         </Vazio>
       ) : (
         <section className="painel">
@@ -133,11 +227,7 @@ export default async function PaginaContratos({
                       {nomeConta(c.conta_id)}
                     </Link>
                     <span className="dica">
-                      {[
-                        c.tipo,
-                        c.fim ? `vence ${formatarData(c.fim)}` : "sem data de fim",
-                        u.detalhe,
-                      ]
+                      {[c.tipo, c.fim ? `vence ${formatarData(c.fim)}` : "sem data de fim", u.detalhe]
                         .filter(Boolean)
                         .join(" · ")}
                     </span>
@@ -150,93 +240,6 @@ export default async function PaginaContratos({
               );
             })}
           </ul>
-        </section>
-      )}
-
-      {podeCriar && (
-        <section className="painel">
-          <h2>Novo contrato</h2>
-          <form action={criarContrato} className="formulario">
-            <input type="hidden" name="volta" value="/contratos" />
-
-            <div className="formulario-linha">
-              <label className="campo">
-                <span>Conta</span>
-                <select name="conta_id" required defaultValue="">
-                  <option value="" disabled>
-                    Escolha
-                  </option>
-                  {contas.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nome}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="campo">
-                <span>Número</span>
-                <input type="text" name="numero" maxLength={60} placeholder="opcional" />
-              </label>
-              <label className="campo">
-                <span>Tipo</span>
-                <input type="text" name="tipo" maxLength={60} placeholder="como sua operação chama" />
-              </label>
-            </div>
-
-            <div className="formulario-linha">
-              <label className="campo">
-                <span>Início</span>
-                <input type="date" name="inicio" />
-              </label>
-              <label className="campo">
-                <span>Fim</span>
-                <input type="date" name="fim" />
-              </label>
-              <label className="campo">
-                <span>Aviso prévio (dias)</span>
-                <input type="number" name="aviso_previa_dias" min={0} max={730} defaultValue={90} />
-                <small>Quantos dias antes do fim a conversa precisa começar.</small>
-              </label>
-              <label className="campo campo-marcador">
-                <span>Renovação automática</span>
-                <input type="checkbox" name="renovacao_automatica" />
-              </label>
-            </div>
-
-            <div className="formulario-linha">
-              <label className="campo">
-                <span>Valor base</span>
-                <input type="text" name="valor_base" inputMode="decimal" placeholder="opcional" />
-              </label>
-              <label className="campo">
-                <span>Periodicidade</span>
-                <select name="periodicidade" defaultValue="">
-                  <option value="">Não definida</option>
-                  {PERIODICIDADES.map((p) => (
-                    <option key={p.valor} value={p.valor}>
-                      {p.rotulo}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="campo">
-                <span>Natureza do benefício</span>
-                <input
-                  type="text"
-                  name="natureza_beneficio"
-                  maxLength={120}
-                  placeholder="o que foi concedido e com que fundamento"
-                />
-              </label>
-            </div>
-
-            <button className="botao" type="submit">
-              Registrar contrato
-            </button>
-            <p className="nota" style={{ marginTop: 4 }}>
-              As cláusulas você registra na ficha do contrato, logo depois.
-            </p>
-          </form>
         </section>
       )}
     </>

@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { exigirOrg, podeAdministrar } from "@/lib/auth";
+import { exigirOrg } from "@/lib/auth";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { PAPEIS, rotuloPapel, type Papel } from "@/lib/tipos";
+import { rotuloPapel, type Papel } from "@/lib/tipos";
 import { listarCarteiras } from "@/lib/carteiras";
 import { formatarData, listarContas } from "@/lib/contas";
 import { classeSelo, listarContratos, urgencia } from "@/lib/contratos";
@@ -14,7 +14,6 @@ import {
 } from "@/lib/compromissos";
 import { caminhoEntidade } from "@/lib/registros";
 import { mudarStatusCompromisso } from "@/app/acoes/compromissos";
-import { vincularMembro } from "@/app/acoes/organizacoes";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { PrimeirosPassos, type Passo } from "@/components/primeiros-passos";
 
@@ -78,7 +77,6 @@ export default async function PaginaPainel({
   const totalFrentes = totais(frentes);
   const nomeCarteira = (id: string) => carteiras.find((c) => c.id === id)?.nome ?? "—";
 
-  const administra = podeAdministrar(org.papel);
   const urgentes = contratos
     .map((c) => ({ contrato: c, u: urgencia(c) }))
     .filter((x) => x.u.chave === "vencido" || x.u.chave === "janela")
@@ -142,8 +140,17 @@ export default async function PaginaPainel({
 
   return (
     <>
-      <p className="olho">{org.nome}</p>
-      <h1>Painel</h1>
+      <div className="cabeca-pagina">
+        <div>
+          <p className="olho">{org.nome}</p>
+          <h1>Painel</h1>
+        </div>
+        <div className="cabeca-acoes">
+          <Link className="botao botao-secundario" href="/panorama">
+            Ver panorama
+          </Link>
+        </div>
+      </div>
 
       <IntroSecao>
         Você está como <strong>{rotuloPapel(org.papel).toLowerCase()}</strong>. Esta tela reúne o
@@ -154,12 +161,6 @@ export default async function PaginaPainel({
       {searchParams.ok && <p className="aviso aviso-ok">{searchParams.ok}</p>}
 
       <PrimeirosPassos passos={passos} />
-
-      {carteiras.length > 1 && (
-        <p className="nota" style={{ marginBottom: 24 }}>
-          Para comparar as carteiras entre si, abra o <Link href="/panorama">panorama</Link>.
-        </p>
-      )}
 
       <section className={compromissosAtencao.length ? "painel painel-alerta" : "painel"}>
         <div className="linha-titulo">
@@ -302,31 +303,9 @@ export default async function PaginaPainel({
           ))}
         </ul>
 
-        {administra && (
-          <form action={vincularMembro} className="formulario formulario-linha" style={{ marginTop: 20 }}>
-            <input type="hidden" name="org_id" value={org.orgId} />
-            <label className="campo">
-              <span>E-mail</span>
-              <input type="email" name="email" required />
-            </label>
-            <label className="campo">
-              <span>Alcance</span>
-              <select name="papel" defaultValue="analista">
-                {PAPEIS.filter((p) => p.valor !== "owner").map((p) => (
-                  <option key={p.valor} value={p.valor}>
-                    {p.rotulo} — {p.explicacao}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button className="botao" type="submit">
-              Incluir
-            </button>
-            <p className="nota" style={{ flexBasis: "100%", marginTop: 4 }}>
-              A pessoa precisa ter criado o acesso antes, com o mesmo e-mail.
-            </p>
-          </form>
-        )}
+        <p className="nota" style={{ marginTop: 16, marginBottom: 0 }}>
+          Alcance e inclusão de pessoas ficam em <Link href="/configuracoes">configurações</Link>.
+        </p>
       </section>
     </>
   );

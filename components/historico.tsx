@@ -8,6 +8,8 @@ import {
 } from "@/lib/registros";
 import { criarRegistro, editarRegistro } from "@/app/acoes/registros";
 import { Vazio } from "@/components/intro-secao";
+import { Modal } from "@/components/modal";
+import { Plus, Pencil } from "lucide-react";
 
 /**
  * Historico de uma entidade. Cada linha mostra quem escreveu e quando.
@@ -33,11 +35,54 @@ export async function Historico({
   return (
     <section className="painel">
       <div className="linha-titulo">
-        <h2>Histórico</h2>
-        {registros.length > 0 && (
-          <span className="dado passos-contagem">
-            {registros.length} {registros.length === 1 ? "registro" : "registros"}
-          </span>
+        <h2>
+          Histórico
+          {registros.length > 0 && (
+            <span className="dado passos-contagem" style={{ marginLeft: 10 }}>
+              {registros.length}
+            </span>
+          )}
+        </h2>
+        {editavel && (
+          <Modal
+            rotulo="Registrar"
+            titulo="Novo registro"
+            descricao="Escreva como contaria a alguém que assume amanhã."
+            icone={<Plus size={15} />}
+          >
+            <form action={criarRegistro} className="formulario">
+              <input type="hidden" name="entidade_tipo" value={entidadeTipo} />
+              <input type="hidden" name="entidade_id" value={entidadeId} />
+              <input type="hidden" name="carteira_id" value={carteiraId} />
+              <div className="formulario-linha">
+                <label className="campo">
+                  <span>Tipo</span>
+                  <select name="tipo" defaultValue="nota">
+                    {TIPOS_REGISTRO.map((t) => (
+                      <option key={t.valor} value={t.valor}>
+                        {t.rotulo} — {t.explicacao}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="campo">
+                  <span>Quando</span>
+                  <input type="date" name="ocorrido_em" defaultValue={hoje} />
+                </label>
+              </div>
+              <label className="campo">
+                <span>Título</span>
+                <input type="text" name="titulo" maxLength={160} placeholder="opcional" />
+              </label>
+              <label className="campo">
+                <span>O que aconteceu</span>
+                <textarea name="corpo" rows={4} required autoFocus />
+              </label>
+              <button className="botao botao-primario" type="submit">
+                Registrar
+              </button>
+            </form>
+          </Modal>
         )}
       </div>
 
@@ -61,8 +106,14 @@ export async function Historico({
               <p className="registro-corpo">{r.corpo}</p>
 
               {editavel && (
-                <details className="registro-editar">
-                  <summary>Editar</summary>
+                <div className="registro-editar">
+                  <Modal
+                    rotulo="Editar"
+                    titulo="Editar registro"
+                    descricao="A versão atual continua guardada. Nada é sobrescrito."
+                    variante="link"
+                    icone={<Pencil size={13} />}
+                  >
                   <form action={editarRegistro} className="formulario">
                     <input type="hidden" name="id" value={r.id} />
                     <input type="hidden" name="entidade_tipo" value={entidadeTipo} />
@@ -94,54 +145,15 @@ export async function Historico({
                     <button className="botao botao-secundario" type="submit">
                       Salvar como nova versão
                     </button>
-                    <p className="nota">
-                      A versão atual continua guardada. Nada é sobrescrito.
-                    </p>
-                  </form>
-                </details>
+                    </form>
+                  </Modal>
+                </div>
               )}
             </li>
           ))}
         </ol>
       )}
 
-      {editavel && (
-        <form action={criarRegistro} className="formulario" style={{ marginTop: 22 }}>
-          <input type="hidden" name="entidade_tipo" value={entidadeTipo} />
-          <input type="hidden" name="entidade_id" value={entidadeId} />
-          <input type="hidden" name="carteira_id" value={carteiraId} />
-
-          <div className="formulario-linha">
-            <label className="campo">
-              <span>Tipo</span>
-              <select name="tipo" defaultValue="nota">
-                {TIPOS_REGISTRO.map((t) => (
-                  <option key={t.valor} value={t.valor}>
-                    {t.rotulo} — {t.explicacao}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="campo">
-              <span>Título</span>
-              <input type="text" name="titulo" maxLength={160} placeholder="opcional" />
-            </label>
-            <label className="campo">
-              <span>Quando</span>
-              <input type="date" name="ocorrido_em" defaultValue={hoje} />
-            </label>
-          </div>
-
-          <label className="campo">
-            <span>O que aconteceu</span>
-            <textarea name="corpo" rows={3} required placeholder="Escreva como contaria a alguém que assume amanhã." />
-          </label>
-
-          <button className="botao" type="submit">
-            Registrar
-          </button>
-        </form>
-      )}
     </section>
   );
 }

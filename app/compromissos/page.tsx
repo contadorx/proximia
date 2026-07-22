@@ -16,6 +16,8 @@ import {
   mudarStatusCompromisso,
 } from "@/app/acoes/compromissos";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
+import { Modal } from "@/components/modal";
+import { Plus, RefreshCw } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -107,8 +109,93 @@ export default async function PaginaCompromissos({
 
   return (
     <>
-      <p className="olho">{org.nome}</p>
-      <h1>Compromissos</h1>
+      <div className="cabeca-pagina">
+        <div>
+          <p className="olho">{org.nome}</p>
+          <h1>Compromissos</h1>
+        </div>
+        <div className="cabeca-acoes">
+          {editavel && carteiras.length > 0 && (
+            <Modal
+              rotulo="Novo compromisso"
+              titulo="Novo compromisso"
+              descricao="O que foi combinado vira data com dono."
+              icone={<Plus size={15} />}
+              largo
+            >
+              <form action={criarCompromisso} className="formulario">
+                <input type="hidden" name="volta" value="/compromissos" />
+                <input type="hidden" name="entidade_tipo" value="carteira" />
+                <div className="formulario-linha">
+                  <label className="campo">
+                    <span>O que precisa ser feito</span>
+                    <input type="text" name="titulo" required maxLength={160} autoFocus />
+                  </label>
+                  <label className="campo">
+                    <span>Carteira</span>
+                    <select name="carteira_id" required defaultValue="">
+                      <option value="" disabled>
+                        Escolha
+                      </option>
+                      {carteiras.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div className="formulario-linha">
+                  <label className="campo">
+                    <span>Data</span>
+                    <input type="date" name="vence_em" required defaultValue={hoje} />
+                  </label>
+                  <label className="campo">
+                    <span>Dono</span>
+                    <select name="dono_id" defaultValue={usuario.id}>
+                      {pessoas.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {nomePessoa(p)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="campo campo-numerico">
+                    <span>Avisar (dias antes)</span>
+                    <input type="number" name="alerta_dias" min={0} max={365} defaultValue={7} />
+                  </label>
+                </div>
+                <label className="campo">
+                  <span>Detalhe</span>
+                  <input type="text" name="descricao" maxLength={200} placeholder="opcional" />
+                </label>
+                <button className="botao botao-primario" type="submit">
+                  Registrar compromisso
+                </button>
+              </form>
+            </Modal>
+          )}
+          {org.papel !== "ponto_focal" && editavel && (
+            <Modal
+              rotulo="Gerar pendentes"
+              titulo="Gerar compromissos dos contratos"
+              descricao="Contratos e cláusulas cadastrados antes desta função não passaram pela geração automática."
+              variante="secundario"
+              icone={<RefreshCw size={15} />}
+            >
+              <p className="nota">
+                Rode uma vez para trazer os que faltam. Repetir não duplica nada — cada contrato e
+                cada cláusula tem no máximo um compromisso automático.
+              </p>
+              <form action={gerarCompromissosPendentes}>
+                <button className="botao botao-primario" type="submit">
+                  Gerar os que faltam
+                </button>
+              </form>
+            </Modal>
+          )}
+        </div>
+      </div>
 
       <IntroSecao>
         O que foi combinado vira <strong>data com dono</strong>. Contratos e cláusulas monitoradas
@@ -119,28 +206,26 @@ export default async function PaginaCompromissos({
       {searchParams.erro && <p className="aviso aviso-erro">{searchParams.erro}</p>}
       {searchParams.ok && <p className="aviso aviso-ok">{searchParams.ok}</p>}
 
-      <section className="painel">
-        <div className="grade-prazos">
-          <div>
-            <p className="olho">Atrasados</p>
-            <p className="dado destaque-dado" style={{ color: atrasados.length ? "var(--alerta)" : undefined }}>
-              {atrasados.length}
-            </p>
-          </div>
-          <div>
-            <p className="olho">Próximos dias</p>
-            <p className="dado destaque-dado">{proximos.length}</p>
-          </div>
-          <div>
-            <p className="olho">Meus, em aberto</p>
-            <p className="dado destaque-dado">{meus.length}</p>
-          </div>
-          <div>
-            <p className="olho">Total em aberto</p>
-            <p className="dado destaque-dado">{abertos.length}</p>
-          </div>
+      <div className="cartoes">
+        <div className="cartao">
+          <p className="olho">Atrasados</p>
+          <p className={atrasados.length ? "cartao-valor alerta" : "cartao-valor"}>
+            {atrasados.length}
+          </p>
         </div>
-      </section>
+        <div className="cartao">
+          <p className="olho">Próximos dias</p>
+          <p className="cartao-valor">{proximos.length}</p>
+        </div>
+        <div className="cartao">
+          <p className="olho">Meus, em aberto</p>
+          <p className="cartao-valor">{meus.length}</p>
+        </div>
+        <div className="cartao">
+          <p className="olho">Total em aberto</p>
+          <p className="cartao-valor">{abertos.length}</p>
+        </div>
+      </div>
 
       <form className="filtros" method="get">
         <label className="campo">
@@ -202,77 +287,6 @@ export default async function PaginaCompromissos({
         </section>
       )}
 
-      {editavel && carteiras.length > 0 && (
-        <section className="painel">
-          <h2>Novo compromisso</h2>
-          <form action={criarCompromisso} className="formulario">
-            <input type="hidden" name="volta" value="/compromissos" />
-            <input type="hidden" name="entidade_tipo" value="carteira" />
-
-            <div className="formulario-linha">
-              <label className="campo">
-                <span>O que precisa ser feito</span>
-                <input type="text" name="titulo" required maxLength={160} />
-              </label>
-              <label className="campo">
-                <span>Carteira</span>
-                <select name="carteira_id" required defaultValue="">
-                  <option value="" disabled>
-                    Escolha
-                  </option>
-                  {carteiras.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nome}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="campo">
-                <span>Data</span>
-                <input type="date" name="vence_em" required defaultValue={hoje} />
-              </label>
-              <label className="campo">
-                <span>Dono</span>
-                <select name="dono_id" defaultValue={usuario.id}>
-                  {pessoas.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {nomePessoa(p)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="campo">
-                <span>Avisar (dias antes)</span>
-                <input type="number" name="alerta_dias" min={0} max={365} defaultValue={7} />
-              </label>
-            </div>
-
-            <label className="campo">
-              <span>Detalhe</span>
-              <input type="text" name="descricao" maxLength={200} placeholder="opcional" />
-            </label>
-
-            <button className="botao" type="submit">
-              Registrar compromisso
-            </button>
-          </form>
-        </section>
-      )}
-
-      {org.papel !== "ponto_focal" && podeEscrever(org.papel) && (
-        <section className="painel">
-          <h2>Contratos anteriores a esta função</h2>
-          <p className="nota" style={{ marginBottom: 16 }}>
-            Contratos e cláusulas cadastrados antes desta etapa não passaram pela geração automática.
-            Rode uma vez para trazer os que faltam — repetir não duplica nada.
-          </p>
-          <form action={gerarCompromissosPendentes}>
-            <button className="botao botao-secundario" type="submit">
-              Gerar os que faltam
-            </button>
-          </form>
-        </section>
-      )}
     </>
   );
 }

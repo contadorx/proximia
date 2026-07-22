@@ -15,6 +15,8 @@ import {
 } from "@/lib/contratos";
 import { atualizarContrato, criarClausula, excluirClausula } from "@/app/acoes/contratos";
 import { Vazio } from "@/components/intro-secao";
+import { Modal } from "@/components/modal";
+import { Pencil } from "lucide-react";
 import { Historico } from "@/components/historico";
 import { pessoasDaOrganizacao } from "@/lib/carteiras";
 import { classeSituacao, listarCompromissos, situacao } from "@/lib/compromissos";
@@ -253,8 +255,7 @@ export default async function PaginaContrato({
       </section>
 
       {editavel && (
-        <section className="painel">
-          <h2>Dados do contrato</h2>
+        <Modal rotulo="Editar contrato" titulo="Editar contrato" descricao="A janela de renegociação é recalculada sozinha." largo icone={<Pencil size={15} />} variante="secundario">
           <form action={atualizarContrato} className="formulario">
             <input type="hidden" name="id" value={contrato.id} />
 
@@ -369,7 +370,7 @@ export default async function PaginaContrato({
               Salvar alterações
             </button>
           </form>
-        </section>
+        </Modal>
       )}
       <Historico
         entidadeTipo="contrato"

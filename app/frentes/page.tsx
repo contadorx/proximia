@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Plus, Search } from "lucide-react";
 import { exigirOrg, podeEscrever } from "@/lib/auth";
 import { listarCarteiras, nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
 import { formatarData, formatarValor } from "@/lib/contas";
@@ -10,8 +11,10 @@ import {
   tiposDeFrente,
   totais,
 } from "@/lib/frentes";
-import { criarFrente, criarTipoFrente } from "@/app/acoes/frentes";
+import { criarFrente } from "@/app/acoes/frentes";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
+import { Modal } from "@/components/modal";
+import { CampoQuantidade, CampoValor } from "@/components/campos";
 
 export const dynamic = "force-dynamic";
 
@@ -30,52 +33,146 @@ export default async function PaginaFrentes({
 
   const t = totais(frentes);
   const podeCriar = podeEscrever(org.papel) && carteiras.length > 0;
-  const podeGerirCatalogo = org.papel !== "ponto_focal" && podeEscrever(org.papel);
   const nomeCarteira = (id: string) => carteiras.find((c) => c.id === id)?.nome ?? "—";
 
   return (
     <>
-      <p className="olho">{org.nome}</p>
-      <h1>Frentes</h1>
+      <div className="cabeca-pagina">
+        <div>
+          <p className="olho">{org.nome}</p>
+          <h1>Frentes</h1>
+        </div>
+        {podeCriar && (
+          <div className="cabeca-acoes">
+            <Modal
+              rotulo="Nova frente"
+              titulo="Nova frente"
+              descricao="Uma linha por tema de volume. A base de trabalho continua onde está — o link entra depois."
+              icone={<Plus size={15} />}
+              largo
+            >
+              <form action={criarFrente} className="formulario">
+                <div className="formulario-linha">
+                  <label className="campo">
+                    <span>Título</span>
+                    <input type="text" name="titulo" required maxLength={160} autoFocus />
+                  </label>
+                  <label className="campo">
+                    <span>Carteira</span>
+                    <select name="carteira_id" required defaultValue="">
+                      <option value="" disabled>
+                        Escolha
+                      </option>
+                      {carteiras.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="campo">
+                    <span>Tipo</span>
+                    <select name="catalogo_id" defaultValue="">
+                      <option value="">Sem tipo</option>
+                      {tipos
+                        .filter((x) => x.ativo)
+                        .map((x) => (
+                          <option key={x.id} value={x.id}>
+                            {x.nome}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+                </div>
+
+                <div className="formulario-linha">
+                  <label className="campo">
+                    <span>Situação</span>
+                    <select name="status" defaultValue="identificada">
+                      {STATUS_FRENTE.filter((s) => s.valor !== "descartada").map((s) => (
+                        <option key={s.valor} value={s.valor}>
+                          {s.rotulo} — {s.explicacao}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="campo">
+                    <span>Dono</span>
+                    <select name="dono_id" defaultValue="">
+                      <option value="">Definir depois</option>
+                      {pessoas.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {nomePessoa(p)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <CampoQuantidade nome="qtd_casos" rotulo="Casos" ajuda="Quantos itens a frente representa." />
+                </div>
+
+                <div className="formulario-linha">
+                  <CampoValor nome="potencial_bruto" rotulo="Potencial estimado" />
+                  <label className="campo">
+                    <span>Origem da estimativa</span>
+                    <input
+                      type="text"
+                      name="potencial_origem"
+                      maxLength={160}
+                      placeholder="de onde veio esse número"
+                    />
+                  </label>
+                </div>
+
+                <div className="formulario-linha">
+                  <label className="campo">
+                    <span>Próxima etapa</span>
+                    <input type="text" name="proxima_etapa" maxLength={160} />
+                  </label>
+                  <label className="campo">
+                    <span>Prazo</span>
+                    <input type="date" name="prazo" />
+                  </label>
+                </div>
+
+                <button className="botao botao-primario" type="submit">
+                  Criar frente
+                </button>
+              </form>
+            </Modal>
+          </div>
+        )}
+      </div>
 
       <IntroSecao>
         Frente é <strong>trabalho de volume agregado por carteira</strong>: uma linha por tema, com
-        quantidade de casos, potencial, capturado, dono e próxima etapa. A base de trabalho continua
-        onde sempre esteve — aqui fica o link para ela. Conta grande tem ficha própria; volume tem
-        frente.
+        quantidade de casos, potencial, capturado, dono e próxima etapa. Conta grande tem ficha
+        própria; volume tem frente. Os tipos ficam em{" "}
+        <Link href="/configuracoes">configurações</Link>.
       </IntroSecao>
 
       {searchParams.erro && <p className="aviso aviso-erro">{searchParams.erro}</p>}
 
       {frentes.length > 0 && (
-        <section className="painel">
-          <div className="grade-prazos">
-            <div>
-              <p className="olho">Frentes em aberto</p>
-              <p className="dado destaque-dado">{t.ativas}</p>
-            </div>
-            <div>
-              <p className="olho">Casos representados</p>
-              <p className="dado destaque-dado">{t.casos.toLocaleString("pt-BR")}</p>
-            </div>
-            <div>
-              <p className="olho">Potencial estimado</p>
-              <p className="dado destaque-dado valor-teto" style={{ fontSize: 16 }}>
-                {formatarValor(t.potencial)}
-              </p>
-            </div>
-            <div>
-              <p className="olho">Capturado</p>
-              <p className="dado destaque-dado valor-capturado" style={{ fontSize: 16 }}>
-                {formatarValor(t.capturado)}
-              </p>
-            </div>
+        <div className="cartoes">
+          <div className="cartao">
+            <p className="olho">Frentes em aberto</p>
+            <p className="cartao-valor">{t.ativas}</p>
           </div>
-          <p className="nota" style={{ marginTop: 14 }}>
-            Potencial é teto estimado das frentes em aberto; capturado é o que já se confirmou. Os
-            dois não se somam.
-          </p>
-        </section>
+          <div className="cartao">
+            <p className="olho">Casos representados</p>
+            <p className="cartao-valor">{t.casos.toLocaleString("pt-BR")}</p>
+          </div>
+          <div className="cartao">
+            <p className="olho">Potencial estimado</p>
+            <p className="cartao-valor teto">{formatarValor(t.potencial)}</p>
+            <p className="cartao-nota">teto das frentes em aberto</p>
+          </div>
+          <div className="cartao">
+            <p className="olho">Capturado</p>
+            <p className="cartao-valor capturado">{formatarValor(t.capturado)}</p>
+            <p className="cartao-nota">confirmado, não se soma ao teto</p>
+          </div>
+        </div>
       )}
 
       <form className="filtros" method="get">
@@ -102,6 +199,7 @@ export default async function PaginaFrentes({
           </select>
         </label>
         <button className="botao botao-secundario" type="submit">
+          <Search size={14} />
           Filtrar
         </button>
         {(searchParams.carteira || searchParams.status) && (
@@ -115,7 +213,7 @@ export default async function PaginaFrentes({
         <Vazio
           acao={
             carteiras.length === 0 ? (
-              <Link className="botao" href="/carteiras">
+              <Link className="botao botao-secundario" href="/carteiras">
                 Criar carteira
               </Link>
             ) : undefined
@@ -123,7 +221,7 @@ export default async function PaginaFrentes({
         >
           {carteiras.length === 0
             ? "Toda frente pertence a uma carteira. Crie a carteira primeiro."
-            : "Nenhuma frente registrada. Comece pelo tema que hoje ocupa mais tempo da equipe — uma linha basta."}
+            : "Nenhuma frente registrada. Comece pelo tema que hoje ocupa mais tempo da equipe."}
         </Vazio>
       ) : (
         <section className="painel">
@@ -152,142 +250,6 @@ export default async function PaginaFrentes({
               </li>
             ))}
           </ul>
-        </section>
-      )}
-
-      {podeCriar && (
-        <section className="painel">
-          <h2>Nova frente</h2>
-          <form action={criarFrente} className="formulario">
-            <div className="formulario-linha">
-              <label className="campo">
-                <span>Título</span>
-                <input type="text" name="titulo" required maxLength={160} />
-              </label>
-              <label className="campo">
-                <span>Carteira</span>
-                <select name="carteira_id" required defaultValue="">
-                  <option value="" disabled>
-                    Escolha
-                  </option>
-                  {carteiras.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nome}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="campo">
-                <span>Tipo</span>
-                <select name="catalogo_id" defaultValue="">
-                  <option value="">Sem tipo</option>
-                  {tipos
-                    .filter((t) => t.ativo)
-                    .map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.nome}
-                      </option>
-                    ))}
-                </select>
-              </label>
-            </div>
-
-            <div className="formulario-linha">
-              <label className="campo">
-                <span>Situação</span>
-                <select name="status" defaultValue="identificada">
-                  {STATUS_FRENTE.filter((s) => s.valor !== "descartada").map((s) => (
-                    <option key={s.valor} value={s.valor}>
-                      {s.rotulo} — {s.explicacao}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="campo">
-                <span>Dono</span>
-                <select name="dono_id" defaultValue="">
-                  <option value="">Definir depois</option>
-                  {pessoas.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {nomePessoa(p)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="campo">
-                <span>Casos</span>
-                <input type="number" name="qtd_casos" min={0} placeholder="quantos itens" />
-              </label>
-            </div>
-
-            <div className="formulario-linha">
-              <label className="campo">
-                <span>Potencial estimado</span>
-                <input type="text" name="potencial_bruto" inputMode="decimal" />
-              </label>
-              <label className="campo">
-                <span>Origem da estimativa</span>
-                <input
-                  type="text"
-                  name="potencial_origem"
-                  maxLength={160}
-                  placeholder="de onde veio esse número"
-                />
-              </label>
-              <label className="campo">
-                <span>Próxima etapa</span>
-                <input type="text" name="proxima_etapa" maxLength={160} />
-              </label>
-              <label className="campo">
-                <span>Prazo</span>
-                <input type="date" name="prazo" />
-              </label>
-            </div>
-
-            <button className="botao" type="submit">
-              Criar frente
-            </button>
-          </form>
-        </section>
-      )}
-
-      {podeGerirCatalogo && (
-        <section className="painel">
-          <h2>Tipos de frente</h2>
-          <p className="nota" style={{ marginBottom: 16 }}>
-            O catálogo é da sua operação: nenhum tipo vem pronto no produto. Cadastre os temas que se
-            repetem entre carteiras para poder comparar depois.
-          </p>
-
-          {tipos.length > 0 && (
-            <ul className="lista-estado">
-              {tipos.map((t) => (
-                <li key={t.id}>
-                  <span className="rotulo">
-                    {t.nome}
-                    {t.descricao && <span className="dica">{t.descricao}</span>}
-                  </span>
-                  <span className="selo selo-neutro">
-                    {frentes.filter((f) => f.catalogo_id === t.id).length} em uso
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <form action={criarTipoFrente} className="formulario formulario-linha" style={{ marginTop: 18 }}>
-            <label className="campo">
-              <span>Nome</span>
-              <input type="text" name="nome" required maxLength={80} />
-            </label>
-            <label className="campo">
-              <span>Descrição</span>
-              <input type="text" name="descricao" maxLength={160} placeholder="opcional" />
-            </label>
-            <button className="botao botao-secundario" type="submit">
-              Incluir tipo
-            </button>
-          </form>
         </section>
       )}
     </>

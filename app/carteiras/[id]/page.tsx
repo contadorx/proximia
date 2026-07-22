@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Pencil } from "lucide-react";
+import { Modal } from "@/components/modal";
 import { notFound } from "next/navigation";
 import { exigirOrg, podeEscrever } from "@/lib/auth";
 import {
@@ -177,8 +179,7 @@ export default async function PaginaCarteira({
       </section>
 
       {podeEditar ? (
-        <section className="painel">
-          <h2>Dados da carteira</h2>
+        <Modal rotulo="Editar carteira" titulo="Editar carteira" descricao="Alterações valem para toda a organização." largo icone={<Pencil size={15} />} variante="secundario">
           <form action={atualizarCarteira} className="formulario">
             <input type="hidden" name="id" value={carteira.id} />
 
@@ -243,7 +244,7 @@ export default async function PaginaCarteira({
               Salvar alterações
             </button>
           </form>
-        </section>
+        </Modal>
       ) : (
         carteira.observacoes && (
           <section className="painel">

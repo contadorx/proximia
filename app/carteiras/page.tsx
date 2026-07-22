@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { exigirOrg, podeEscrever } from "@/lib/auth";
 import {
   faixaMaturidade,
@@ -8,7 +9,9 @@ import {
   STATUS_CARTEIRA,
 } from "@/lib/carteiras";
 import { criarCarteira } from "@/app/acoes/carteiras";
-import { IntroSecao } from "@/components/intro-secao";
+import { IntroSecao, Vazio } from "@/components/intro-secao";
+import { Modal } from "@/components/modal";
+import { CampoScore } from "@/components/campos";
 
 export const dynamic = "force-dynamic";
 
@@ -24,10 +27,69 @@ export default async function PaginaCarteiras({
   ]);
   const podeCriar = podeEscrever(org.papel) && org.papel !== "ponto_focal";
 
+  const formulario = (
+    <form action={criarCarteira} className="formulario">
+      <div className="formulario-linha">
+        <label className="campo">
+          <span>Nome</span>
+          <input type="text" name="nome" required maxLength={120} autoFocus />
+        </label>
+        <label className="campo">
+          <span>Código</span>
+          <input type="text" name="codigo" maxLength={30} placeholder="opcional" />
+        </label>
+      </div>
+      <div className="formulario-linha">
+        <label className="campo">
+          <span>Região</span>
+          <input type="text" name="regiao" maxLength={60} placeholder="opcional" />
+        </label>
+        <label className="campo">
+          <span>Responsável</span>
+          <select name="responsavel_id" defaultValue="">
+            <option value="">Definir depois</option>
+            {pessoas.map((p) => (
+              <option key={p.id} value={p.id}>
+                {nomePessoa(p)}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="formulario-linha">
+        <CampoScore ajuda="Nota de avaliação já feita. Em branco se não houver." />
+        <label className="campo">
+          <span>Ciclo do score</span>
+          <input type="text" name="score_ciclo" maxLength={20} placeholder="2026-1" />
+        </label>
+      </div>
+      <button className="botao botao-primario" type="submit">
+        Criar carteira
+      </button>
+    </form>
+  );
+
   return (
     <>
-      <p className="olho">{org.nome}</p>
-      <h1>Carteiras</h1>
+      <div className="cabeca-pagina">
+        <div>
+          <p className="olho">{org.nome}</p>
+          <h1>Carteiras</h1>
+        </div>
+        {podeCriar && (
+          <div className="cabeca-acoes">
+            <Modal
+              rotulo="Nova carteira"
+              titulo="Nova carteira"
+              descricao="Só o nome é obrigatório. O resto pode entrar depois."
+              icone={<Plus size={15} />}
+            >
+              {formulario}
+            </Modal>
+          </div>
+        )}
+      </div>
+
       <IntroSecao>
         {org.papel === "ponto_focal"
           ? "Aqui estão as carteiras em que você foi vinculado."
@@ -37,10 +99,12 @@ export default async function PaginaCarteiras({
       {searchParams.erro && <p className="aviso aviso-erro">{searchParams.erro}</p>}
 
       {carteiras.length === 0 ? (
-        <p className="nota" style={{ marginBottom: 28 }}>
+        <Vazio>
           Nenhuma carteira cadastrada ainda.
-          {podeCriar ? " Crie a primeira no formulário abaixo." : " Peça a inclusão a um administrador."}
-        </p>
+          {podeCriar
+            ? " Use o botão acima para criar a primeira."
+            : " Peça a inclusão a um administrador."}
+        </Vazio>
       ) : (
         <section className="painel">
           <ul className="lista-estado">
@@ -74,53 +138,6 @@ export default async function PaginaCarteiras({
               );
             })}
           </ul>
-        </section>
-      )}
-
-      {podeCriar && (
-        <section className="painel">
-          <h2>Nova carteira</h2>
-          <form action={criarCarteira} className="formulario">
-            <div className="formulario-linha">
-              <label className="campo">
-                <span>Nome</span>
-                <input type="text" name="nome" required maxLength={120} />
-              </label>
-              <label className="campo">
-                <span>Código</span>
-                <input type="text" name="codigo" maxLength={30} placeholder="opcional" />
-              </label>
-              <label className="campo">
-                <span>Região</span>
-                <input type="text" name="regiao" maxLength={60} placeholder="opcional" />
-              </label>
-            </div>
-            <div className="formulario-linha">
-              <label className="campo">
-                <span>Responsável</span>
-                <select name="responsavel_id" defaultValue="">
-                  <option value="">Definir depois</option>
-                  {pessoas.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {nomePessoa(p)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="campo">
-                <span>Score de maturidade</span>
-                <input type="text" name="score_maturidade" inputMode="decimal" placeholder="0 a 100" />
-                <small>Nota vinda de avaliação já feita. Deixe em branco se não houver.</small>
-              </label>
-              <label className="campo">
-                <span>Ciclo do score</span>
-                <input type="text" name="score_ciclo" maxLength={20} placeholder="2026-1" />
-              </label>
-            </div>
-            <button className="botao" type="submit">
-              Criar carteira
-            </button>
-          </form>
         </section>
       )}
     </>
