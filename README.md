@@ -66,6 +66,7 @@ Aplicadas até aqui:
 | `0021_gestao_acesso.sql` | B28 | Travas de acesso e visão consolidada de quem vê, responde e carrega |
 | `0022_capturas.sql` | B29 | Captura como evento, com estorno, e o campo virando soma |
 | `0023_pipeline.sql` | B30 | Etapas com prazo esperado, motivos de perda e leitura de conversão |
+| `0024_playbooks.sql` | B31 | Cadência: compromissos que nascem da mudança de etapa |
 
 Testes de banco ficam em `supabase/testes` e **não são migrations** — são scripts avulsos, para rodar no editor SQL quando quiser conferir. `0001_isolamento.sql` prova que uma organização não enxerga a outra.
 
@@ -160,6 +161,10 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 
 **Taxa de conversão só conta o que saiu do funil.** Oportunidade em andamento não é perda. Incluí-la achata a taxa e faz a equipe parecer pior do que é — e é o erro mais comum nesse número.
 
+**O dono do playbook é uma regra, não uma pessoa.** Cravar nome faria a cadência quebrar na primeira troca de equipe. As regras — responsável da oportunidade, quem responde pela carteira, quem moveu a etapa — sobrevivem à rotatividade, que é o problema que o produto existe para resolver.
+
+**Cadência não enche fila.** Só um playbook ativo por etapa; a tarefa não é recriada enquanto o compromisso dela estiver aberto; concluída, uma nova passagem recria, porque aí é volta de verdade.
+
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
 ## Rotas
@@ -184,6 +189,7 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 | `/oportunidades`, `/oportunidades/[id]` | Iniciativas com investimento, retorno e payback |
 | `/oportunidades/quadro` | Quadro por etapa, taxa de conversão e por que perdemos |
 | `/configuracoes/pipeline` | Nome e ritmo de cada etapa, catálogo de motivos de perda |
+| `/configuracoes/playbooks` | Cadência por etapa: o que criar, com que prazo e para quem |
 | `/maturidade`, `/maturidade/[id]` | Régua, ciclos, matriz maturidade × potencial e questionário |
 | `/alertas` | O que saiu do trilho, com silenciar e varredura sob demanda |
 | `/convite/[token]` | Aceite de convite de acesso |
