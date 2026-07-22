@@ -67,6 +67,7 @@ Aplicadas até aqui:
 | `0022_capturas.sql` | B29 | Captura como evento, com estorno, e o campo virando soma |
 | `0023_pipeline.sql` | B30 | Etapas com prazo esperado, motivos de perda e leitura de conversão |
 | `0024_playbooks.sql` | B31 | Cadência: compromissos que nascem da mudança de etapa |
+| `0025_resumo_diario.sql` | B32 | Resumo diário por pessoa e preferência de aviso |
 
 Testes de banco ficam em `supabase/testes` e **não são migrations** — são scripts avulsos, para rodar no editor SQL quando quiser conferir. `0001_isolamento.sql` prova que uma organização não enxerga a outra.
 
@@ -164,6 +165,10 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 **O dono do playbook é uma regra, não uma pessoa.** Cravar nome faria a cadência quebrar na primeira troca de equipe. As regras — responsável da oportunidade, quem responde pela carteira, quem moveu a etapa — sobrevivem à rotatividade, que é o problema que o produto existe para resolver.
 
 **Cadência não enche fila.** Só um playbook ativo por etapa; a tarefa não é recriada enquanto o compromisso dela estiver aberto; concluída, uma nova passagem recria, porque aí é volta de verdade.
+
+**Silêncio é informação.** O resumo diário sai por pessoa, com o que está na mão dela, e **só quando há algo para agir**. Resumo que chega todo dia dizendo "está tudo bem" vira ruído, e em duas semanas ninguém abre — inclusive no dia em que não estava tudo bem. Um e-mail por pessoa, não um por alerta: e-mail por alerta é como se ensina alguém a criar filtro para o seu domínio.
+
+**A preferência é de quem recebe.** Cada pessoa liga, desliga e escolhe receber só severidade alta. Ninguém edita a preferência de outro — aviso que um terceiro liga por você é spam com autorização.
 
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 

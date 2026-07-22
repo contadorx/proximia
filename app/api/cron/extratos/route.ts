@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { criarClienteAdmin } from "@/lib/supabase/server";
 import { htmlExtrato, montarExtrato } from "@/lib/extrato";
 import { enviarEmail, provedorConfigurado } from "@/lib/email";
+import { htmlResumo, itensDaPessoa, resumoDoDia } from "@/lib/resumo";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -93,6 +94,48 @@ export async function GET(requisicao: Request) {
     console.error("[cron] falha ao gerar alertas:", e);
   }
 
+  // Resumo do dia, por pessoa. Um e-mail por pessoa com o que é dela;
+  // quem não tem nada para agir não recebe nada.
+  const resumos: { pessoa: string; status: string }[] = [];
+  try {
+    const { data: orgs } = await supabase.from("orgs").select("id, nome");
+    const endereco = new URL(requisicao.url).origin;
+
+    for (const o of (orgs ?? []) as { id: string; nome: string }[]) {
+      for (const linha of await resumoDoDia(supabase, o.id)) {
+        const itens = await itensDaPessoa(supabase, o.id, linha.user_id, linha.apenas_alta);
+
+        const envio = await enviarEmail({
+          para: [linha.email],
+          assunto: `${o.nome} — ${linha.alertas_altos > 0 ? "alertas de atenção alta" : "o que está na sua mão hoje"}`,
+          html: htmlResumo({
+            organizacao: o.nome,
+            nome: linha.nome,
+            alertas: itens.alertas,
+            compromissos: itens.compromissos,
+            endereco,
+          }),
+        });
+
+        await supabase.from("envios").insert({
+          org_id: o.id,
+          tipo: "resumo",
+          origem: "automatico",
+          destinatarios: [linha.email],
+          periodo_inicio: hoje,
+          periodo_fim: hoje,
+          assunto: "Resumo do dia",
+          status: envio.status,
+          detalhe: envio.detalhe,
+        });
+
+        resumos.push({ pessoa: linha.email, status: envio.status });
+      }
+    }
+  } catch (e) {
+    console.error("[cron] falha ao enviar resumos:", e);
+  }
+
   const resultados: { carteira: string; status: string; detalhe?: string }[] = [];
 
   for (const item of fila) {
@@ -158,6 +201,7 @@ export async function GET(requisicao: Request) {
   return NextResponse.json({
     data: hoje,
     alertas,
+    resumos,
     provedor: provedorConfigurado() ? "configurado" : "não configurado (envios simulados)",
     carteiras_na_fila: fila.length,
     resultados,

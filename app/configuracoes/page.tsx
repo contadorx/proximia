@@ -7,6 +7,8 @@ import { listarFrentes, tiposDeFrente } from "@/lib/frentes";
 import { vincularMembro } from "@/app/acoes/organizacoes";
 import { cancelarConvite, convidarPessoa } from "@/app/acoes/convites";
 import { trocarSenha } from "@/app/acoes/senha";
+import { salvarPreferenciaAviso } from "@/app/acoes/avisos";
+import { exigirUsuario } from "@/lib/auth";
 import { criarPapel, excluirPapel } from "@/app/acoes/responsabilidades";
 import { papeisOperacionais } from "@/lib/responsabilidades";
 import { BotaoExcluir } from "@/components/botao-excluir";
@@ -23,7 +25,6 @@ type Pessoa = { user_id: string; papel: Papel; nome: string | null; email: strin
 
 async function pessoasDaOrg(orgId: string): Promise<Pessoa[]> {
   const supabase = criarClienteServidor();
-
   const { data: vinculos } = await supabase
     .from("memberships")
     .select("user_id, papel")
@@ -59,6 +60,7 @@ export default async function PaginaConfiguracoes({
   searchParams: { erro?: string; ok?: string };
 }) {
   const org = await exigirOrg();
+  const usuario = await exigirUsuario();
   const supabase = criarClienteServidor();
   const { data: convitesBrutos } = await supabase
     .from("convites")
@@ -73,6 +75,14 @@ export default async function PaginaConfiguracoes({
     status: string;
     expira_em: string;
   }[];
+
+  const { data: preferencia } = await supabase
+    .from("preferencias_aviso")
+    .select("resumo_diario, apenas_alta")
+    .eq("org_id", org.orgId)
+    .eq("user_id", usuario.id)
+    .maybeSingle();
+
 
   const [pessoas, tipos, frentes, tiposOportunidade, oportunidades, papeis] = await Promise.all([
     pessoasDaOrg(org.orgId),
@@ -309,6 +319,40 @@ export default async function PaginaConfiguracoes({
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>Resumo diário por e-mail</h2>
+        </div>
+        <form action={salvarPreferenciaAviso} className="formulario">
+          <div className="formulario-linha">
+            <label className="campo campo-marcador">
+              <input
+                type="checkbox"
+                name="resumo_diario"
+                defaultChecked={preferencia?.resumo_diario ?? true}
+              />
+              <span>Receber o resumo do dia</span>
+            </label>
+            <label className="campo campo-marcador">
+              <input
+                type="checkbox"
+                name="apenas_alta"
+                defaultChecked={preferencia?.apenas_alta ?? false}
+              />
+              <span>Só quando houver alerta de severidade alta</span>
+            </label>
+            <button className="botao botao-secundario" type="submit">
+              Salvar preferência
+            </button>
+          </div>
+        </form>
+        <p className="nota" style={{ marginBottom: 0 }}>
+          O e-mail sai uma vez por dia, com o que está na sua mão — e{" "}
+          <strong>só quando há algo para agir</strong>. Dia sem pendência não gera mensagem: resumo
+          que chega dizendo &ldquo;está tudo bem&rdquo; ensina a ignorar o que chega.
+        </p>
       </section>
 
       <section className="painel">

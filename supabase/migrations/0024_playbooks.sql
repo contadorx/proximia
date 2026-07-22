@@ -43,6 +43,96 @@ create unique index if not exists idx_compromissos_playbook
   on public.compromissos (entidade_id, origem_id)
   where origem = 'playbook' and status = 'aberto';
 
+-- Mudar o índice quebra o ON CONFLICT das funções que sincronizam
+-- compromisso de contrato e de cláusula: elas apontavam para o predicado
+-- antigo. Recriadas aqui apontando para o novo — mesma lógica, mesma
+-- escrita, só o alvo do conflito muda.
+create or replace function public.sincronizar_compromisso_contrato()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_dono  uuid;
+  v_rotulo text;
+begin
+  -- Contrato encerrado ou sem janela: o compromisso automatico sai de cena.
+  if new.status = 'encerrado' or new.janela_renegociacao is null then
+    update public.compromissos
+       set status = 'cancelado'
+     where origem = 'contrato' and origem_id = new.id and status = 'aberto';
+    return new;
+  end if;
+
+  select c.responsavel_id into v_dono from public.contas c where c.id = new.conta_id;
+  v_rotulo := coalesce('Renegociar contrato ' || new.numero, 'Renegociar contrato');
+
+  insert into public.compromissos (
+    org_id, carteira_id, entidade_tipo, entidade_id, titulo, descricao,
+    vence_em, dono_id, alerta_dias, origem, origem_id, criado_por
+  )
+  values (
+    new.org_id, new.carteira_id, 'contrato', new.id, v_rotulo,
+    'Gerado pela vigência: a janela abre ' || to_char(new.janela_renegociacao, 'DD/MM/YYYY')
+      || ' e o contrato vence ' || to_char(new.fim, 'DD/MM/YYYY') || '.',
+    new.janela_renegociacao, v_dono, 14, 'contrato', new.id, auth.uid()
+  )
+  on conflict (origem, origem_id) where origem in ('contrato', 'clausula')
+  do update set
+    vence_em  = excluded.vence_em,
+    titulo    = excluded.titulo,
+    descricao = excluded.descricao,
+    status    = case when public.compromissos.status = 'cancelado'
+                     then 'aberto' else public.compromissos.status end;
+
+  return new;
+end;
+$$;
+
+create or replace function public.sincronizar_compromisso_clausula()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_contrato public.contratos;
+  v_dono uuid;
+begin
+  if not new.monitorada or new.data_referencia is null then
+    update public.compromissos
+       set status = 'cancelado'
+     where origem = 'clausula' and origem_id = new.id and status = 'aberto';
+    return new;
+  end if;
+
+  select * into v_contrato from public.contratos where id = new.contrato_id;
+  select c.responsavel_id into v_dono from public.contas c where c.id = v_contrato.conta_id;
+
+  insert into public.compromissos (
+    org_id, carteira_id, entidade_tipo, entidade_id, titulo, descricao,
+    vence_em, dono_id, alerta_dias, origem, origem_id, criado_por
+  )
+  values (
+    new.org_id, v_contrato.carteira_id, 'contrato', v_contrato.id,
+    left(new.descricao, 160),
+    'Cláusula acompanhada. Referência em ' || to_char(new.data_referencia, 'DD/MM/YYYY')
+      || ', com aviso ' || new.antecedencia_dias || ' dias antes.',
+    new.data_referencia - new.antecedencia_dias, v_dono, 7, 'clausula', new.id, auth.uid()
+  )
+  on conflict (origem, origem_id) where origem in ('contrato', 'clausula')
+  do update set
+    vence_em  = excluded.vence_em,
+    titulo    = excluded.titulo,
+    descricao = excluded.descricao,
+    status    = case when public.compromissos.status = 'cancelado'
+                     then 'aberto' else public.compromissos.status end;
+
+  return new;
+end;
+$$;
+
 -- ---------------------------------------------------------------------
 -- 2. Playbooks e suas tarefas
 -- ---------------------------------------------------------------------
