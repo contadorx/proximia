@@ -20,6 +20,7 @@ const SECOES = [
   { href: "/contratos", rotulo: "Contratos" },
   { href: "/compromissos", rotulo: "Compromissos" },
   { href: "/historico", rotulo: "Histórico" },
+  { href: "/importacao", rotulo: "Importação" },
 ];
 
 export default async function LayoutRaiz({ children }: { children: React.ReactNode }) {

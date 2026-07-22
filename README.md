@@ -51,6 +51,7 @@ Aplicadas até aqui:
 | `0006_registros.sql` | F6 | Histórico com autor, versionamento, imutabilidade e RLS |
 | `0007_compromissos.sql` | F7 | Compromissos, geração automática por contrato e cláusula, e RLS |
 | `0008_panorama.sql` | F8 | Visão `carteira_resumo` consolidando as carteiras, com security_invoker |
+| `0009_importacoes.sql` | F10 | Registro das cargas, com conferência antes de gravar, e RLS |
 
 Testes de banco ficam em `supabase/testes` e **não são migrations** — são scripts avulsos, para rodar no editor SQL quando quiser conferir. `0001_isolamento.sql` prova que uma organização não enxerga a outra.
 
@@ -93,6 +94,8 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 
 **O extrato é o entregável.** A situação da carteira sai em uma página, com frentes em aberto, contratos que exigem decisão, o que foi entregue no período e as pendências. Impressão é CSS: a barra lateral e os controles somem, o conteúdo ocupa a folha inteira e nenhum bloco quebra no meio.
 
+**Carga não grava sem conferência.** A importação acontece em duas etapas: o arquivo é lido e validado linha a linha, gerando um relatório com o motivo de cada recusa, e só então a pessoa confirma. Linhas boas entram mesmo que outras tenham sido recusadas — não é tudo ou nada. Importar é operação de quem administra carteiras.
+
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
 ## Rotas
@@ -111,6 +114,7 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 | `/compromissos` | Atrasados, meus, próximos e geração retroativa |
 | `/panorama` | Todas as carteiras em uma tela, ordenadas por atenção |
 | `/carteiras/[id]/situacao` | Extrato de uma página, pronto para imprimir ou salvar em PDF |
+| `/importacao`, `/importacao/[id]` | Envio de CSV, conferência linha a linha e confirmação |
 | `/instalacao` | Estado da configuração e trilha de construção |
 | `/diagnostico` | Testa configuração, conexão, sessão e banco |
 | `/api/saude` | Verificação de saúde |
@@ -152,6 +156,6 @@ supabase/
 
 ## Trilha de construção
 
-F0 esqueleto ✓ · F1 acesso, organizações e papéis ✓ · F2 carteiras ✓ · F3 contas nomeadas ✓ · F4 contratos e cláusulas ✓ · F5 frentes ✓ · F6 timeline e memória institucional ✓ · F7 compromissos e alertas ✓ · F8 painel multi-carteira ✓ · F9 situação da carteira ✓ · F10 importação.
+F0 esqueleto ✓ · F1 acesso, organizações e papéis ✓ · F2 carteiras ✓ · F3 contas nomeadas ✓ · F4 contratos e cláusulas ✓ · F5 frentes ✓ · F6 timeline e memória institucional ✓ · F7 compromissos e alertas ✓ · F8 painel multi-carteira ✓ · F9 situação da carteira ✓ · F10 importação ✓ — **fatia 1 completa**.
 
 Uma feature por vez, com build passando entre cada uma.
