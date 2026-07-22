@@ -82,6 +82,7 @@ export async function GET(requisicao: Request) {
     const { data: orgs } = await supabase.from("orgs").select("id, nome");
     for (const o of (orgs ?? []) as { id: string; nome: string }[]) {
       const { data: dif } = await supabase.rpc("gerar_alertas", { p_org: o.id });
+      await supabase.rpc("gerar_alertas_marcos", { p_org: o.id });
       const { data: atribuidos } = await supabase.rpc("atribuir_alertas", { p_org: o.id });
       await supabase.rpc("atribuir_compromissos", { p_org: o.id });
 

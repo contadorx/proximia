@@ -48,6 +48,8 @@ export type Oportunidade = {
   catalogo_id: string | null;
   titulo: string;
   descricao: string | null;
+  natureza: "captura" | "protecao";
+  prioridade: number;
   fase: Fase;
   fase_desde: string;
   motivo_descarte: string | null;

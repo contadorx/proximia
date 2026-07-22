@@ -57,6 +57,8 @@ export async function varrerAgora() {
 
   // Alerta sem dono é alerta de ninguém: a atribuição vem logo atrás da
   // varredura, usando a cadeia de responsabilidade da carteira.
+  // Marcos de renovação: 180, 90 e 60 dias antes do fim, cada um uma vez.
+  await supabase.rpc("gerar_alertas_marcos", { p_org: org.orgId });
   await supabase.rpc("atribuir_alertas", { p_org: org.orgId });
 
   const diferenca = Number(data ?? 0);

@@ -413,6 +413,7 @@ export default async function PaginaOportunidade({
         entidadeTipo="oportunidade"
         entidadeId={oportunidade.id}
         carteiraId={oportunidade.carteira_id}
+        orgId={org.orgId}
         pessoas={pessoas}
         editavel={editavel}
       />

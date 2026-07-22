@@ -21,6 +21,10 @@ import { Pencil } from "lucide-react";
 import { Historico } from "@/components/historico";
 import { Anexos } from "@/components/anexos";
 import { Compromissos } from "@/components/compromissos";
+import { classificacoes, classificacoesDaConta, porGrupo } from "@/lib/classificacoes";
+import { salvarClassificacoesDaConta } from "@/app/acoes/classificacoes";
+import { SeletorMultiplo } from "@/components/seletor";
+import { Tags } from "lucide-react";
 import { Capturas } from "@/components/capturas";
 import { classeFase, formatarPayback, listarOportunidades, rotuloFase } from "@/lib/oportunidades";
 
@@ -46,6 +50,12 @@ export default async function PaginaConta({
     listarContratos({ orgId: org.orgId, contaId: conta.id }),
     listarOportunidades({ orgId: org.orgId, contaId: conta.id }),
   ]);
+
+  const [catalogo, marcadas] = await Promise.all([
+    classificacoes(org.orgId),
+    classificacoesDaConta(conta.id),
+  ]);
+  const grupos = porGrupo(catalogo.filter((c) => c.ativo));
 
   const editavel = podeEscrever(org.papel);
   const podeExcluir = org.papel !== "ponto_focal" && podeEscrever(org.papel);
@@ -336,9 +346,75 @@ export default async function PaginaConta({
         entidadeTipo="conta"
         entidadeId={conta.id}
         carteiraId={conta.carteira_id}
+        orgId={org.orgId}
         pessoas={pessoas}
         editavel={editavel}
       />
+
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>
+            <Tags size={15} style={{ verticalAlign: "-2px", marginRight: 8, color: "var(--g400)" }} />
+            Classificação
+          </h2>
+          {editavel && grupos.length > 0 && (
+            <Modal
+              rotulo="Classificar"
+              titulo="Classificar a conta"
+              descricao="Uma conta pode receber valores de vários grupos."
+              variante="secundario"
+            >
+              <form action={salvarClassificacoesDaConta} className="formulario">
+                <input type="hidden" name="conta_id" value={conta.id} />
+                {grupos.map((g) => (
+                  <SeletorMultiplo
+                    key={g.grupo}
+                    nome="classificacao"
+                    rotulo={g.grupo}
+                    opcoes={g.valores.map((v) => ({
+                      valor: v.id,
+                      rotulo: v.valor,
+                      detalhe: v.descricao ?? undefined,
+                    }))}
+                    inicial={marcadas.filter((m) => g.valores.some((v) => v.id === m))}
+                    rotuloTodas="Não classificado"
+                  />
+                ))}
+                <button className="botao botao-primario" type="submit">
+                  Salvar classificação
+                </button>
+                <p className="nota">
+                  Salvar substitui a classificação inteira da conta pelo que estiver marcado aqui.
+                </p>
+              </form>
+            </Modal>
+          )}
+        </div>
+
+        {grupos.length === 0 ? (
+          <p className="nota" style={{ marginBottom: 0 }}>
+            Nenhuma classificação cadastrada ainda.{" "}
+            <Link href="/configuracoes/classificacoes">Criar em Configurações</Link>.
+          </p>
+        ) : marcadas.length === 0 ? (
+          <p className="nota" style={{ marginBottom: 0 }}>
+            Conta sem classificação. Sem ela, esta conta não aparece nos recortes por ramo, natureza
+            ou porte.
+          </p>
+        ) : (
+          <div className="celula-sinais">
+            {grupos.map((g) =>
+              g.valores
+                .filter((v) => marcadas.includes(v.id))
+                .map((v) => (
+                  <span className="selo selo-neutro" key={v.id}>
+                    {g.grupo}: {v.valor}
+                  </span>
+                )),
+            )}
+          </div>
+        )}
+      </section>
 
       <Compromissos
         entidadeTipo="conta"

@@ -8,6 +8,8 @@ import { vincularMembro } from "@/app/acoes/organizacoes";
 import { cancelarConvite, convidarPessoa } from "@/app/acoes/convites";
 import { trocarSenha } from "@/app/acoes/senha";
 import { salvarPreferenciaAviso } from "@/app/acoes/avisos";
+import { alternarAnexos } from "@/app/acoes/classificacoes";
+import { anexosPermitidos } from "@/lib/classificacoes";
 import { exigirUsuario } from "@/lib/auth";
 import { criarPapel, excluirPapel } from "@/app/acoes/responsabilidades";
 import { papeisOperacionais } from "@/lib/responsabilidades";
@@ -76,6 +78,7 @@ export default async function PaginaConfiguracoes({
     expira_em: string;
   }[];
 
+  const permiteAnexos = await anexosPermitidos(org.orgId);
   const { data: preferencia } = await supabase
     .from("preferencias_aviso")
     .select("resumo_diario, apenas_alta")
@@ -323,6 +326,35 @@ export default async function PaginaConfiguracoes({
 
       <section className="painel">
         <div className="linha-titulo">
+          <h2>Governança de documentos</h2>
+          {administra && (
+            <form action={alternarAnexos}>
+              <input type="hidden" name="permitir" value={permiteAnexos ? "0" : "1"} />
+              <button className="botao botao-secundario" type="submit">
+                {permiteAnexos ? "Ligar anexo zero" : "Permitir anexos"}
+              </button>
+            </form>
+          )}
+        </div>
+        <p className="nota" style={{ marginBottom: 0 }}>
+          {permiteAnexos ? (
+            <>
+              Arquivos podem ser guardados no sistema, em armazenamento privado. Se a política da
+              sua organização exige que documento viva apenas no repositório oficial,{" "}
+              <strong>ligue o anexo zero</strong>: o produto passa a aceitar somente links, e a
+              recusa vale no banco de dados, não só na tela.
+            </>
+          ) : (
+            <>
+              <strong>Anexo zero ligado.</strong> Nenhum arquivo novo é guardado; documentos entram
+              por link para o repositório oficial. O que já estava guardado continua acessível.
+            </>
+          )}
+        </p>
+      </section>
+
+      <section className="painel">
+        <div className="linha-titulo">
           <h2>Resumo diário por e-mail</h2>
         </div>
         <form action={salvarPreferenciaAviso} className="formulario">
@@ -418,6 +450,12 @@ export default async function PaginaConfiguracoes({
             <span className="rotulo">
               <Link href="/importacao">Importação de dados</Link>
               <span className="dica">Carga de carteiras, contas, contratos e frentes por planilha</span>
+            </span>
+          </li>
+          <li>
+            <span className="rotulo">
+              <Link href="/configuracoes/classificacoes">Classificações de conta</Link>
+              <span className="dica">Ramo, natureza, porte — as dimensões que a sua operação usa</span>
             </span>
           </li>
           <li>

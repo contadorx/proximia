@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies, headers } from "next/headers";
 import { Lateral, type GrupoMenu } from "@/components/lateral";
+import { souOperador } from "@/lib/negocio";
 import {
   Building2,
   Bell,
+  Briefcase,
   CalendarClock,
   Gauge,
   ClipboardList,
@@ -97,6 +99,7 @@ export default async function LayoutRaiz({ children }: { children: React.ReactNo
   }
 
   const org = await orgAtual();
+  const operador = await souOperador();
 
   if (!org) {
     return (
@@ -133,7 +136,19 @@ export default async function LayoutRaiz({ children }: { children: React.ReactNo
       <body>
         <div className="com-lateral">
           <Lateral
-            grupos={GRUPOS}
+            grupos={
+              operador
+                ? [
+                    ...GRUPOS,
+                    {
+                      titulo: "Plataforma",
+                      itens: [
+                        { href: "/negocio", rotulo: "Negócio", icone: <Briefcase size={TAMANHO} /> },
+                      ],
+                    },
+                  ]
+                : GRUPOS
+            }
             recolhidaInicial={cookies().get("proximia_menu")?.value === "1"}
             marca={
               <Link className="marca" href="/painel">

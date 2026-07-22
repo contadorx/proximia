@@ -125,6 +125,8 @@ function oportunidade(p: Partial<Oportunidade>): Oportunidade {
     descricao: null,
     fase: "viabilidade",
     fase_desde: "2026-01-01",
+    natureza: "captura",
+    prioridade: 3,
     motivo_descarte: null,
     responsavel_id: null,
     proxima_etapa: null,
@@ -218,5 +220,41 @@ describe("janela e alinhamento das séries", () => {
     const meses = janela(12);
     expect(meses).toHaveLength(12);
     expect(meses[11].mes).toBe(new Date().toISOString().slice(0, 7));
+  });
+});
+
+describe("natureza da iniciativa", () => {
+  // A separação entre captura e proteção é a tese do produto virando
+  // coluna: desconto contratado não é receita a recuperar.
+  const somar = (
+    itens: { potencial: number; natureza: "captura" | "protecao" }[],
+    natureza: "captura" | "protecao",
+  ) => itens.filter((i) => i.natureza === natureza).reduce((t, i) => t + i.potencial, 0);
+
+  const itens = [
+    { potencial: 400000, natureza: "captura" as const },
+    { potencial: 900000, natureza: "protecao" as const },
+    { potencial: 100000, natureza: "captura" as const },
+  ];
+
+  it("não soma proteção ao potencial de captura", () => {
+    expect(somar(itens, "captura")).toBe(500000);
+  });
+
+  it("conta a proteção à parte, em vez de descartá-la", () => {
+    // Descartar seria pior que somar: some da vista a receita em risco,
+    // que é justamente o que precisa de atenção.
+    expect(somar(itens, "protecao")).toBe(900000);
+  });
+
+  it("a soma das duas não é um total útil", () => {
+    expect(somar(itens, "captura") + somar(itens, "protecao")).toBe(1400000);
+  });
+});
+
+describe("prioridade", () => {
+  it("ordena do mais urgente para o menos", () => {
+    const lista = [{ p: 3 }, { p: 1 }, { p: 5 }, { p: 2 }];
+    expect([...lista].sort((a, b) => a.p - b.p).map((x) => x.p)).toEqual([1, 2, 3, 5]);
   });
 });

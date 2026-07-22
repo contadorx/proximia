@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { exigirOrg, exigirUsuario } from "@/lib/auth";
+import { criarClienteServidor } from "@/lib/supabase/server";
 import { listarCarteiras } from "@/lib/carteiras";
 import { formatarData, formatarValor, listarContas } from "@/lib/contas";
 import { classeSelo, listarContratos, urgencia } from "@/lib/contratos";
@@ -39,6 +40,13 @@ export default async function PaginaPainel({
       capturaMensal(org.orgId),
       capturaSemData(org.orgId),
     ]);
+
+  const { data: contaOrg } = await criarClienteServidor()
+    .from("orgs")
+    .select("assinatura_status")
+    .eq("id", org.orgId)
+    .maybeSingle();
+  const situacaoConta = (contaOrg as { assinatura_status: string } | null)?.assinatura_status;
 
   const nomeCarteira = (id: string) => carteiras.find((c) => c.id === id)?.nome ?? "—";
   const nomeConta = (id: string) => contas.find((c) => c.id === id)?.nome ?? "conta removida";
@@ -235,6 +243,13 @@ export default async function PaginaPainel({
 
       {searchParams.erro && <p className="aviso aviso-erro">{searchParams.erro}</p>}
       {searchParams.ok && <p className="aviso aviso-ok">{searchParams.ok}</p>}
+
+      {situacaoConta && situacaoConta !== "ativa" && situacaoConta !== "avaliacao" && (
+        <p className="aviso aviso-erro">
+          <strong>Esta organização está com o acesso suspenso.</strong> Você continua consultando e
+          exportando os dados; novos registros ficam bloqueados até a regularização.
+        </p>
+      )}
 
       <PrimeirosPassos passos={passos} />
 

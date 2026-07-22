@@ -297,6 +297,7 @@ export default async function PaginaFrente({
         entidadeTipo="frente"
         entidadeId={frente.id}
         carteiraId={frente.carteira_id}
+        orgId={org.orgId}
         pessoas={pessoas}
         editavel={editavel}
       />

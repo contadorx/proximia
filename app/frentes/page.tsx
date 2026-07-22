@@ -69,6 +69,26 @@ export default async function PaginaFrentes({
                     <span>Título</span>
                     <input type="text" name="titulo" required maxLength={160} autoFocus />
                   </label>
+                  <div className="formulario-linha">
+                    <label className="campo">
+                      <span>Natureza</span>
+                      <select name="natureza" defaultValue="captura">
+                        <option value="captura">Captura — receita nova</option>
+                        <option value="protecao">Proteção — receita que já existe</option>
+                      </select>
+                      <small>Proteção não soma ao potencial a capturar.</small>
+                    </label>
+                    <label className="campo">
+                      <span>Prioridade</span>
+                      <select name="prioridade" defaultValue="3">
+                        <option value="1">1 · Máxima</option>
+                        <option value="2">2 · Alta</option>
+                        <option value="3">3 · Média</option>
+                        <option value="4">4 · Baixa</option>
+                        <option value="5">5 · Mínima</option>
+                      </select>
+                    </label>
+                  </div>
                   <Seletor
                     nome="carteira_id"
                     rotulo="Carteira"

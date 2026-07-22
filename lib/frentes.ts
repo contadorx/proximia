@@ -45,6 +45,8 @@ export type Frente = {
   carteira_id: string;
   catalogo_id: string | null;
   titulo: string;
+  natureza: "captura" | "protecao";
+  prioridade: number;
   status: StatusFrente;
   motivo_descarte: string | null;
   dono_id: string | null;

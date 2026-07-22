@@ -1,5 +1,6 @@
 import { Download, Paperclip, Upload } from "lucide-react";
 import { anexosDa, formatarTamanho } from "@/lib/anexos";
+import { anexosPermitidos } from "@/lib/classificacoes";
 import { formatarData } from "@/lib/contas";
 import { nomePessoa, type Pessoa } from "@/lib/carteiras";
 import type { EntidadeTipo } from "@/lib/registros";
@@ -16,16 +17,22 @@ export async function Anexos({
   entidadeTipo,
   entidadeId,
   carteiraId,
+  orgId,
   pessoas,
   editavel,
 }: {
   entidadeTipo: EntidadeTipo;
   entidadeId: string;
   carteiraId: string;
+  orgId: string;
   pessoas: Pessoa[];
   editavel: boolean;
 }) {
   const anexos = await anexosDa(entidadeTipo, entidadeId);
+
+  // Política de anexo zero: o botão some, e o banco recusa de qualquer
+  // forma — tela escondida ainda aceita requisição montada à mão.
+  const podeAnexar = editavel && (await anexosPermitidos(orgId));
 
   return (
     <section className="painel">
@@ -38,7 +45,7 @@ export async function Anexos({
             </span>
           )}
         </h2>
-        {editavel && (
+        {podeAnexar && (
           <Modal
             rotulo="Enviar arquivo"
             titulo="Enviar arquivo"
@@ -69,7 +76,12 @@ export async function Anexos({
         )}
       </div>
 
-      {anexos.length === 0 ? (
+      {anexos.length === 0 && !podeAnexar && editavel ? (
+        <Vazio>
+          Esta organização usa <strong>anexo zero</strong>: documentos vivem no repositório oficial e
+          entram aqui por link, não por upload.
+        </Vazio>
+      ) : anexos.length === 0 ? (
         <Vazio>
           Nenhum arquivo aqui. Contrato assinado, estudo, orçamento, ata — o que precisa estar junto
           do registro em vez de perdido numa pasta.

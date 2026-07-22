@@ -169,6 +169,15 @@ export default async function PaginaPanorama({
               <p className="cartao-valor teto">{formatarValor(t.potencial)}</p>
               <p className="cartao-nota">teto, com origem declarada</p>
             </div>
+            {t.protecao > 0 && (
+              <div className="cartao">
+                <p className="olho">Em proteção</p>
+                <p className="cartao-valor" style={{ color: "var(--ambar)" }}>
+                  {formatarValor(t.protecao)}
+                </p>
+                <p className="cartao-nota">receita que já existe e pode ser perdida</p>
+              </div>
+            )}
             <div className="cartao">
               <p className="olho">Capturado</p>
               <p className="cartao-valor capturado">{formatarValor(t.capturado)}</p>

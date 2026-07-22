@@ -356,6 +356,7 @@ export default async function PaginaContrato({
         entidadeTipo="contrato"
         entidadeId={contrato.id}
         carteiraId={contrato.carteira_id}
+        orgId={org.orgId}
         pessoas={pessoas}
         editavel={editavel}
       />

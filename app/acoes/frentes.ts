@@ -78,6 +78,8 @@ export async function criarFrente(formData: FormData) {
       carteira_id: carteiraId,
       catalogo_id: texto(formData, "catalogo_id"),
       titulo,
+    natureza: String(formData.get("natureza") ?? "captura"),
+    prioridade: Number(formData.get("prioridade") ?? 3) || 3,
       status: String(formData.get("status") ?? "identificada"),
       dono_id: texto(formData, "dono_id"),
       qtd_casos: numero(formData, "qtd_casos"),

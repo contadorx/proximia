@@ -73,6 +73,8 @@ Aplicadas até aqui:
 | `0028_financeiro.sql` | B37 | VPL, TIR, payback descontado e custo de capital |
 | `0029_series_relatorios.sql` | B35 | Séries de alertas, esforço, vencimentos e conversão |
 | `0030_busca.sql` | B39 | Busca unificada com índices de similaridade |
+| `0031_classificacao_governanca.sql` | B41 | Classificações livres, natureza, prioridade, marcos e anexo zero |
+| `0032_negocio.sql` | B42 | Planos, assinaturas, operador da plataforma e painel do negócio |
 
 ## Verificação
 
@@ -206,6 +208,16 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 
 **Reimportar corrige, não duplica.** Resposta de maturidade da mesma pergunta na mesma avaliação atualiza a nota; a avaliação da mesma carteira no mesmo ciclo é uma só. Carga que duplica a cada tentativa faz as pessoas terem medo de reimportar — e aí o dado errado fica.
 
+**Captura e proteção não se somam.** Frente e oportunidade declaram a natureza: captura é receita nova; proteção é receita que já existe e pode ser perdida. O panorama mostra as duas em colunas separadas — somar desconto contratado como receita a recuperar é o erro que a disciplina do produto existe para evitar, e agora ele é impedido pela estrutura, não pela boa vontade de quem preenche.
+
+**Classificação é catálogo, não campo fixo.** "Ramo" e "natureza" parecem universais até o segundo assinante, que chama de outra coisa e precisa de uma terceira dimensão. Grupo e valor livres custam uma tela a mais e evitam uma migration por cliente.
+
+**Anexo zero é uma trava, não uma recomendação.** Desligados os anexos, o botão some e o banco recusa a gravação — tela escondida ainda aceita requisição montada à mão. O que já estava guardado continua acessível.
+
+**Dois níveis, não um.** Uma coisa é administrar uma organização; outra é operar o produto e ter organizações como clientes. Quem opera a plataforma vê a ficha comercial de cada assinante e o uso que ele faz — nunca os dados dele.
+
+**Suspender bloqueia escrita, não leitura.** Os Termos prometem que o assinante possa extrair os dados; suspensão que apaga a tela transformaria cobrança em atraso em perda de acesso ao próprio histórico. A trava fica numa função só, aplicada às três portas de escrita — colocá-la em uma delas deixaria passar tudo o que as outras guardam.
+
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
 ## Rotas
@@ -231,8 +243,10 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 | `/oportunidades/quadro` | Quadro por etapa, taxa de conversão e por que perdemos |
 | `/configuracoes/pipeline` | Nome e ritmo de cada etapa, catálogo de motivos de perda |
 | `/configuracoes/playbooks` | Cadência por etapa: o que criar, com que prazo e para quem |
+| `/configuracoes/classificacoes` | Grupos e valores pelos quais a operação enxerga as contas |
 | `/configuracoes/exportacao` | Dados em CSV por recurso ou pacote completo em JSON |
 | `/relatorios` | Vencimentos, captura, alertas, esforço, conversão e evolução |
+| `/negocio` | Painel de quem opera o produto: assinantes, planos e receita |
 | `/maturidade`, `/maturidade/[id]` | Régua, ciclos, matriz maturidade × potencial e questionário |
 | `/alertas` | O que saiu do trilho, com silenciar e varredura sob demanda |
 | `/convite/[token]` | Aceite de convite de acesso |
