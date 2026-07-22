@@ -83,24 +83,80 @@ a:hover {
   flex: 0 0 232px;
   background: var(--navy-fundo);
   color: #dbe3ef;
-  padding: 20px 14px 18px;
+  padding: 16px 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 14px;
   position: sticky;
   top: 0;
   height: 100vh;
+  transition: flex-basis 0.14s ease;
+}
+
+/* Recolhida: só os ícones. Resolve a tela baixa, onde a lista inteira
+   empurrava o rodapé para fora do alcance. */
+.lateral.recolhida {
+  flex: 0 0 60px;
+  padding: 16px 8px 14px;
+  align-items: center;
+}
+
+.lateral-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 8px;
+}
+
+.lateral.recolhida .lateral-topo {
+  justify-content: center;
+  padding: 0;
+}
+
+.lateral-alternar {
+  background: none;
+  border: 0;
+  color: #7c8ba4;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--r-p);
+  line-height: 0;
+}
+
+.lateral-alternar:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* A parte que rola é só a navegação: marca e rodapé ficam fixos. */
+.lateral-rolagem {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+
+.lateral-rolagem::-webkit-scrollbar {
+  width: 5px;
+}
+
+.lateral-rolagem::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 100px;
 }
 
 .lateral .marca {
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 0 10px;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.02em;
   color: #fff;
+  white-space: nowrap;
 }
 
 .marca-ponto {
@@ -112,7 +168,7 @@ a:hover {
 }
 
 .lateral-grupo + .lateral-grupo {
-  margin-top: 18px;
+  margin-top: 14px;
 }
 
 .lateral-titulo {
@@ -121,7 +177,7 @@ a:hover {
   text-transform: uppercase;
   color: #7c8ba4;
   padding: 0 10px;
-  margin: 0 0 6px;
+  margin: 0 0 5px;
   font-weight: 600;
 }
 
@@ -140,11 +196,24 @@ a:hover {
   color: #c2ccdb;
   padding: 8px 10px;
   border-radius: var(--r-p);
+  white-space: nowrap;
+}
+
+.lateral.recolhida .lateral-nav a {
+  justify-content: center;
+  padding: 9px 0;
 }
 
 .lateral-nav a:hover {
   background: rgba(255, 255, 255, 0.07);
   color: #fff;
+}
+
+/* Seção atual: com onze destinos, sem isso a pessoa perde a referência. */
+.lateral-nav a.ativo {
+  background: rgba(28, 157, 104, 0.16);
+  color: #fff;
+  box-shadow: inset 2px 0 0 var(--esmeralda);
 }
 
 .lateral-nav svg {
@@ -153,12 +222,11 @@ a:hover {
 }
 
 .lateral-rodape {
-  margin-top: auto;
-  padding: 14px 10px 0;
+  padding: 12px 10px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.09);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   align-items: flex-start;
 }
 
@@ -1353,7 +1421,8 @@ input[type="file"] {
     flex-direction: column;
   }
 
-  .lateral {
+  .lateral,
+  .lateral.recolhida {
     flex: none;
     position: static;
     height: auto;
@@ -1362,6 +1431,22 @@ input[type="file"] {
     align-items: center;
     gap: 14px;
     padding: 12px 18px;
+    flex-wrap: wrap;
+  }
+
+  .lateral-topo {
+    width: 100%;
+  }
+
+  .lateral-alternar {
+    display: none;
+  }
+
+  .lateral-rolagem {
+    overflow: visible;
+    width: 100%;
+    display: flex;
+    gap: 16px;
     flex-wrap: wrap;
   }
 

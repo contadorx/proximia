@@ -7,12 +7,14 @@ import { listarFrentes, tiposDeFrente } from "@/lib/frentes";
 import { vincularMembro } from "@/app/acoes/organizacoes";
 import { cancelarConvite, convidarPessoa } from "@/app/acoes/convites";
 import { trocarSenha } from "@/app/acoes/senha";
+import { criarPapel, excluirPapel } from "@/app/acoes/responsabilidades";
+import { papeisOperacionais } from "@/lib/responsabilidades";
+import { BotaoExcluir } from "@/components/botao-excluir";
 import { criarTipoFrente } from "@/app/acoes/frentes";
 import { criarTipoOportunidade } from "@/app/acoes/oportunidades";
 import { listarOportunidades, tiposDeOportunidade } from "@/lib/oportunidades";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
-import { BotaoExcluir } from "@/components/botao-excluir";
 import { excluirTipoFrente, excluirTipoOportunidade } from "@/app/acoes/exclusoes";
 
 export const dynamic = "force-dynamic";
@@ -72,12 +74,13 @@ export default async function PaginaConfiguracoes({
     expira_em: string;
   }[];
 
-  const [pessoas, tipos, frentes, tiposOportunidade, oportunidades] = await Promise.all([
+  const [pessoas, tipos, frentes, tiposOportunidade, oportunidades, papeis] = await Promise.all([
     pessoasDaOrg(org.orgId),
     tiposDeFrente(org.orgId),
     listarFrentes({ orgId: org.orgId }),
     tiposDeOportunidade(org.orgId),
     listarOportunidades({ orgId: org.orgId }),
+    papeisOperacionais(org.orgId),
   ]);
 
   const administra = podeAdministrar(org.papel);
@@ -209,7 +212,74 @@ export default async function PaginaConfiguracoes({
         </p>
       </section>
 
-      <section className="painel">
+            <section className="painel">
+        <div className="linha-titulo">
+          <h2>Papéis de responsabilidade</h2>
+          {gereCatalogo && (
+            <Modal
+              rotulo="Novo papel"
+              titulo="Novo papel de responsabilidade"
+              descricao="Ex.: responsável na unidade, apoio corporativo, ponto focal técnico."
+              icone={<Plus size={15} />}
+            >
+              <form action={criarPapel} className="formulario">
+                <label className="campo">
+                  <span>Nome</span>
+                  <input type="text" name="nome" required maxLength={80} autoFocus />
+                </label>
+                <label className="campo">
+                  <span>Descrição</span>
+                  <input type="text" name="descricao" maxLength={160} placeholder="opcional" />
+                </label>
+                <div className="formulario-linha">
+                  <label className="campo campo-numerico">
+                    <span>Ordem</span>
+                    <input type="number" name="ordem" defaultValue={papeis.length + 1} />
+                  </label>
+                  <label className="campo campo-marcador">
+                    <input type="checkbox" name="primario" />
+                    <span>Papel primário</span>
+                  </label>
+                </div>
+                <button className="botao botao-primario" type="submit">
+                  Criar papel
+                </button>
+                <p className="nota">
+                  O papel primário é quem responde por uma carteira quando não há dono mais
+                  específico. Só pode haver um.
+                </p>
+              </form>
+            </Modal>
+          )}
+        </div>
+
+        {papeis.length === 0 ? (
+          <Vazio>
+            Nenhum papel cadastrado. Sem eles, alertas e compromissos caem no responsável gravado na
+            ficha da carteira — funciona, mas não distingue quem opera de quem acompanha.
+          </Vazio>
+        ) : (
+          <ul className="lista-estado">
+            {papeis.map((x) => (
+              <li key={x.id}>
+                <span className="rotulo">
+                  {x.nome}
+                  {x.descricao && <span className="dica">{x.descricao}</span>}
+                </span>
+                {x.primario && <span className="selo selo-ok">primário</span>}
+                {gereCatalogo && (
+                  <form action={excluirPapel}>
+                    <input type="hidden" name="id" value={x.id} />
+                    <BotaoExcluir compacto rotulo="Excluir" />
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+<section className="painel">
         <div className="linha-titulo">
           <h2>Tipos de frente</h2>
           {gereCatalogo && (
@@ -370,6 +440,24 @@ export default async function PaginaConfiguracoes({
             </p>
           </div>
         </div>
+      </section>
+
+      <section className="painel">
+        <h2>Administração</h2>
+        <ul className="lista-estado">
+          <li>
+            <span className="rotulo">
+              <Link href="/importacao">Importação de dados</Link>
+              <span className="dica">Carga de carteiras, contas, contratos e frentes por planilha</span>
+            </span>
+          </li>
+          <li>
+            <span className="rotulo">
+              <Link href="/auditoria">Registro de alterações</Link>
+              <span className="dica">Quem alterou o quê, e quando</span>
+            </span>
+          </li>
+        </ul>
       </section>
 
       <section className="painel">

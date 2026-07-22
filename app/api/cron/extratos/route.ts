@@ -76,12 +76,17 @@ export async function GET(requisicao: Request) {
   fim.setDate(fim.getDate() - 1);
 
   // Alertas primeiro: assim o extrato do dia já sai com a situação varrida.
-  const alertas: { org: string; diferenca: number }[] = [];
+  const alertas: { org: string; diferenca: number; atribuidos: number }[] = [];
   try {
     const { data: orgs } = await supabase.from("orgs").select("id, nome");
     for (const o of (orgs ?? []) as { id: string; nome: string }[]) {
       const { data: dif } = await supabase.rpc("gerar_alertas", { p_org: o.id });
-      alertas.push({ org: o.nome, diferenca: Number(dif ?? 0) });
+      const { data: atribuidos } = await supabase.rpc("atribuir_alertas", { p_org: o.id });
+      alertas.push({
+        org: o.nome,
+        diferenca: Number(dif ?? 0),
+        atribuidos: Number(atribuidos ?? 0),
+      });
     }
   } catch (e) {
     console.error("[cron] falha ao gerar alertas:", e);

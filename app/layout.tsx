@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { Lateral, type GrupoMenu } from "@/components/lateral";
 import {
   Building2,
   Bell,
@@ -30,15 +31,17 @@ export const metadata: Metadata = {
 
 const TAMANHO = 16;
 
-const GRUPOS = [
+// Onze destinos num nível só não cabiam na tela. Agora são três grupos
+// curtos, e o que é administração — importação, trilha de alterações,
+// pessoas, catálogos — vive dentro de Configurações.
+const GRUPOS: GrupoMenu[] = [
   {
     titulo: "Acompanhar",
     itens: [
       { href: "/painel", rotulo: "Painel", icone: <LayoutGrid size={TAMANHO} /> },
       { href: "/alertas", rotulo: "Alertas", icone: <Bell size={TAMANHO} /> },
-      { href: "/panorama", rotulo: "Panorama", icone: <Building2 size={TAMANHO} /> },
       { href: "/compromissos", rotulo: "Compromissos", icone: <CalendarClock size={TAMANHO} /> },
-      { href: "/maturidade", rotulo: "Maturidade", icone: <Gauge size={TAMANHO} /> },
+      { href: "/panorama", rotulo: "Panorama", icone: <Building2 size={TAMANHO} /> },
     ],
   },
   {
@@ -54,9 +57,8 @@ const GRUPOS = [
   {
     titulo: "Registrar",
     itens: [
-      { href: "/historico", rotulo: "Histórico", icone: <ClipboardList size={TAMANHO} /> },
-      { href: "/importacao", rotulo: "Importação", icone: <Upload size={TAMANHO} /> },
-      { href: "/auditoria", rotulo: "Alterações", icone: <ScrollText size={TAMANHO} /> },
+      { href: "/historico", rotulo: "Histórico", icone: <ScrollText size={TAMANHO} /> },
+      { href: "/maturidade", rotulo: "Maturidade", icone: <Gauge size={TAMANHO} /> },
       { href: "/configuracoes", rotulo: "Configurações", icone: <Settings size={TAMANHO} /> },
     ],
   },
@@ -128,43 +130,32 @@ export default async function LayoutRaiz({ children }: { children: React.ReactNo
       </head>
       <body>
         <div className="com-lateral">
-          <aside className="lateral">
-            <Link className="marca" href="/painel">
-              <span className="marca-ponto" />
-              {nomeApp}
-            </Link>
-
-            <div>
-              {GRUPOS.map((g) => (
-                <div className="lateral-grupo" key={g.titulo}>
-                  <p className="lateral-titulo">{g.titulo}</p>
-                  <nav className="lateral-nav">
-                    {g.itens.map((i) => (
-                      <Link key={i.href} href={i.href} title={i.rotulo}>
-                        {i.icone}
-                        <span>{i.rotulo}</span>
-                      </Link>
-                    ))}
-                  </nav>
-                </div>
-              ))}
-            </div>
-
-            <div className="lateral-rodape">
-              <p className="lateral-org">{org.nome}</p>
-              <p className="lateral-papel">{rotuloPapel(org.papel)}</p>
-              <form action={trocarOrganizacao}>
-                <button className="link-acao" type="submit">
-                  Trocar de organização
-                </button>
-              </form>
-              <form action={sair}>
-                <button className="link-acao" type="submit">
-                  Sair
-                </button>
-              </form>
-            </div>
-          </aside>
+          <Lateral
+            grupos={GRUPOS}
+            recolhidaInicial={cookies().get("proximia_menu")?.value === "1"}
+            marca={
+              <Link className="marca" href="/painel">
+                <span className="marca-ponto" />
+                {nomeApp}
+              </Link>
+            }
+            rodape={
+              <>
+                <p className="lateral-org">{org.nome}</p>
+                <p className="lateral-papel">{rotuloPapel(org.papel)}</p>
+                <form action={trocarOrganizacao}>
+                  <button className="link-acao" type="submit">
+                    Trocar de organização
+                  </button>
+                </form>
+                <form action={sair}>
+                  <button className="link-acao" type="submit">
+                    Sair
+                  </button>
+                </form>
+              </>
+            }
+          />
 
           <div className="area">
             <main className="conteudo">{children}</main>

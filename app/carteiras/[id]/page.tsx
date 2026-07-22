@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Pencil } from "lucide-react";
 import { Modal } from "@/components/modal";
+import { Seletor } from "@/components/seletor";
+import { Vazio } from "@/components/intro-secao";
 import { BotaoExcluir } from "@/components/botao-excluir";
 import { excluirCarteira } from "@/app/acoes/exclusoes";
 import { Mail, Send, Share2, RefreshCw } from "lucide-react";
@@ -9,6 +11,9 @@ import { periodos } from "@/lib/periodo";
 import { salvarCadencia, enviarExtratoAgora } from "@/app/acoes/extrato";
 import { salvarPortal, trocarEndereco } from "@/app/acoes/portal";
 import { portalDaCarteira } from "@/lib/portal";
+import { papeisOperacionais, responsabilidades } from "@/lib/responsabilidades";
+import { atribuirResponsavel, removerResponsavel } from "@/app/acoes/responsabilidades";
+import { UserCog } from "lucide-react";
 import { formatarData } from "@/lib/contas";
 import { notFound } from "next/navigation";
 import { exigirOrg, podeEscrever } from "@/lib/auth";
@@ -71,6 +76,10 @@ export default async function PaginaCarteira({
     criado_em: string;
   }[];
   const portal = await portalDaCarteira(carteira.id);
+  const [papeis, respons] = await Promise.all([
+    papeisOperacionais(org.orgId),
+    responsabilidades({ orgId: org.orgId, carteiraId: carteira.id }),
+  ]);
   const destinatariosAtuais = ((carteira as unknown as {
     extrato_destinatarios?: string[];
   }).extrato_destinatarios ?? []) as string[];
@@ -179,6 +188,102 @@ export default async function PaginaCarteira({
           </ul>
         </section>
       )}
+
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>Quem responde</h2>
+          {podeEditar && papeis.length > 0 && (
+            <Modal
+              rotulo="Definir responsável"
+              titulo="Definir responsável"
+              descricao="Uma carteira pode ter mais de um responsável, em papéis diferentes."
+              variante="secundario"
+              icone={<UserCog size={15} />}
+            >
+              <form action={atribuirResponsavel} className="formulario">
+                <input type="hidden" name="carteira_id" value={carteira.id} />
+                <Seletor
+                  nome="user_id"
+                  rotulo="Pessoa"
+                  opcoes={pessoasOrg.map((p) => ({ valor: p.id, rotulo: nomePessoa(p) }))}
+                  vazio="Escolha a pessoa"
+                  obrigatorio
+                />
+                <Seletor
+                  nome="papel_id"
+                  rotulo="Papel"
+                  opcoes={papeis
+                    .filter((x) => x.ativo)
+                    .map((x) => ({
+                      valor: x.id,
+                      rotulo: x.nome,
+                      detalhe: x.primario ? "papel primário" : (x.descricao ?? undefined),
+                    }))}
+                  vazio="Escolha o papel"
+                  obrigatorio
+                />
+                <label className="campo">
+                  <span>Observação</span>
+                  <input type="text" name="observacao" maxLength={160} placeholder="opcional" />
+                </label>
+                <button className="botao botao-primario" type="submit">
+                  Definir
+                </button>
+              </form>
+            </Modal>
+          )}
+        </div>
+
+        {papeis.length === 0 ? (
+          <Vazio
+            acao={
+              podeEditar ? (
+                <Link className="botao botao-secundario" href="/configuracoes">
+                  Cadastrar papéis
+                </Link>
+              ) : undefined
+            }
+          >
+            Nenhum papel de responsabilidade cadastrado ainda. Os papéis são da sua operação —
+            &ldquo;responsável na unidade&rdquo;, &ldquo;apoio corporativo&rdquo;, o que fizer
+            sentido — e ficam em Configurações.
+          </Vazio>
+        ) : respons.length === 0 ? (
+          <Vazio>
+            Ninguém definido. Enquanto isso, alertas e compromissos desta carteira caem no
+            responsável cadastrado na ficha, se houver.
+          </Vazio>
+        ) : (
+          <ul className="lista-estado">
+            {respons.map((r) => {
+              const papel = papeis.find((x) => x.id === r.papel_id);
+              return (
+                <li key={r.id}>
+                  <span className="rotulo">
+                    {nomePessoa(pessoasOrg.find((p) => p.id === r.user_id))}
+                    <span className="dica">
+                      {[papel?.nome, r.observacao].filter(Boolean).join(" · ")}
+                    </span>
+                  </span>
+                  {papel?.primario && <span className="selo selo-ok">responde primeiro</span>}
+                  {podeEditar && (
+                    <form action={removerResponsavel}>
+                      <input type="hidden" name="id" value={r.id} />
+                      <input type="hidden" name="carteira_id" value={carteira.id} />
+                      <BotaoExcluir compacto rotulo="Remover" />
+                    </form>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
+          Responder é diferente de enxergar. Quem responde recebe os alertas; quem tem acesso está
+          no bloco abaixo.
+        </p>
+      </section>
 
       <section className="painel">
         <h2>Quem acompanha</h2>
