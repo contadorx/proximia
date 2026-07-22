@@ -107,3 +107,26 @@ describe("panorama por responsável", () => {
     expect(soma).toBeGreaterThan(600);
   });
 });
+
+describe("alvo do compromisso", () => {
+  // A entidade viaja como "tipo:id" num campo só, para não precisar de
+  // dois seletores dependentes — o segundo teria de recarregar quando o
+  // primeiro muda, e a pessoa erraria a combinação.
+  const separar = (alvo: string | null) => (alvo ? alvo.split(":") : []);
+
+  it("separa tipo e identificador", () => {
+    expect(separar("conta:abc-123")).toEqual(["conta", "abc-123"]);
+    expect(separar("oportunidade:xyz")).toEqual(["oportunidade", "xyz"]);
+  });
+
+  it("devolve vazio quando não há alvo, para a ação cair no padrão", () => {
+    expect(separar(null)).toEqual([]);
+    expect(separar("")).toEqual([]);
+  });
+
+  it("preserva o identificador inteiro, que também tem hífen", () => {
+    const [tipo, id] = separar("contrato:0f8c1b2a-1111-2222-3333-444455556666");
+    expect(tipo).toBe("contrato");
+    expect(id).toBe("0f8c1b2a-1111-2222-3333-444455556666");
+  });
+});

@@ -11,6 +11,7 @@ import {
   type Compromisso,
 } from "@/lib/compromissos";
 import { carteirasDaPessoa } from "@/lib/responsabilidades";
+import { alvosDisponiveis, mapaDeNomes, rotuloTipo } from "@/lib/alvos";
 import { caminhoEntidade } from "@/lib/registros";
 import {
   criarCompromisso,
@@ -35,22 +36,30 @@ export default async function PaginaCompromissos({
     carteira?: string | string[];
     dono?: string | string[];
     lente?: string | string[];
+    tipo?: string | string[];
+    alvo?: string | string[];
   };
 }) {
   const org = await exigirOrg();
   const usuario = await exigirUsuario();
 
-  const [todos, carteiras, pessoas, minhasCarteiras] = await Promise.all([
+  const [todos, carteiras, pessoas, minhasCarteiras, alvos] = await Promise.all([
     listarCompromissos({ orgId: org.orgId }),
     listarCarteiras(org.orgId),
     pessoasDaOrganizacao(org.orgId),
     carteirasDaPessoa(org.orgId, usuario.id),
+    alvosDisponiveis(org.orgId),
   ]);
+
+  const nomes = mapaDeNomes(alvos);
+  const nomeAlvo = (tipo: string, id: string) => nomes.get(`${tipo}:${id}`);
 
   const editavel = podeEscrever(org.papel);
   const lente = paraTexto(searchParams.lente) ?? "todos";
   const filtroCarteiras = paraLista(searchParams.carteira);
   const filtroDonos = paraLista(searchParams.dono);
+  const filtroTipos = paraLista(searchParams.tipo);
+  const filtroAlvo = paraTexto(searchParams.alvo);
 
   // Carteiras que a pessoa carrega: onde ela responde por papel, mais as
   // que a têm como responsável na ficha.
@@ -64,6 +73,8 @@ export default async function PaginaCompromissos({
     if (lente === "unidade" && !minhas.has(c.carteira_id)) return false;
     if (filtroCarteiras.length && !filtroCarteiras.includes(c.carteira_id)) return false;
     if (filtroDonos.length && !filtroDonos.includes(c.dono_id ?? "")) return false;
+    if (filtroTipos.length && !filtroTipos.includes(c.entidade_tipo)) return false;
+    if (filtroAlvo && `${c.entidade_tipo}:${c.entidade_id}` !== filtroAlvo) return false;
     return true;
   });
 
@@ -114,6 +125,11 @@ export default async function PaginaCompromissos({
                   {[
                     formatarData(c.vence_em),
                     s.detalhe,
+                    // O que o compromisso trata vem antes de onde ele mora:
+                    // "Alfa Indústria" diz mais que "Regional Norte".
+                    nomeAlvo(c.entidade_tipo, c.entidade_id)
+                      ? `${rotuloTipo(c.entidade_tipo)}: ${nomeAlvo(c.entidade_tipo, c.entidade_id)}`
+                      : null,
                     nomeCarteira(c.carteira_id),
                     nome(c.dono_id),
                     c.origem !== "manual" ? rotuloOrigem(c.origem) : null,
@@ -194,7 +210,6 @@ export default async function PaginaCompromissos({
             >
               <form action={criarCompromisso} className="formulario">
                 <input type="hidden" name="volta" value="/compromissos" />
-                <input type="hidden" name="entidade_tipo" value="carteira" />
                 <div className="formulario-linha">
                   <label className="campo">
                     <span>O que precisa ser feito</span>
@@ -210,6 +225,19 @@ export default async function PaginaCompromissos({
                     }))}
                     vazio="Escolha a carteira"
                     obrigatorio
+                  />
+                </div>
+                <div className="formulario-linha">
+                  <Seletor
+                    nome="alvo"
+                    rotulo="Refere-se a"
+                    opcoes={alvos.map((a) => ({
+                      valor: a.valor,
+                      rotulo: a.nome,
+                      detalhe: a.rotuloTipo,
+                    }))}
+                    vazio="A carteira inteira"
+                    ajuda="Uma conta, um contrato, uma frente — ou a carteira, se for geral."
                   />
                 </div>
                 <div className="formulario-linha">
@@ -327,6 +355,30 @@ export default async function PaginaCompromissos({
           inicial={filtroCarteiras}
         />
         <SeletorMultiplo
+          nome="tipo"
+          rotulo="Refere-se a"
+          opcoes={[
+            { valor: "carteira", rotulo: "Carteira" },
+            { valor: "conta", rotulo: "Conta" },
+            { valor: "contrato", rotulo: "Contrato" },
+            { valor: "frente", rotulo: "Frente" },
+            { valor: "oportunidade", rotulo: "Oportunidade" },
+          ]}
+          inicial={filtroTipos}
+          rotuloTodas="Tudo"
+        />
+        <Seletor
+          nome="alvo"
+          rotulo="Registro específico"
+          opcoes={alvos.map((a) => ({
+            valor: a.valor,
+            rotulo: a.nome,
+            detalhe: a.rotuloTipo,
+          }))}
+          inicial={filtroAlvo ?? ""}
+          vazio="Qualquer um"
+        />
+        <SeletorMultiplo
           nome="dono"
           rotulo="Responsável"
           opcoes={pessoas.map((p) => ({ valor: p.id, rotulo: nomePessoa(p) }))}
@@ -336,7 +388,8 @@ export default async function PaginaCompromissos({
           <Search size={14} />
           Filtrar
         </button>
-        {(temFiltro(searchParams.carteira, searchParams.dono) || lente !== "todos") && (
+        {(temFiltro(searchParams.carteira, searchParams.dono, searchParams.tipo, searchParams.alvo) ||
+          lente !== "todos") && (
           <Link className="link-acao" href="/compromissos">
             Limpar
           </Link>

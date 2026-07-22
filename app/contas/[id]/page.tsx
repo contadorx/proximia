@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { exigirOrg, podeEscrever } from "@/lib/auth";
+import { exigirOrg, exigirUsuario, podeEscrever } from "@/lib/auth";
 import { listarCarteiras, nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
 import {
   CRITICIDADES,
@@ -20,6 +20,7 @@ import { excluirConta } from "@/app/acoes/exclusoes";
 import { Pencil } from "lucide-react";
 import { Historico } from "@/components/historico";
 import { Anexos } from "@/components/anexos";
+import { Compromissos } from "@/components/compromissos";
 import { Capturas } from "@/components/capturas";
 import { classeFase, formatarPayback, listarOportunidades, rotuloFase } from "@/lib/oportunidades";
 
@@ -34,6 +35,7 @@ export default async function PaginaConta({
   searchParams: { erro?: string; ok?: string };
 }) {
   const org = await exigirOrg();
+  const usuario = await exigirUsuario();
   const conta = await obterConta(params.id);
   if (!conta) notFound();
 
@@ -336,6 +338,16 @@ export default async function PaginaConta({
         carteiraId={conta.carteira_id}
         pessoas={pessoas}
         editavel={editavel}
+      />
+
+      <Compromissos
+        entidadeTipo="conta"
+        entidadeId={conta.id}
+        carteiraId={conta.carteira_id}
+        pessoas={pessoas}
+        editavel={editavel}
+        usuarioId={usuario.id}
+        volta={`/contas/${conta.id}`}
       />
 
       <Historico

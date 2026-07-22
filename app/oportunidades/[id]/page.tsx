@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Pencil } from "lucide-react";
-import { exigirOrg, podeEscrever } from "@/lib/auth";
+import { exigirOrg, exigirUsuario, podeEscrever } from "@/lib/auth";
 import { listarCarteiras, nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
 import { formatarData, formatarValor, listarContas } from "@/lib/contas";
 import {
@@ -27,6 +27,7 @@ import { CampoValor } from "@/components/campos";
 import { Historico } from "@/components/historico";
 import { AnaliseFinanceira } from "@/components/analise-financeira";
 import { Anexos } from "@/components/anexos";
+import { Compromissos } from "@/components/compromissos";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,7 @@ export default async function PaginaOportunidade({
   searchParams: { erro?: string; ok?: string };
 }) {
   const org = await exigirOrg();
+  const usuario = await exigirUsuario();
   const oportunidade = await obterOportunidade(params.id);
   if (!oportunidade) notFound();
 
@@ -413,6 +415,16 @@ export default async function PaginaOportunidade({
         carteiraId={oportunidade.carteira_id}
         pessoas={pessoas}
         editavel={editavel}
+      />
+
+      <Compromissos
+        entidadeTipo="oportunidade"
+        entidadeId={oportunidade.id}
+        carteiraId={oportunidade.carteira_id}
+        pessoas={pessoas}
+        editavel={editavel}
+        usuarioId={usuario.id}
+        volta={`/oportunidades/${oportunidade.id}`}
       />
 
       <Historico

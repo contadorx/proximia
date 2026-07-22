@@ -28,6 +28,13 @@ export async function criarCompromisso(formData: FormData) {
 
   const titulo = texto(formData, "titulo");
   const venceEm = texto(formData, "vence_em");
+
+  // A entidade chega como "tipo:id" num campo só. Dois seletores
+  // dependentes seriam pior: o segundo teria de recarregar quando o
+  // primeiro muda, e a pessoa erraria a combinação.
+  const alvo = texto(formData, "alvo");
+  const [tipoAlvo, idAlvo] = alvo ? alvo.split(":") : [];
+
   const carteiraId = String(formData.get("carteira_id") ?? "");
 
   if (!titulo) comErro(rota, "Diga o que precisa ser feito.");
@@ -38,8 +45,8 @@ export async function criarCompromisso(formData: FormData) {
   const { error } = await supabase.from("compromissos").insert({
     org_id: org.orgId,
     carteira_id: carteiraId,
-    entidade_tipo: String(formData.get("entidade_tipo") ?? "carteira"),
-    entidade_id: String(formData.get("entidade_id") ?? carteiraId),
+    entidade_tipo: tipoAlvo ?? String(formData.get("entidade_tipo") ?? "carteira"),
+    entidade_id: idAlvo ?? String(formData.get("entidade_id") ?? carteiraId),
     titulo,
     descricao: texto(formData, "descricao"),
     vence_em: venceEm,

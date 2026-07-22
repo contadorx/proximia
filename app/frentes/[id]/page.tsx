@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { exigirOrg, podeEscrever } from "@/lib/auth";
+import { exigirOrg, exigirUsuario, podeEscrever } from "@/lib/auth";
 import { listarCarteiras, nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
 import { formatarData, formatarValor } from "@/lib/contas";
 import {
@@ -18,6 +18,7 @@ import { excluirFrente } from "@/app/acoes/exclusoes";
 import { Pencil } from "lucide-react";
 import { Historico } from "@/components/historico";
 import { Anexos } from "@/components/anexos";
+import { Compromissos } from "@/components/compromissos";
 import { Capturas } from "@/components/capturas";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +31,7 @@ export default async function PaginaFrente({
   searchParams: { erro?: string; ok?: string };
 }) {
   const org = await exigirOrg();
+  const usuario = await exigirUsuario();
   const frente = await obterFrente(params.id);
   if (!frente) notFound();
 
@@ -297,6 +299,16 @@ export default async function PaginaFrente({
         carteiraId={frente.carteira_id}
         pessoas={pessoas}
         editavel={editavel}
+      />
+
+      <Compromissos
+        entidadeTipo="frente"
+        entidadeId={frente.id}
+        carteiraId={frente.carteira_id}
+        pessoas={pessoas}
+        editavel={editavel}
+        usuarioId={usuario.id}
+        volta={`/frentes/${frente.id}`}
       />
 
       <Historico

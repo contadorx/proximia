@@ -192,6 +192,10 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 
 **As contas financeiras descontam o tempo.** Payback simples e retorno percentual ignoram que mil reais daqui a cinco anos valem menos que mil hoje, e decidir por eles favorece sistematicamente projeto longo. Entram valor presente líquido, taxa interna de retorno e payback descontado, sobre um custo de capital que é do assinante. O modelo assume fluxo constante, que é a forma do dado coletado: supor mais precisão seria falso rigor.
 
+**Compromisso mora onde a conversa aconteceu.** Ele aparece nas cinco fichas — carteira, conta, contrato, frente e oportunidade — no mesmo tratamento que histórico e anexos, com criação já vinculada ao registro aberto. Antes existia só na tela geral, e o formulário prendia tudo à carteira: nenhum compromisso manual conseguia apontar para uma conta ou um contrato.
+
+**A entidade viaja num campo só, como `tipo:id`.** Dois seletores dependentes seriam pior — o segundo teria de recarregar quando o primeiro muda, e a pessoa erraria a combinação.
+
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
 ## Rotas

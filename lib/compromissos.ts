@@ -34,7 +34,11 @@ export async function listarCompromissos(opcoes: {
   entidadeId?: string;
 }): Promise<Compromisso[]> {
   const supabase = criarClienteServidor();
-  let consulta = supabase.from("compromissos").select(CAMPOS).eq("org_id", opcoes.orgId);
+  let consulta = supabase.from("compromissos").select(CAMPOS);
+
+  // Sem organização informada, o alcance vem inteiro da RLS — é o caso de
+  // quem já está dentro de uma ficha e filtra pela entidade.
+  if (opcoes.orgId) consulta = consulta.eq("org_id", opcoes.orgId);
 
   if (opcoes.carteiraId) consulta = consulta.eq("carteira_id", opcoes.carteiraId);
   if (opcoes.carteiras?.length) consulta = consulta.in("carteira_id", opcoes.carteiras);

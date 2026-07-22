@@ -16,7 +16,7 @@ import { atribuirResponsavel, removerResponsavel } from "@/app/acoes/responsabil
 import { UserCog } from "lucide-react";
 import { formatarData } from "@/lib/contas";
 import { notFound } from "next/navigation";
-import { exigirOrg, podeEscrever } from "@/lib/auth";
+import { exigirOrg, exigirUsuario, podeEscrever } from "@/lib/auth";
 import {
   faixaMaturidade,
   nomePessoa,
@@ -27,6 +27,7 @@ import {
 } from "@/lib/carteiras";
 import { formatarValor, listarContas, rotuloRelacao } from "@/lib/contas";
 import { Historico } from "@/components/historico";
+import { Compromissos } from "@/components/compromissos";
 import { classeStatus, listarFrentes, rotuloStatus } from "@/lib/frentes";
 import { classeFase, formatarPayback, listarOportunidades, rotuloFase } from "@/lib/oportunidades";
 import {
@@ -45,6 +46,7 @@ export default async function PaginaCarteira({
   searchParams: { erro?: string; ok?: string };
 }) {
   const org = await exigirOrg();
+  const usuario = await exigirUsuario();
   const carteira = await obterCarteira(params.id);
 
   // A RLS já esconde carteira de outra organização ou fora do alcance:
@@ -645,6 +647,16 @@ export default async function PaginaCarteira({
           </>
         )}
       </section>
+
+      <Compromissos
+        entidadeTipo="carteira"
+        entidadeId={carteira.id}
+        carteiraId={carteira.id}
+        pessoas={pessoasOrg}
+        editavel={podeEditar}
+        usuarioId={usuario.id}
+        volta={`/carteiras/${carteira.id}`}
+      />
 
       <Historico
         entidadeTipo="carteira"
