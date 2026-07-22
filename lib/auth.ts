@@ -104,14 +104,3 @@ export function podeAdministrar(papel: Papel): boolean {
 export function podeEscrever(papel: Papel): boolean {
   return papel !== "leitura_ampla";
 }
-
-/**
- * Espelho de `pode_gerir_carteiras()` no banco: quem define estrutura —
- * criar carteira, abrir link externo. O ponto focal opera dentro da
- * carteira, mas não decide quem passa a enxergá-la de fora.
- *
- * Isto é conveniência de tela. A decisão continua sendo do banco.
- */
-export function podeGerirCarteiras(papel: Papel): boolean {
-  return papel === "owner" || papel === "admin" || papel === "analista";
-}

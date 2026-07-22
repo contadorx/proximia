@@ -3,10 +3,12 @@ import { Pencil } from "lucide-react";
 import { Modal } from "@/components/modal";
 import { BotaoExcluir } from "@/components/botao-excluir";
 import { excluirCarteira } from "@/app/acoes/exclusoes";
-import { Mail, Send } from "lucide-react";
+import { Mail, Send, Share2, RefreshCw } from "lucide-react";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { periodos } from "@/lib/periodo";
 import { salvarCadencia, enviarExtratoAgora } from "@/app/acoes/extrato";
+import { salvarPortal, trocarEndereco } from "@/app/acoes/portal";
+import { portalDaCarteira } from "@/lib/portal";
 import { formatarData } from "@/lib/contas";
 import { notFound } from "next/navigation";
 import { exigirOrg, podeEscrever } from "@/lib/auth";
@@ -20,7 +22,6 @@ import {
 } from "@/lib/carteiras";
 import { formatarValor, listarContas, rotuloRelacao } from "@/lib/contas";
 import { Historico } from "@/components/historico";
-import { Anexos } from "@/components/anexos";
 import { classeStatus, listarFrentes, rotuloStatus } from "@/lib/frentes";
 import { classeFase, formatarPayback, listarOportunidades, rotuloFase } from "@/lib/oportunidades";
 import {
@@ -69,6 +70,7 @@ export default async function PaginaCarteira({
     detalhe: string | null;
     criado_em: string;
   }[];
+  const portal = await portalDaCarteira(carteira.id);
   const destinatariosAtuais = ((carteira as unknown as {
     extrato_destinatarios?: string[];
   }).extrato_destinatarios ?? []) as string[];
@@ -426,21 +428,125 @@ export default async function PaginaCarteira({
         )}
       </section>
 
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>Portal da unidade</h2>
+          {podeEditar && (
+            <div className="cabeca-acoes">
+              <Modal
+                rotulo={portal ? "Configurar portal" : "Criar portal"}
+                titulo="Portal da unidade"
+                descricao="Um endereço só de leitura para a unidade acompanhar a própria carteira, sem precisar de usuário."
+                variante="secundario"
+                icone={<Share2 size={15} />}
+              >
+                <form action={salvarPortal} className="formulario">
+                  <input type="hidden" name="carteira_id" value={carteira.id} />
+                  <label className="campo">
+                    <span>Título da página</span>
+                    <input
+                      type="text"
+                      name="titulo"
+                      defaultValue={portal?.titulo ?? ""}
+                      maxLength={120}
+                      placeholder={carteira.nome}
+                    />
+                  </label>
+                  <label className="campo">
+                    <span>Mensagem de abertura</span>
+                    <textarea
+                      name="mensagem"
+                      rows={3}
+                      defaultValue={portal?.mensagem ?? ""}
+                      placeholder="opcional — aparece no topo da página"
+                    />
+                  </label>
+                  <div className="formulario-linha">
+                    <label className="campo">
+                      <span>Expira em</span>
+                      <input type="date" name="expira_em" defaultValue={portal?.expira_em ?? ""} />
+                      <small>Em branco, não expira.</small>
+                    </label>
+                    <label className="campo campo-marcador">
+                      <input type="checkbox" name="ativo" defaultChecked={portal?.ativo ?? true} />
+                      <span>Ativo</span>
+                    </label>
+                    <label className="campo campo-marcador">
+                      <input
+                        type="checkbox"
+                        name="mostrar_valores"
+                        defaultChecked={portal?.mostrar_valores ?? true}
+                      />
+                      <span>Mostrar valores</span>
+                    </label>
+                  </div>
+                  <button className="botao botao-primario" type="submit">
+                    Salvar
+                  </button>
+                  <p className="nota">
+                    Sem valores, a página mostra frentes, prazos e entregas sem os números de
+                    dinheiro — útil quando o valor não deve circular fora de casa.
+                  </p>
+                </form>
+              </Modal>
+
+              {portal && (
+                <Modal
+                  rotulo="Trocar endereço"
+                  titulo="Trocar o endereço do portal"
+                  descricao="O link atual para de funcionar na hora."
+                  variante="link"
+                  icone={<RefreshCw size={13} />}
+                >
+                  <p className="nota">
+                    Use quando o link tiver circulado além de quem devia. Quem estiver com o
+                    endereço antigo passa a ver a mensagem de indisponível, e você envia o novo.
+                  </p>
+                  <form action={trocarEndereco}>
+                    <input type="hidden" name="id" value={portal.id} />
+                    <input type="hidden" name="carteira_id" value={carteira.id} />
+                    <button className="botao botao-perigo" type="submit">
+                      Trocar endereço
+                    </button>
+                  </form>
+                </Modal>
+              )}
+            </div>
+          )}
+        </div>
+
+        {!portal ? (
+          <p className="nota">
+            Nenhum portal criado. Ele dá à unidade um endereço próprio, somente leitura, com as
+            frentes, os prazos e o que foi entregue — sem contatos, sem nomes de pessoas e sem
+            acesso ao resto da operação.
+          </p>
+        ) : (
+          <>
+            <p className="nota">
+              {portal.ativo ? "Ativo" : "Desativado"} ·{" "}
+              {portal.mostrar_valores ? "com valores" : "sem valores"} ·{" "}
+              {portal.expira_em ? `expira em ${formatarData(portal.expira_em)}` : "sem prazo"} ·{" "}
+              {portal.acessos} {portal.acessos === 1 ? "acesso" : "acessos"}
+              {portal.ultimo_acesso
+                ? ` · último em ${formatarData(portal.ultimo_acesso.slice(0, 10))}`
+                : ""}
+            </p>
+            <p className="campo-endereco dado">/portal/{portal.token}</p>
+            <p className="nota" style={{ marginBottom: 0 }}>
+              Endereço completo: o domínio do aplicativo seguido do caminho acima. Qualquer pessoa
+              com o link abre a página — trate-o como senha.
+            </p>
+          </>
+        )}
+      </section>
+
       <Historico
         entidadeTipo="carteira"
         entidadeId={carteira.id}
         carteiraId={carteira.id}
         pessoas={pessoasOrg}
         editavel={podeEscrever(org.papel)}
-      />
-
-      <Anexos
-        entidadeTipo="carteira"
-        entidadeId={carteira.id}
-        carteiraId={carteira.id}
-        pessoas={pessoasOrg}
-        editavel={podeEscrever(org.papel)}
-        volta={`/carteiras/${carteira.id}`}
       />
 
       {podeExcluir && (

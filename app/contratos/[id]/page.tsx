@@ -377,7 +377,7 @@ export default async function PaginaContrato({
           </form>
         </Modal>
       )}
-      <Historico
+      <Anexos
         entidadeTipo="contrato"
         entidadeId={contrato.id}
         carteiraId={contrato.carteira_id}
@@ -385,13 +385,12 @@ export default async function PaginaContrato({
         editavel={editavel}
       />
 
-      <Anexos
+      <Historico
         entidadeTipo="contrato"
         entidadeId={contrato.id}
         carteiraId={contrato.carteira_id}
         pessoas={pessoas}
         editavel={editavel}
-        volta={`/contratos/${contrato.id}`}
       />
 
       {podeExcluir && (

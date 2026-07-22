@@ -48,11 +48,6 @@ const OPCIONAIS = [
     valor: process.env.CRON_SECRET,
     dica: "Segredo da rotina diaria de extratos. Sem ele, a rotina fica desligada.",
   },
-  {
-    nome: "NEXT_PUBLIC_APP_URL",
-    valor: process.env.NEXT_PUBLIC_APP_URL,
-    dica: "Endereco publico do aplicativo. Sem ela, o link do portal sai sem dominio.",
-  },
 ] as const;
 
 export function checarAmbiente(): ChecagemAmbiente[] {

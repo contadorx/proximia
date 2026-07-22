@@ -12,9 +12,8 @@ import { credenciaisOpcionais } from "@/lib/env";
  * e a pessoa cai na tela que explica o que falta.
  */
 export async function middleware(request: NextRequest) {
-  // O layout raiz precisa saber em qual rota está para decidir se mostra a
-  // casca do produto ou a página nua do portal. Server Component não
-  // enxerga o caminho, então ele vem por cabeçalho.
+  // O layout precisa saber a rota para decidir se mostra a casca do
+  // produto. O portal é a exceção: lá a marca é a do assinante.
   const cabecalhos = new Headers(request.headers);
   cabecalhos.set("x-caminho", request.nextUrl.pathname);
 

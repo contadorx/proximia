@@ -1,246 +1,195 @@
-import { ShieldCheck, Trash2 } from "lucide-react";
-import { exigirOrg, podeAdministrar } from "@/lib/auth";
-import { nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
-import {
-  ACOES,
-  classeAcao,
-  descreverCampos,
-  listarAuditoria,
-  rotuloAcao,
-  rotuloEntidadeAuditada,
-  type Acao,
-} from "@/lib/auditoria";
-import { limparTrilha } from "@/app/acoes/auditoria";
+import { exigirOrg } from "@/lib/auth";
+import { criarClienteServidor } from "@/lib/supabase/server";
+import { pessoasDaOrganizacao, nomePessoa } from "@/lib/carteiras";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { SeletorMultiplo } from "@/components/seletor";
-import { Modal } from "@/components/modal";
 import { paraLista, paraTexto } from "@/lib/consulta";
 
 export const dynamic = "force-dynamic";
 
-const JANELAS = [
-  { valor: "7", rotulo: "Últimos 7 dias" },
-  { valor: "30", rotulo: "Últimos 30 dias" },
-  { valor: "90", rotulo: "Últimos 90 dias" },
-  { valor: "0", rotulo: "Tudo o que estiver guardado" },
+type Linha = {
+  id: string;
+  acao: "criou" | "alterou" | "excluiu";
+  tabela: string;
+  registro_id: string | null;
+  resumo: string | null;
+  mudancas: Record<string, { de: unknown; para: unknown }>;
+  autor_id: string | null;
+  criado_em: string;
+};
+
+const TABELAS = [
+  { valor: "carteiras", rotulo: "Carteiras" },
+  { valor: "contas", rotulo: "Contas" },
+  { valor: "contratos", rotulo: "Contratos" },
+  { valor: "contrato_clausulas", rotulo: "Cláusulas" },
+  { valor: "frentes", rotulo: "Frentes" },
+  { valor: "oportunidades", rotulo: "Oportunidades" },
+  { valor: "compromissos", rotulo: "Compromissos" },
+  { valor: "memberships", rotulo: "Acessos" },
+  { valor: "convites", rotulo: "Convites" },
+  { valor: "anexos", rotulo: "Anexos" },
+  { valor: "maturidade_avaliacoes", rotulo: "Avaliações" },
+  { valor: "maturidade_dimensoes", rotulo: "Dimensões" },
+  { valor: "maturidade_perguntas", rotulo: "Perguntas" },
 ];
+
+const ACOES = [
+  { valor: "criou", rotulo: "Criou" },
+  { valor: "alterou", rotulo: "Alterou" },
+  { valor: "excluiu", rotulo: "Excluiu" },
+];
+
+const rotuloTabela = (t: string) => TABELAS.find((x) => x.valor === t)?.rotulo ?? t;
+
+function valorLegivel(v: unknown): string {
+  if (v === null || v === undefined) return "vazio";
+  if (typeof v === "boolean") return v ? "sim" : "não";
+  const texto = String(v);
+  return texto.length > 60 ? `${texto.slice(0, 60)}…` : texto;
+}
 
 export default async function PaginaAuditoria({
   searchParams,
 }: {
-  searchParams: {
-    erro?: string;
-    ok?: string;
-    acao?: string | string[];
-    pessoa?: string | string[];
-    janela?: string | string[];
-  };
+  searchParams: { tabela?: string | string[]; acao?: string | string[]; dias?: string | string[] };
 }) {
   const org = await exigirOrg();
+  const dias = Number(paraTexto(searchParams.dias) ?? "30");
 
-  // A RLS já barra quem não é administrador — a consulta voltaria vazia.
-  // Dizer isso na tela é melhor do que mostrar uma lista vazia sem motivo.
-  if (!podeAdministrar(org.papel)) {
-    return (
-      <>
-        <div className="cabeca-pagina">
-          <div>
-            <p className="olho">{org.nome}</p>
-            <h1>Registro de acesso</h1>
-          </div>
-        </div>
-        <Vazio>
-          A trilha de acesso é visível apenas para quem administra a organização. Seu perfil é{" "}
-          {org.papel === "leitura_ampla" ? "de acompanhamento" : "de operação"}.
-        </Vazio>
-      </>
-    );
-  }
+  const desde = new Date();
+  desde.setDate(desde.getDate() - (Number.isNaN(dias) ? 30 : dias));
 
-  const janela = paraTexto(searchParams.janela) ?? "30";
-  const desde =
-    janela === "0"
-      ? undefined
-      : new Date(Date.now() - Number(janela) * 86400000).toISOString();
+  const supabase = criarClienteServidor();
+  let consulta = supabase
+    .from("auditoria")
+    .select("id, acao, tabela, registro_id, resumo, mudancas, autor_id, criado_em")
+    .eq("org_id", org.orgId)
+    .gte("criado_em", desde.toISOString());
 
-  const [linhas, pessoas] = await Promise.all([
-    listarAuditoria({
-      orgId: org.orgId,
-      acoes: paraLista(searchParams.acao),
-      pessoas: paraLista(searchParams.pessoa),
-      desde,
-    }),
-    pessoasDaOrganizacao(org.orgId),
-  ]);
+  const tabelas = paraLista(searchParams.tabela);
+  const acoes = paraLista(searchParams.acao);
+  if (tabelas.length) consulta = consulta.in("tabela", tabelas);
+  if (acoes.length) consulta = consulta.in("acao", acoes);
 
-  const quem = (linha: { user_id: string | null; origem: string }) => {
-    if (linha.origem === "portal") return "visitante do portal";
-    if (linha.origem === "rotina") return "rotina do sistema";
-    if (!linha.user_id) return "sistema";
-    return nomePessoa(pessoas.find((p) => p.id === linha.user_id));
-  };
+  const { data, error } = await consulta.order("criado_em", { ascending: false }).limit(300);
+  const linhas = (data ?? []) as Linha[];
+  const pessoas = await pessoasDaOrganizacao(org.orgId);
 
-  const momento = (iso: string) =>
-    new Date(iso).toLocaleString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-  const porAcao = (a: Acao) => linhas.filter((l) => l.acao === a).length;
-  const exclusoes = porAcao("excluiu");
-  const leituras = linhas.filter((l) => ["leu", "baixou", "exportou", "abriu_portal"].includes(l.acao)).length;
+  const semAcesso = Boolean(error) || !["owner", "admin", "leitura_ampla"].includes(org.papel);
 
   return (
     <>
       <div className="cabeca-pagina">
         <div>
           <p className="olho">{org.nome}</p>
-          <h1>Registro de acesso</h1>
-        </div>
-        <div className="cabeca-acoes">
-          <Modal
-            rotulo="Descartar antigos"
-            titulo="Descartar o que passou do prazo"
-            descricao="Trilha que cresce para sempre vira passivo. Quem administra define o prazo."
-            variante="secundario"
-            icone={<Trash2 size={15} />}
-          >
-            <form action={limparTrilha} className="formulario">
-              <label className="campo">
-                <span>Guardar os últimos</span>
-                <select name="dias" defaultValue="365">
-                  <option value="90">90 dias</option>
-                  <option value="180">180 dias</option>
-                  <option value="365">365 dias</option>
-                  <option value="730">730 dias</option>
-                </select>
-                <small>
-                  Tudo mais antigo é descartado. O descarte em si fica registrado — inclusive quem o
-                  fez.
-                </small>
-              </label>
-              <div className="acoes-rodape">
-                <button className="botao botao-perigo" type="submit">
-                  Descartar
-                </button>
-              </div>
-            </form>
-          </Modal>
+          <h1>Registro de alterações</h1>
         </div>
       </div>
 
       <IntroSecao>
-        Quem alterou o quê, quando, e quem abriu o que não é seu. A trilha{" "}
-        <strong>só aceita acréscimo</strong>: não há como editar nem apagar linha — nem por aqui,
-        nem por quem administra. Ela guarda o nome dos campos tocados, nunca o conteúdo anterior:
-        registro de acesso não é uma segunda cópia dos dados.
+        Quem alterou o quê, e quando. As linhas nascem por gatilho no banco:{" "}
+        <strong>ninguém escreve aqui, nem edita depois</strong> — registro que a própria pessoa pode
+        forjar não serve de auditoria. Guardamos apenas os campos que mudaram, não a cópia inteira do
+        registro.
       </IntroSecao>
 
-      {searchParams.erro && <p className="aviso aviso-erro">{searchParams.erro}</p>}
-      {searchParams.ok && <p className="aviso aviso-ok">{searchParams.ok}</p>}
-
-      {linhas.length > 0 && (
-        <div className="cartoes">
-          <div className="cartao">
-            <p className="olho">Eventos no período</p>
-            <p className="cartao-valor">{linhas.length}</p>
-          </div>
-          <div className="cartao">
-            <p className="olho">Alterações</p>
-            <p className="cartao-valor">{porAcao("alterou")}</p>
-          </div>
-          <div className="cartao">
-            <p className="olho">Exclusões</p>
-            <p className={exclusoes ? "cartao-valor alerta" : "cartao-valor"}>{exclusoes}</p>
-            <p className="cartao-nota">o que não volta</p>
-          </div>
-          <div className="cartao">
-            <p className="olho">Leituras e downloads</p>
-            <p className="cartao-valor">{leituras}</p>
-          </div>
-        </div>
-      )}
-
-      <form className="filtros" method="get">
-        <SeletorMultiplo
-          nome="pessoa"
-          rotulo="Pessoa"
-          opcoes={pessoas.map((p) => ({ valor: p.id, rotulo: nomePessoa(p) }))}
-          inicial={paraLista(searchParams.pessoa)}
-        />
-        <SeletorMultiplo
-          nome="acao"
-          rotulo="Ação"
-          opcoes={ACOES.map((a) => ({ valor: a.valor, rotulo: a.rotulo }))}
-          inicial={paraLista(searchParams.acao)}
-        />
-        <label className="campo">
-          <span>Período</span>
-          <select name="janela" defaultValue={janela}>
-            {JANELAS.map((j) => (
-              <option key={j.valor} value={j.valor}>
-                {j.rotulo}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button className="botao botao-secundario" type="submit">
-          Filtrar
-        </button>
-      </form>
-
-      {linhas.length === 0 ? (
+      {semAcesso ? (
         <Vazio>
-          Nada registrado neste recorte. Se a trilha estiver vazia por completo, confira se a
-          migration <span className="dado">0016_auditoria.sql</span> foi aplicada — o registro só
-          começa a valer a partir dela, e não alcança o que aconteceu antes.
+          O registro de alterações é visível para quem administra a organização e para o perfil de
+          acompanhamento.
         </Vazio>
       ) : (
-        <section className="painel">
-          <div className="tabela-rolagem">
-            <table className="tabela-panorama">
-              <thead>
-                <tr>
-                  <th>Quando</th>
-                  <th>Quem</th>
-                  <th>Ação</th>
-                  <th>Sobre</th>
-                  <th>O que mudou</th>
-                </tr>
-              </thead>
-              <tbody>
+        <>
+          <form className="filtros" method="get">
+            <SeletorMultiplo
+              nome="tabela"
+              rotulo="Onde"
+              opcoes={TABELAS}
+              inicial={tabelas}
+              rotuloTodas="Tudo"
+            />
+            <SeletorMultiplo
+              nome="acao"
+              rotulo="O que"
+              opcoes={ACOES}
+              inicial={acoes}
+              rotuloTodas="Todas"
+            />
+            <label className="campo">
+              <span>Período</span>
+              <select name="dias" defaultValue={String(dias)}>
+                <option value="7">Últimos 7 dias</option>
+                <option value="30">Últimos 30 dias</option>
+                <option value="90">Últimos 90 dias</option>
+                <option value="365">Último ano</option>
+              </select>
+            </label>
+            <button className="botao botao-secundario" type="submit">
+              Filtrar
+            </button>
+          </form>
+
+          {linhas.length === 0 ? (
+            <Vazio>Nenhuma alteração registrada no período.</Vazio>
+          ) : (
+            <section className="painel">
+              <ul className="lista-estado">
                 {linhas.map((l) => {
-                  const mudou = descreverCampos(l.campos);
+                  const campos = Object.entries(l.mudancas ?? {});
                   return (
-                    <tr key={l.id}>
-                      <td className="dado">{momento(l.criado_em)}</td>
-                      <td>{quem(l)}</td>
-                      <td>
-                        <span className={classeAcao(l.acao)}>{rotuloAcao(l.acao)}</span>
-                      </td>
-                      <td>
-                        {rotuloEntidadeAuditada(l.entidade_tipo)}
-                        {l.resumo && <span className="celula-sub">{l.resumo}</span>}
-                      </td>
-                      <td>{mudou || "—"}</td>
-                    </tr>
+                    <li key={l.id} className="linha-auditoria">
+                      <span className="rotulo">
+                        <strong>{rotuloTabela(l.tabela)}</strong>
+                        {l.resumo ? ` · ${l.resumo}` : ""}
+                        <span className="dica">
+                          {new Date(l.criado_em).toLocaleString("pt-BR")} ·{" "}
+                          {l.autor_id
+                            ? nomePessoa(pessoas.find((p) => p.id === l.autor_id))
+                            : "rotina automática"}
+                        </span>
+
+                        {campos.length > 0 && (
+                          <span className="mudancas">
+                            {campos.slice(0, 4).map(([campo, v]) => (
+                              <span key={campo} className="mudanca">
+                                <span className="dado">{campo}</span>
+                                <span className="de">{valorLegivel(v?.de)}</span>
+                                <span className="seta">→</span>
+                                <span className="para">{valorLegivel(v?.para)}</span>
+                              </span>
+                            ))}
+                            {campos.length > 4 && (
+                              <span className="mudanca-mais">e mais {campos.length - 4}</span>
+                            )}
+                          </span>
+                        )}
+                      </span>
+
+                      <span
+                        className={
+                          l.acao === "excluiu"
+                            ? "selo selo-falta"
+                            : l.acao === "criou"
+                              ? "selo selo-ok"
+                              : "selo selo-neutro"
+                        }
+                      >
+                        {l.acao}
+                      </span>
+                    </li>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+              </ul>
+            </section>
+          )}
 
-      <p className="nota">
-        <ShieldCheck size={13} style={{ verticalAlign: "-2px", marginRight: 6 }} />
-        Histórico e compromissos automáticos ficam de fora de propósito: o histórico já nasce com
-        autor e versão, e o compromisso automático é gerado aos montes por gatilho — auditar os dois
-        enterraria o que importa.
-      </p>
+          <p className="nota">
+            Histórico e alertas ficam fora desta trilha de propósito: o histórico já é imutável por
+            desenho, e alerta nasce de varredura, não de decisão de alguém.
+          </p>
+        </>
+      )}
     </>
   );
 }

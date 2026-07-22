@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { Plus, UserPlus } from "lucide-react";
+import { KeyRound, Plus, UserPlus } from "lucide-react";
 import { exigirOrg, podeAdministrar, podeEscrever } from "@/lib/auth";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { PAPEIS, rotuloPapel, type Papel } from "@/lib/tipos";
 import { listarFrentes, tiposDeFrente } from "@/lib/frentes";
 import { vincularMembro } from "@/app/acoes/organizacoes";
 import { cancelarConvite, convidarPessoa } from "@/app/acoes/convites";
+import { trocarSenha } from "@/app/acoes/senha";
 import { criarTipoFrente } from "@/app/acoes/frentes";
 import { criarTipoOportunidade } from "@/app/acoes/oportunidades";
 import { listarOportunidades, tiposDeOportunidade } from "@/lib/oportunidades";
@@ -313,6 +314,38 @@ export default async function PaginaConfiguracoes({
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>Sua conta</h2>
+          <Modal
+            rotulo="Trocar senha"
+            titulo="Trocar senha"
+            descricao="A senha nova passa a valer imediatamente, aqui e nos outros dispositivos."
+            variante="secundario"
+            icone={<KeyRound size={15} />}
+          >
+            <form action={trocarSenha} className="formulario">
+              <label className="campo">
+                <span>Senha nova</span>
+                <input type="password" name="senha" required minLength={8} autoFocus />
+                <small>Pelo menos 8 caracteres.</small>
+              </label>
+              <label className="campo">
+                <span>Repita a senha</span>
+                <input type="password" name="confirmacao" required minLength={8} />
+              </label>
+              <button className="botao botao-primario" type="submit">
+                Salvar senha
+              </button>
+            </form>
+          </Modal>
+        </div>
+        <p className="nota" style={{ marginBottom: 0 }}>
+          Esqueceu a senha e não consegue entrar? A tela de acesso tem o link de redefinição por
+          e-mail.
+        </p>
       </section>
 
       <section className="painel">

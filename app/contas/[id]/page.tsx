@@ -336,7 +336,7 @@ export default async function PaginaConta({
         </Modal>
       )}
 
-      <Historico
+      <Anexos
         entidadeTipo="conta"
         entidadeId={conta.id}
         carteiraId={conta.carteira_id}
@@ -344,13 +344,12 @@ export default async function PaginaConta({
         editavel={editavel}
       />
 
-      <Anexos
+      <Historico
         entidadeTipo="conta"
         entidadeId={conta.id}
         carteiraId={conta.carteira_id}
         pessoas={pessoas}
         editavel={editavel}
-        volta={`/contas/${conta.id}`}
       />
 
       {podeExcluir && (

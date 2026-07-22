@@ -404,7 +404,7 @@ export default async function PaginaOportunidade({
         )}
       </section>
 
-      <Historico
+      <Anexos
         entidadeTipo="oportunidade"
         entidadeId={oportunidade.id}
         carteiraId={oportunidade.carteira_id}
@@ -412,13 +412,12 @@ export default async function PaginaOportunidade({
         editavel={editavel}
       />
 
-      <Anexos
+      <Historico
         entidadeTipo="oportunidade"
         entidadeId={oportunidade.id}
         carteiraId={oportunidade.carteira_id}
         pessoas={pessoas}
         editavel={editavel}
-        volta={`/oportunidades/${oportunidade.id}`}
       />
 
       {podeExcluir && (

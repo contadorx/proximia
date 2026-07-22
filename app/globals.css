@@ -1876,3 +1876,124 @@ input[aria-invalid="true"] {
   padding: 10px;
   margin: 0;
 }
+
+/* ---------------- portal e auditoria ---------------- */
+
+.portal {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 40px 20px 64px;
+}
+
+.campo-endereco {
+  display: block;
+  background: var(--g50);
+  border: 1px solid var(--g200);
+  border-radius: var(--r-p);
+  padding: 10px 14px;
+  font-size: 12.5px;
+  color: var(--navy);
+  word-break: break-all;
+  margin: 0 0 12px;
+}
+
+.linha-auditoria {
+  align-items: flex-start;
+}
+
+.mudancas {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 7px;
+}
+
+.mudanca {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.mudanca .dado {
+  color: var(--g500);
+  min-width: 130px;
+}
+
+.mudanca .de {
+  color: var(--g400);
+  text-decoration: line-through;
+}
+
+.mudanca .seta {
+  color: var(--g300);
+}
+
+.mudanca .para {
+  color: var(--navy);
+  font-weight: 600;
+}
+
+.mudanca-mais {
+  font-size: 11.5px;
+  color: var(--g400);
+}
+
+/* ---------------- primeiro acesso ---------------- */
+
+.trilha-passos {
+  list-style: none;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 var(--gap);
+  padding: 0;
+}
+
+.trilha-passo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--g400);
+  background: var(--branco);
+  border: 1px solid var(--g200);
+  border-radius: 100px;
+  padding: 6px 14px 6px 8px;
+}
+
+.trilha-marca {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--g100);
+  color: var(--g500);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.trilha-passo.atual {
+  color: var(--navy);
+  border-color: var(--navy);
+}
+
+.trilha-passo.atual .trilha-marca {
+  background: var(--navy);
+  color: #fff;
+}
+
+.trilha-passo.feito {
+  color: var(--esmeralda-forte);
+  border-color: #c4e8d7;
+  background: var(--esmeralda-pale);
+}
+
+.trilha-passo.feito .trilha-marca {
+  background: var(--esmeralda);
+  color: #fff;
+}

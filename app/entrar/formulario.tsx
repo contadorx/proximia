@@ -46,17 +46,22 @@ export default function FormularioAcesso({ modo }: { modo: Modo }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password: senha,
-        options: { data: { nome } },
+        options: {
+          data: { nome },
+          emailRedirectTo: `${window.location.origin}/auth/callback?proximo=/comecar`,
+        },
       });
       if (error) throw error;
 
       if (!data.session) {
-        setAviso("Cadastro criado. Confirme o e-mail pelo link que enviamos e depois entre.");
+        setAviso(
+          "Cadastro criado. Confirme o e-mail pelo link que enviamos — ele leva direto para a configuração inicial.",
+        );
         setEnviando(false);
         return;
       }
 
-      router.push("/");
+      router.push("/comecar");
       router.refresh();
     } catch (e) {
       const mensagem = e instanceof Error ? e.message : "Não foi possível concluir. Tente de novo.";
@@ -98,9 +103,10 @@ export default function FormularioAcesso({ modo }: { modo: Modo }) {
           value={senha}
           onChange={(e) => setSenha(e.target.value)}
           autoComplete={modo === "entrar" ? "current-password" : "new-password"}
-          minLength={6}
+          minLength={modo === "entrar" ? 6 : 8}
           required
         />
+        {modo === "cadastrar" && <small>Pelo menos 8 caracteres.</small>}
       </label>
 
       {erro && <p className="aviso aviso-erro">{erro}</p>}

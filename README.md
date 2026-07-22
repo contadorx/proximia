@@ -57,12 +57,11 @@ Aplicadas até aqui:
 | `0012_maturidade.sql` | F14 | Questionário ponderado, ciclos, avaliações, score e RLS |
 | `0013_panorama_oportunidades_convites.sql` | F17/F18 | Panorama com oportunidades e convites por e-mail |
 | `0014_alertas.sql` | F19 | Alertas proativos gerados pelo banco, com silenciar e reabrir |
-| `0015_anexos.sql` | F20 | Anexos em qualquer entidade, balde privado no Storage e RLS do arquivo |
-| `0016_auditoria.sql` | F21 | Trilha de acesso e alteração, só de acréscimo, com prazo de guarda |
-| `0017_portal.sql` | F22 | Link externo de leitura por carteira, com validade, revogação e registro de abertura |
+| `0015_anexos.sql` | F20 | Bucket privado, registro de anexos e políticas de storage |
+| `0016_auditoria.sql` | F21 | Trilha de alterações escrita só por gatilho |
+| `0017_portal.sql` | F22 | Portal público da carteira, com token revogável |
 
 Testes de banco ficam em `supabase/testes` e **não são migrations** — são scripts avulsos, para rodar no editor SQL quando quiser conferir. `0001_isolamento.sql` prova que uma organização não enxerga a outra.
-`0002_anexos_auditoria_portal.sql` tenta, de propósito, o que não pode dar certo — anexar arquivo e link na mesma linha, escrever direto na trilha, apagar linha da trilha, registrar acesso em organização alheia, abrir portal revogado, expirado e inexistente — e levanta exceção se alguma passar.
 
 ## Variáveis de ambiente
 
@@ -73,7 +72,6 @@ Testes de banco ficam em `supabase/testes` e **não são migrations** — são s
 | `SUPABASE_SERVICE_ROLE_KEY` | somente servidor | sim, para a rotina de extratos |
 | `BREVO_API_KEY`, `EMAIL_REMETENTE` | somente servidor | para enviar de verdade |
 | `CRON_SECRET` | somente servidor | para a rotina diária rodar |
-| `NEXT_PUBLIC_APP_URL` | cliente e servidor | para o link do portal sair com domínio |
 | `NEXT_PUBLIC_APP_NOME` | cliente e servidor | não |
 
 Nenhum segredo no repositório. A chave service role ignora RLS e só pode ser usada em rotina de servidor.
@@ -130,11 +128,15 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 
 **Convite em vez de cadastro prévio.** O link vale 14 dias, só para o e-mail convidado, e uma vez só. Vincular quem já tem acesso continua existindo, para quando não houver espera.
 
-**Anexo é arquivo ou link, nunca os dois.** O acervo oficial continua no repositório do assinante — para ele, entra o endereço. O que passa a caber aqui é o anexo de trabalho: a ata, o laudo, a planilha da rodada, que ninguém vai catalogar em repositório nenhum e que, sem lugar, volta para a caixa de e-mail de uma pessoa. O balde é privado e o download sai por endereço assinado de um minuto: não existe URL permanente para vazar. A política do Storage não enxerga a tabela de anexos, só o caminho — por isso o caminho começa pela organização.
+**Ninguém escreve na auditoria.** A trilha de alterações não tem política de escrita: as linhas nascem por gatilho no banco. Registro que a própria pessoa pode forjar não serve de auditoria. Guarda só os campos que mudaram — copiar a linha inteira encheria o banco de repetição e espalharia dado pessoal por mais um lugar.
 
-**A trilha só aceita acréscimo.** Não há política de update nem de delete em `auditoria`, nem grant para isso — nem para o dono. Registro de acesso que a administração pode reescrever não responde à única pergunta que ele existe para responder. A trilha guarda o nome dos campos tocados, nunca o conteúdo anterior: senão viraria uma segunda base de dados pessoais, com todo o passivo e nenhum uso. Histórico e compromisso automático ficam de fora — o primeiro já nasce versionado com autor, o segundo é gerado aos montes por gatilho e enterraria o resto. A única forma de tirar linha da trilha é o descarte por prazo de guarda, que ele próprio vira linha na trilha.
+**O caminho do anexo carrega o dono.** O arquivo é gravado em `{org_id}/{entidade}/{uuid}-{nome}`, e a política do storage decide o acesso lendo o próprio nome do objeto. Nada é público: o download sai por link assinado que vale um minuto.
 
-**O portal não expõe potencial por padrão.** Link com segredo, uma carteira, somente leitura, com validade e revogação. Quem visita é anônimo e não recebe `select` em tabela nenhuma: tudo sai de uma função, já filtrado pelo que o link autoriza. Potencial e nome de quem registrou começam desligados — teto estimado que chega a quem não participou da apuração vira número cobrado, e quem digitou é assunto interno. Cada abertura fica registrada, o que responde ao "mandei e não sei se olharam". Encerrar não apaga: o link para de abrir e o registro de quem já abriu permanece.
+**O portal é um segredo revogável.** O token no endereço é a credencial: pode ser trocado a qualquer momento, pode expirar, conta acessos, e nunca devolve dado pessoal — sem contatos, sem e-mails, sem nome de quem escreveu. Valores podem ser escondidos por carteira.
+
+**O primeiro acesso lê o estado, não a URL.** O passo mostrado vem do que existe no banco — nome preenchido, organização criada, primeira carteira. Quem fecha o navegador no meio volta de onde parou; quem já terminou não vê a tela de novo.
+
+**Redefinição não confirma cadastro.** O pedido de redefinição responde a mesma coisa exista ou não a conta. Dizer "esse e-mail não está cadastrado" entrega a terceiros quem usa o sistema.
 
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
@@ -160,9 +162,11 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 | `/maturidade`, `/maturidade/[id]` | Régua, ciclos, matriz maturidade × potencial e questionário |
 | `/alertas` | O que saiu do trilho, com silenciar e varredura sob demanda |
 | `/convite/[token]` | Aceite de convite de acesso |
-| `/portais` | Links externos por carteira, com aberturas e revogação |
-| `/auditoria` | Quem alterou o quê e quem abriu o que não é seu |
-| `/portal/[token]` | Situação da carteira para quem não tem acesso ao sistema |
+| `/comecar` | Primeiro acesso guiado: nome, organização e primeira carteira |
+| `/esqueci`, `/redefinir` | Redefinição de senha por e-mail |
+| `/auth/callback` | Troca o código do link de e-mail por sessão |
+| `/auditoria` | Quem alterou o quê, com filtros |
+| `/portal/[token]` | Página pública da carteira, somente leitura |
 | `/instalacao` | Estado da configuração e trilha de construção |
 | `/diagnostico` | Testa configuração, conexão, sessão e banco |
 | `/api/saude` | Verificação de saúde |
@@ -206,6 +210,6 @@ supabase/
 
 F0 esqueleto ✓ · F1 acesso, organizações e papéis ✓ · F2 carteiras ✓ · F3 contas nomeadas ✓ · F4 contratos e cláusulas ✓ · F5 frentes ✓ · F6 timeline e memória institucional ✓ · F7 compromissos e alertas ✓ · F8 painel multi-carteira ✓ · F9 situação da carteira ✓ · F10 importação ✓ · F11 camada de interface ✓ — **fatia 1 completa**.
 
-Fase 2: F12 oportunidades ✓ · F13 extrato automático ✓ · F14 motor de maturidade ✓ · F16 seletor com busca ✓ · F17 panorama com oportunidades ✓ · F18 convite por e-mail ✓ · F19 alertas proativos ✓ · F20 anexos ✓ · F21 registro de acesso ✓ · F22 portal da carteira ✓ — **fase 2 completa**.
+Fase 2 completa: F12 oportunidades ✓ · F13 extrato automático ✓ · F14 maturidade ✓ · F16 seletor com busca ✓ · F17 panorama com oportunidades ✓ · F18 convite por e-mail ✓ · F19 alertas ✓ · F20 anexos ✓ · F21 registro de alterações ✓ · F22 portal da unidade ✓.
 
 Uma feature por vez, com build passando entre cada uma.

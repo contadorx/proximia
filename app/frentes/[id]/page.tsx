@@ -297,7 +297,7 @@ export default async function PaginaFrente({
           </form>
         </Modal>
       )}
-      <Historico
+      <Anexos
         entidadeTipo="frente"
         entidadeId={frente.id}
         carteiraId={frente.carteira_id}
@@ -305,13 +305,12 @@ export default async function PaginaFrente({
         editavel={editavel}
       />
 
-      <Anexos
+      <Historico
         entidadeTipo="frente"
         entidadeId={frente.id}
         carteiraId={frente.carteira_id}
         pessoas={pessoas}
         editavel={editavel}
-        volta={`/frentes/${frente.id}`}
       />
 
       {podeExcluir && (

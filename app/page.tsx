@@ -18,7 +18,10 @@ export default async function PaginaRaiz() {
   if (org) redirect("/painel");
 
   const vinculos = await vinculosDoUsuario();
-  if (vinculos.length === 0) redirect("/organizacoes");
+
+  // Sem organização nenhuma, a pessoa é nova: vai para o primeiro acesso
+  // em vez de cair numa lista vazia com um formulário solto.
+  if (vinculos.length === 0) redirect("/comecar");
 
   redirect("/organizacoes");
 }
