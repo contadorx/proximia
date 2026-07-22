@@ -11,7 +11,7 @@ const TRILHA: { fase: string; titulo: string; feito: boolean }[] = [
   { fase: "F5", titulo: "Frentes de trabalho", feito: true },
   { fase: "F6", titulo: "Timeline e memória institucional", feito: true },
   { fase: "F7", titulo: "Compromissos e alertas", feito: true },
-  { fase: "F8", titulo: "Painel multi-carteira", feito: false },
+  { fase: "F8", titulo: "Painel multi-carteira", feito: true },
   { fase: "F9", titulo: "Situação da carteira (imprimível)", feito: false },
   { fase: "F10", titulo: "Importação de dados", feito: false },
 ];

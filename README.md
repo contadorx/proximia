@@ -50,6 +50,7 @@ Aplicadas até aqui:
 | `0005_frentes.sql` | F5 | Catálogo de frentes, frentes agregadas por carteira e RLS |
 | `0006_registros.sql` | F6 | Histórico com autor, versionamento, imutabilidade e RLS |
 | `0007_compromissos.sql` | F7 | Compromissos, geração automática por contrato e cláusula, e RLS |
+| `0008_panorama.sql` | F8 | Visão `carteira_resumo` consolidando as carteiras, com security_invoker |
 
 Testes de banco ficam em `supabase/testes` e **não são migrations** — são scripts avulsos, para rodar no editor SQL quando quiser conferir. `0001_isolamento.sql` prova que uma organização não enxerga a outra.
 
@@ -88,6 +89,8 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 
 **Compromisso nasce do dado.** Contrato com vigência e cláusula monitorada geram compromisso sozinhos, por gatilho no banco: mudar o aviso prévio move a data, encerrar o contrato cancela, remarcar reabre — sempre uma linha por origem, nunca duplicada. Compromisso automático não pode ser apagado, só cancelado.
 
+**Visão consolidada não fura a RLS.** `carteira_resumo` é criada com `security_invoker = on`: roda com as permissões de quem consulta, não com as do dono. Sem isso, uma visão viraria porta lateral — o ponto focal veria números de carteiras que não pode abrir.
+
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
 ## Rotas
@@ -104,6 +107,7 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 | `/frentes`, `/frentes/[id]` | Frentes agregadas, totais, catálogo e links da base |
 | `/historico` | Tudo o que foi registrado, por dia, com filtros |
 | `/compromissos` | Atrasados, meus, próximos e geração retroativa |
+| `/panorama` | Todas as carteiras em uma tela, ordenadas por atenção |
 | `/instalacao` | Estado da configuração e trilha de construção |
 | `/diagnostico` | Testa configuração, conexão, sessão e banco |
 | `/api/saude` | Verificação de saúde |
@@ -145,6 +149,6 @@ supabase/
 
 ## Trilha de construção
 
-F0 esqueleto ✓ · F1 acesso, organizações e papéis ✓ · F2 carteiras ✓ · F3 contas nomeadas ✓ · F4 contratos e cláusulas ✓ · F5 frentes ✓ · F6 timeline e memória institucional ✓ · F7 compromissos e alertas ✓ · F8 painel multi-carteira · F9 situação da carteira · F10 importação.
+F0 esqueleto ✓ · F1 acesso, organizações e papéis ✓ · F2 carteiras ✓ · F3 contas nomeadas ✓ · F4 contratos e cláusulas ✓ · F5 frentes ✓ · F6 timeline e memória institucional ✓ · F7 compromissos e alertas ✓ · F8 painel multi-carteira ✓ · F9 situação da carteira · F10 importação.
 
 Uma feature por vez, com build passando entre cada uma.

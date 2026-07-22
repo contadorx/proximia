@@ -155,6 +155,12 @@ export default async function PaginaPainel({
 
       <PrimeirosPassos passos={passos} />
 
+      {carteiras.length > 1 && (
+        <p className="nota" style={{ marginBottom: 24 }}>
+          Para comparar as carteiras entre si, abra o <Link href="/panorama">panorama</Link>.
+        </p>
+      )}
+
       <section className={compromissosAtencao.length ? "painel painel-alerta" : "painel"}>
         <div className="linha-titulo">
           <h2>Compromissos do período</h2>

@@ -13,6 +13,7 @@ export const metadata: Metadata = {
 
 const SECOES = [
   { href: "/painel", rotulo: "Painel" },
+  { href: "/panorama", rotulo: "Panorama" },
   { href: "/carteiras", rotulo: "Carteiras" },
   { href: "/contas", rotulo: "Contas" },
   { href: "/frentes", rotulo: "Frentes" },
