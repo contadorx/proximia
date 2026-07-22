@@ -378,6 +378,12 @@ export default async function PaginaConfiguracoes({
           </li>
           <li>
             <span className="rotulo">
+              <Link href="/configuracoes/playbooks">Playbooks de cadência</Link>
+              <span className="dica">Compromissos que nascem quando a oportunidade muda de etapa</span>
+            </span>
+          </li>
+          <li>
+            <span className="rotulo">
               <Link href="/configuracoes/pipeline">Pipeline de conversão</Link>
               <span className="dica">Etapas, prazo esperado de cada uma e motivos de perda</span>
             </span>

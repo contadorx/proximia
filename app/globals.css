@@ -2527,3 +2527,8 @@ input[aria-invalid="true"] {
     flex: 0 0 200px;
   }
 }
+
+.painel-desligado {
+  opacity: 0.72;
+  border-style: dashed;
+}
