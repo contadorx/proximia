@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { Pencil } from "lucide-react";
 import { Modal } from "@/components/modal";
+import { Mail, Send } from "lucide-react";
+import { criarClienteServidor } from "@/lib/supabase/server";
+import { periodos } from "@/lib/periodo";
+import { salvarCadencia, enviarExtratoAgora } from "@/app/acoes/extrato";
+import { formatarData } from "@/lib/contas";
 import { notFound } from "next/navigation";
 import { exigirOrg, podeEscrever } from "@/lib/auth";
 import {
@@ -44,6 +49,29 @@ export default async function PaginaCarteira({
     listarFrentes({ orgId: org.orgId, carteiraId: carteira.id }),
     listarOportunidades({ orgId: org.orgId, carteiraId: carteira.id }),
   ]);
+
+  const { data: enviosBrutos } = await criarClienteServidor()
+    .from("envios")
+    .select("id, origem, destinatarios, periodo_inicio, periodo_fim, status, detalhe, criado_em")
+    .eq("carteira_id", carteira.id)
+    .order("criado_em", { ascending: false })
+    .limit(5);
+  const envios = (enviosBrutos ?? []) as {
+    id: string;
+    origem: string;
+    destinatarios: string[];
+    periodo_inicio: string;
+    periodo_fim: string;
+    status: string;
+    detalhe: string | null;
+    criado_em: string;
+  }[];
+  const destinatariosAtuais = ((carteira as unknown as {
+    extrato_destinatarios?: string[];
+  }).extrato_destinatarios ?? []) as string[];
+  const cadenciaAtual = ((carteira as unknown as { cadencia_extrato?: string }).cadencia_extrato ??
+    "nenhuma") as string;
+  const diaAtual = ((carteira as unknown as { extrato_dia?: number }).extrato_dia ?? 1) as number;
 
   const podeEditar = podeEscrever(org.papel) && org.papel !== "ponto_focal";
   const faixa = faixaMaturidade(carteira.score_maturidade);
@@ -275,6 +303,123 @@ export default async function PaginaCarteira({
           </section>
         )
       )}
+
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>Extrato periódico</h2>
+          {podeEscrever(org.papel) && (
+            <div className="cabeca-acoes">
+              <Modal
+                rotulo="Configurar envio"
+                titulo="Extrato periódico desta carteira"
+                descricao="Cadência, dia do mês e quem recebe."
+                variante="secundario"
+                icone={<Mail size={15} />}
+              >
+                <form action={salvarCadencia} className="formulario">
+                  <input type="hidden" name="id" value={carteira.id} />
+                  <div className="formulario-linha">
+                    <label className="campo">
+                      <span>Cadência</span>
+                      <select name="cadencia_extrato" defaultValue={cadenciaAtual}>
+                        <option value="nenhuma">Não enviar</option>
+                        <option value="quinzenal">Quinzenal</option>
+                        <option value="mensal">Mensal</option>
+                        <option value="trimestral">Trimestral (jan, abr, jul, out)</option>
+                      </select>
+                    </label>
+                    <label className="campo campo-numerico">
+                      <span>Dia do mês</span>
+                      <input type="number" name="extrato_dia" min={1} max={28} defaultValue={diaAtual} />
+                      <small>Até 28: 29, 30 e 31 não existem em todo mês.</small>
+                    </label>
+                  </div>
+                  <label className="campo">
+                    <span>Destinatários</span>
+                    <textarea
+                      name="destinatarios"
+                      rows={3}
+                      defaultValue={destinatariosAtuais.join("\n")}
+                      placeholder="um e-mail por linha"
+                    />
+                  </label>
+                  <button className="botao botao-primario" type="submit">
+                    Salvar cadência
+                  </button>
+                </form>
+              </Modal>
+
+              <Modal
+                rotulo="Enviar agora"
+                titulo="Enviar extrato agora"
+                descricao="Escolha o período. Sem provedor configurado, o envio fica registrado como simulado."
+                icone={<Send size={15} />}
+              >
+                <form action={enviarExtratoAgora} className="formulario">
+                  <input type="hidden" name="id" value={carteira.id} />
+                  <label className="campo">
+                    <span>Período</span>
+                    <select name="periodo" defaultValue="mes">
+                      {periodos().map((pp) => (
+                        <option key={pp.chave} value={pp.chave}>
+                          {pp.rotulo}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="campo">
+                    <span>Destinatários</span>
+                    <textarea
+                      name="destinatarios"
+                      rows={2}
+                      defaultValue={destinatariosAtuais.join("\n")}
+                      placeholder="um e-mail por linha"
+                    />
+                    <small>Em branco, usa os destinatários salvos.</small>
+                  </label>
+                  <button className="botao botao-primario" type="submit">
+                    Enviar
+                  </button>
+                </form>
+              </Modal>
+            </div>
+          )}
+        </div>
+
+        <p className="nota">
+          {cadenciaAtual === "nenhuma"
+            ? "Sem envio automático. O extrato continua disponível na tela e para impressão."
+            : `Envio ${cadenciaAtual} no dia ${diaAtual}, para ${destinatariosAtuais.length} destinatário(s).`}
+        </p>
+
+        {envios.length > 0 && (
+          <ul className="lista-estado">
+            {envios.map((e) => (
+              <li key={e.id}>
+                <span className="rotulo">
+                  {formatarData(e.criado_em.slice(0, 10))} · {e.origem === "manual" ? "manual" : "automático"}
+                  <span className="dica">
+                    {formatarData(e.periodo_inicio)} a {formatarData(e.periodo_fim)} ·{" "}
+                    {e.destinatarios.length} destinatário(s)
+                    {e.detalhe ? ` · ${e.detalhe}` : ""}
+                  </span>
+                </span>
+                <span
+                  className={
+                    e.status === "enviado"
+                      ? "selo selo-ok"
+                      : e.status === "falhou"
+                        ? "selo selo-falta"
+                        : "selo selo-atencao"
+                  }
+                >
+                  {e.status}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <Historico
         entidadeTipo="carteira"

@@ -31,7 +31,22 @@ const OPCIONAIS = [
   {
     nome: "SUPABASE_SERVICE_ROLE_KEY",
     valor: process.env.SUPABASE_SERVICE_ROLE_KEY,
-    dica: "Chave service role. Usada apenas no servidor, a partir da importacao de dados.",
+    dica: "Chave service role. Usada apenas no servidor, pela rotina de extratos.",
+  },
+  {
+    nome: "BREVO_API_KEY",
+    valor: process.env.BREVO_API_KEY,
+    dica: "Chave do provedor de e-mail. Sem ela, os envios ficam como simulados.",
+  },
+  {
+    nome: "EMAIL_REMETENTE",
+    valor: process.env.EMAIL_REMETENTE,
+    dica: "Endereco remetente verificado no provedor.",
+  },
+  {
+    nome: "CRON_SECRET",
+    valor: process.env.CRON_SECRET,
+    dica: "Segredo da rotina diaria de extratos. Sem ele, a rotina fica desligada.",
   },
 ] as const;
 

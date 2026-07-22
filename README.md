@@ -53,6 +53,7 @@ Aplicadas até aqui:
 | `0008_panorama.sql` | F8 | Visão `carteira_resumo` consolidando as carteiras, com security_invoker |
 | `0009_importacoes.sql` | F10 | Registro das cargas, com conferência antes de gravar, e RLS |
 | `0010_oportunidades.sql` | F12 | Oportunidades com investimento, retorno, payback e RLS |
+| `0011_extrato_automatico.sql` | F13 | Cadência do extrato por carteira, registro de envios e RLS |
 
 Testes de banco ficam em `supabase/testes` e **não são migrations** — são scripts avulsos, para rodar no editor SQL quando quiser conferir. `0001_isolamento.sql` prova que uma organização não enxerga a outra.
 
@@ -62,7 +63,9 @@ Testes de banco ficam em `supabase/testes` e **não são migrations** — são s
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | cliente e servidor | sim |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | cliente e servidor | sim |
-| `SUPABASE_SERVICE_ROLE_KEY` | somente servidor | a partir da importação (F10) |
+| `SUPABASE_SERVICE_ROLE_KEY` | somente servidor | sim, para a rotina de extratos |
+| `BREVO_API_KEY`, `EMAIL_REMETENTE` | somente servidor | para enviar de verdade |
+| `CRON_SECRET` | somente servidor | para a rotina diária rodar |
 | `NEXT_PUBLIC_APP_NOME` | cliente e servidor | não |
 
 Nenhum segredo no repositório. A chave service role ignora RLS e só pode ser usada em rotina de servidor.
@@ -104,6 +107,8 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 **Conta de retorno é do banco.** Payback e retorno percentual são colunas geradas a partir de investimento, retorno mensal e custo adicional. Quando o resultado mensal não cobre o custo, o payback fica nulo — não existe payback, e o sistema diz isso em vez de mostrar um número.
 
 **Vocabulário sem setor.** Onde a operação de origem diria um termo do segmento, o produto diz oportunidade; o tipo — expansão, novo serviço, substituição de equipamento — é catálogo do assinante.
+
+**Envio deixa rastro, inclusive quando falha.** Cada extrato enviado vira linha em `envios`, com destinatários, período e resultado. Envio simulado (sem provedor configurado) e envio com falha não marcam a carteira como atendida — são tentados de novo no ciclo seguinte. Sem esse registro, "não recebi o relatório" não tem resposta.
 
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
@@ -169,6 +174,6 @@ supabase/
 
 F0 esqueleto ✓ · F1 acesso, organizações e papéis ✓ · F2 carteiras ✓ · F3 contas nomeadas ✓ · F4 contratos e cláusulas ✓ · F5 frentes ✓ · F6 timeline e memória institucional ✓ · F7 compromissos e alertas ✓ · F8 painel multi-carteira ✓ · F9 situação da carteira ✓ · F10 importação ✓ · F11 camada de interface ✓ — **fatia 1 completa**.
 
-Fase 2 em andamento: F12 oportunidades ✓ · extrato automático por e-mail · motor de maturidade · portal da unidade · anexos · alertas proativos.
+Fase 2 em andamento: F12 oportunidades ✓ · F13 extrato automático por e-mail ✓ · motor de maturidade · portal da unidade · anexos · alertas proativos.
 
 Uma feature por vez, com build passando entre cada uma.
