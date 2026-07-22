@@ -5,6 +5,7 @@ import { PAPEIS, rotuloPapel, type Papel } from "@/lib/tipos";
 import { listarCarteiras } from "@/lib/carteiras";
 import { formatarData, listarContas } from "@/lib/contas";
 import { classeSelo, listarContratos, urgencia } from "@/lib/contratos";
+import { classeStatus, listarFrentes, rotuloStatus, totais } from "@/lib/frentes";
 import { vincularMembro } from "@/app/acoes/organizacoes";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { PrimeirosPassos, type Passo } from "@/components/primeiros-passos";
@@ -52,12 +53,19 @@ export default async function PaginaPainel({
 }) {
   const org = await exigirOrg();
 
-  const [pessoas, carteiras, contas, contratos] = await Promise.all([
+  const [pessoas, carteiras, contas, contratos, frentes] = await Promise.all([
     pessoasDaOrg(org.orgId),
     listarCarteiras(org.orgId),
     listarContas({ orgId: org.orgId }),
     listarContratos({ orgId: org.orgId }),
+    listarFrentes({ orgId: org.orgId }),
   ]);
+
+  const emAndamento = frentes
+    .filter((f) => f.status === "em_execucao" || f.status === "em_analise")
+    .slice(0, 6);
+  const totalFrentes = totais(frentes);
+  const nomeCarteira = (id: string) => carteiras.find((c) => c.id === id)?.nome ?? "—";
 
   const administra = podeAdministrar(org.papel);
   const urgentes = contratos
@@ -92,6 +100,14 @@ export default async function PaginaPainel({
       cta: "Registrar contrato",
       href: "/contratos",
       feito: contratos.length > 0,
+    },
+    {
+      chave: "frente",
+      titulo: "Registre as frentes em andamento",
+      descricao: "Uma linha por tema de volume, com dono e próxima etapa — é o que responde \u201Co que está rodando?\u201D.",
+      cta: "Criar frente",
+      href: "/frentes",
+      feito: frentes.length > 0,
     },
     {
       chave: "clausula",
@@ -162,6 +178,51 @@ export default async function PaginaPainel({
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>Em andamento</h2>
+          {frentes.length > 0 && (
+            <Link className="link-acao" href="/frentes">
+              Ver todas as frentes
+            </Link>
+          )}
+        </div>
+
+        {emAndamento.length === 0 ? (
+          <Vazio>
+            Nenhuma frente em análise ou execução. Quando houver, aparece aqui quem conduz e qual é
+            a próxima etapa.
+          </Vazio>
+        ) : (
+          <>
+            <ul className="lista-estado">
+              {emAndamento.map((f) => (
+                <li key={f.id}>
+                  <span className="rotulo">
+                    <Link href={`/frentes/${f.id}`}>{f.titulo}</Link>
+                    <span className="dica">
+                      {[
+                        nomeCarteira(f.carteira_id),
+                        f.qtd_casos !== null ? `${f.qtd_casos.toLocaleString("pt-BR")} casos` : null,
+                        f.proxima_etapa,
+                        f.prazo ? `prazo ${formatarData(f.prazo)}` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                  </span>
+                  <span className={classeStatus(f.status)}>{rotuloStatus(f.status)}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="nota" style={{ marginTop: 14 }}>
+              {totalFrentes.ativas} frentes em aberto representando{" "}
+              <span className="dado">{totalFrentes.casos.toLocaleString("pt-BR")}</span> casos.
+            </p>
+          </>
         )}
       </section>
 

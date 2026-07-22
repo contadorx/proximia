@@ -15,6 +15,7 @@ const SECOES = [
   { href: "/painel", rotulo: "Painel" },
   { href: "/carteiras", rotulo: "Carteiras" },
   { href: "/contas", rotulo: "Contas" },
+  { href: "/frentes", rotulo: "Frentes" },
   { href: "/contratos", rotulo: "Contratos" },
 ];
 

@@ -10,6 +10,7 @@ import {
   STATUS_CARTEIRA,
 } from "@/lib/carteiras";
 import { formatarValor, listarContas, rotuloRelacao } from "@/lib/contas";
+import { classeStatus, listarFrentes, rotuloStatus } from "@/lib/frentes";
 import {
   atualizarCarteira,
   desvincularPessoaCarteira,
@@ -32,10 +33,11 @@ export default async function PaginaCarteira({
   // se não veio nada, para quem pediu ela não existe.
   if (!carteira) notFound();
 
-  const [pessoasOrg, pessoasCart, contas] = await Promise.all([
+  const [pessoasOrg, pessoasCart, contas, frentes] = await Promise.all([
     pessoasDaOrganizacao(org.orgId),
     pessoasDaCarteira(carteira.id),
     listarContas({ orgId: org.orgId, carteiraId: carteira.id }),
+    listarFrentes({ orgId: org.orgId, carteiraId: carteira.id }),
   ]);
 
   const podeEditar = podeEscrever(org.papel) && org.papel !== "ponto_focal";
@@ -81,6 +83,31 @@ export default async function PaginaCarteira({
                   <span className="valor-teto">teto {formatarValor(c.potencial_bruto)}</span>
                   <span className="valor-capturado">capt. {formatarValor(c.valor_capturado)}</span>
                 </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="painel">
+        <h2>Frentes desta carteira</h2>
+        {frentes.length === 0 ? (
+          <p className="nota">
+            Nenhuma frente. <Link href="/frentes">Registre a primeira</Link>.
+          </p>
+        ) : (
+          <ul className="lista-estado">
+            {frentes.map((f) => (
+              <li key={f.id}>
+                <span className="rotulo">
+                  <Link href={`/frentes/${f.id}`}>{f.titulo}</Link>
+                  <span className="dica">
+                    {[f.qtd_casos !== null ? `${f.qtd_casos} casos` : null, f.proxima_etapa]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                </span>
+                <span className={classeStatus(f.status)}>{rotuloStatus(f.status)}</span>
               </li>
             ))}
           </ul>
@@ -220,7 +247,7 @@ export default async function PaginaCarteira({
       )}
 
       <p className="nota">
-        Contas, contratos e frentes desta carteira entram nas próximas etapas da construção.
+        O histórico e o extrato desta carteira entram nas próximas etapas da construção.
       </p>
     </>
   );
