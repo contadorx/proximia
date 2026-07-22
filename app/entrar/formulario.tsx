@@ -106,7 +106,7 @@ export default function FormularioAcesso({ modo }: { modo: Modo }) {
       {erro && <p className="aviso aviso-erro">{erro}</p>}
       {aviso && <p className="aviso aviso-ok">{aviso}</p>}
 
-      <button className="botao" type="submit" disabled={enviando}>
+      <button className="botao botao-primario" type="submit" disabled={enviando}>
         {enviando ? "Enviando…" : modo === "entrar" ? "Entrar" : "Criar acesso"}
       </button>
     </form>

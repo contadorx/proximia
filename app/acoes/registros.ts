@@ -53,7 +53,7 @@ export async function criarRegistro(formData: FormData) {
 
   revalidatePath(rota);
   revalidatePath("/historico");
-  redirect(rota);
+  redirect(`${rota}?ok=${encodeURIComponent("Registro incluído.")}`);
 }
 
 export async function editarRegistro(formData: FormData) {

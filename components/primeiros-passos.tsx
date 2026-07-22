@@ -45,7 +45,7 @@ export function PrimeirosPassos({ passos }: { passos: Passo[] }) {
               )}
             </span>
             {!p.feito && p.chave === proximo?.chave && (
-              <Link className="botao" href={p.href}>
+              <Link className="botao botao-secundario" href={p.href}>
                 {p.cta}
               </Link>
             )}

@@ -23,7 +23,7 @@ export default function Erro({
       )}
 
       <div className="acoes-rodape" style={{ marginTop: 24 }}>
-        <button className="botao" onClick={() => reset()}>
+        <button className="botao botao-secundario" onClick={() => reset()}>
           Tentar de novo
         </button>
       </div>

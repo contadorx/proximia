@@ -78,7 +78,7 @@ export async function criarTipoOportunidade(formData: FormData) {
   if (error) comErro("/configuracoes", traduzir(error.message, error.code));
 
   revalidatePath("/configuracoes");
-  redirect("/configuracoes");
+  redirect(`/configuracoes?ok=${encodeURIComponent("Tipo de oportunidade incluído.")}`);
 }
 
 export async function criarOportunidade(formData: FormData) {
@@ -167,7 +167,7 @@ export async function mudarFase(formData: FormData) {
   if (error) comErro(rota, traduzir(error.message, error.code));
 
   revalidatePath(rota);
-  redirect(rota);
+  redirect(`${rota}?ok=${encodeURIComponent("Fase alterada.")}`);
 }
 
 export async function incluirLinkOportunidade(formData: FormData) {
@@ -191,5 +191,5 @@ export async function incluirLinkOportunidade(formData: FormData) {
   if (error) comErro(rota, traduzir(error.message, error.code));
 
   revalidatePath(rota);
-  redirect(rota);
+  redirect(`${rota}?ok=${encodeURIComponent("Link incluído.")}`);
 }

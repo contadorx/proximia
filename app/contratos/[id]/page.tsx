@@ -16,6 +16,8 @@ import {
 import { atualizarContrato, criarClausula, excluirClausula } from "@/app/acoes/contratos";
 import { Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
+import { BotaoExcluir } from "@/components/botao-excluir";
+import { excluirContrato } from "@/app/acoes/exclusoes";
 import { Pencil } from "lucide-react";
 import { Historico } from "@/components/historico";
 import { pessoasDaOrganizacao } from "@/lib/carteiras";
@@ -44,6 +46,8 @@ export default async function PaginaContrato({
   ]);
 
   const editavel = podeEscrever(org.papel);
+  const podeExcluir = org.papel !== "ponto_focal" && podeEscrever(org.papel);
+  const id = contrato.id;
   const u = urgencia(contrato);
   const alertas = clausulasEmAlerta(clausulas);
 
@@ -246,7 +250,7 @@ export default async function PaginaContrato({
                 <span>Avisar quantos dias antes</span>
                 <input type="number" name="antecedencia_dias" min={0} max={730} defaultValue={30} />
               </label>
-              <button className="botao" type="submit">
+              <button className="botao botao-primario" type="submit">
                 Incluir cláusula
               </button>
             </div>
@@ -366,7 +370,7 @@ export default async function PaginaContrato({
               <textarea name="observacoes" rows={4} defaultValue={contrato.observacoes ?? ""} />
             </label>
 
-            <button className="botao" type="submit">
+            <button className="botao botao-primario" type="submit">
               Salvar alterações
             </button>
           </form>
@@ -379,6 +383,19 @@ export default async function PaginaContrato({
         pessoas={pessoas}
         editavel={editavel}
       />
+
+      {podeExcluir && (
+        <section className="painel">
+          <div className="zona-perigo" style={{ borderTop: 0, marginTop: 0, paddingTop: 0 }}>
+            <h2>Excluir contrato</h2>
+            <p className="nota">Apaga as cláusulas e os compromissos gerados por ele.</p>
+            <form action={excluirContrato}>
+              <input type="hidden" name="id" value={id} />
+              <BotaoExcluir rotulo="Excluir contrato" aviso="Não há como desfazer." />
+            </form>
+          </div>
+        </section>
+      )}
     </>
   );
 }

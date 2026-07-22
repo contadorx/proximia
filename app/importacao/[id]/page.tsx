@@ -91,7 +91,7 @@ export default async function PaginaRelatorio({
           <div className="acoes-rodape" style={{ marginTop: 22 }}>
             <form action={confirmarImportacao}>
               <input type="hidden" name="id" value={imp.id} />
-              <button className="botao" type="submit" disabled={imp.linhas_ok === 0}>
+              <button className="botao botao-primario" type="submit" disabled={imp.linhas_ok === 0}>
                 Gravar {imp.linhas_ok} {imp.linhas_ok === 1 ? "registro" : "registros"}
               </button>
             </form>

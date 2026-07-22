@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Pencil } from "lucide-react";
 import { Modal } from "@/components/modal";
+import { BotaoExcluir } from "@/components/botao-excluir";
+import { excluirCarteira } from "@/app/acoes/exclusoes";
 import { Mail, Send } from "lucide-react";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { periodos } from "@/lib/periodo";
@@ -74,6 +76,8 @@ export default async function PaginaCarteira({
   const diaAtual = ((carteira as unknown as { extrato_dia?: number }).extrato_dia ?? 1) as number;
 
   const podeEditar = podeEscrever(org.papel) && org.papel !== "ponto_focal";
+  const podeExcluir = org.papel === "owner" || org.papel === "admin";
+  const id = carteira.id;
   const faixa = faixaMaturidade(carteira.score_maturidade);
   const disponiveis = pessoasOrg.filter((p) => !pessoasCart.some((v) => v.id === p.id));
 
@@ -221,7 +225,7 @@ export default async function PaginaCarteira({
                 ))}
               </select>
             </label>
-            <button className="botao" type="submit">
+            <button className="botao botao-primario" type="submit">
               Vincular
             </button>
           </form>
@@ -290,7 +294,7 @@ export default async function PaginaCarteira({
               <textarea name="observacoes" rows={4} defaultValue={carteira.observacoes ?? ""} />
             </label>
 
-            <button className="botao" type="submit">
+            <button className="botao botao-primario" type="submit">
               Salvar alterações
             </button>
           </form>
@@ -428,6 +432,19 @@ export default async function PaginaCarteira({
         pessoas={pessoasOrg}
         editavel={podeEscrever(org.papel)}
       />
+
+      {podeExcluir && (
+        <section className="painel">
+          <div className="zona-perigo" style={{ borderTop: 0, marginTop: 0, paddingTop: 0 }}>
+            <h2>Excluir carteira</h2>
+            <p className="nota">Excluir a carteira apaga junto as contas, contratos, frentes, oportunidades, compromissos e todo o histórico ligados a ela.</p>
+            <form action={excluirCarteira}>
+              <input type="hidden" name="id" value={id} />
+              <BotaoExcluir rotulo="Excluir carteira" aviso="Não há como desfazer." />
+            </form>
+          </div>
+        </section>
+      )}
     </>
   );
 }

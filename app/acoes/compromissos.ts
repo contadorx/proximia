@@ -52,7 +52,7 @@ export async function criarCompromisso(formData: FormData) {
   if (error) comErro(rota, traduzir(error.message, error.code));
 
   revalidatePath(rota);
-  redirect(rota);
+  redirect(`${rota}?ok=${encodeURIComponent("Compromisso registrado.")}`);
 }
 
 export async function mudarStatusCompromisso(formData: FormData) {
@@ -80,7 +80,7 @@ export async function mudarStatusCompromisso(formData: FormData) {
   if (count === 0) comErro(rota, "Nada mudou: seu perfil não permite alterar este compromisso.");
 
   revalidatePath(rota);
-  redirect(rota);
+  redirect(`${rota}?ok=${encodeURIComponent("Compromisso atualizado.")}`);
 }
 
 export async function gerarCompromissosPendentes() {

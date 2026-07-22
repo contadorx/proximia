@@ -55,7 +55,7 @@ export default async function PaginaPanorama({
       {filtradas.length === 0 ? (
         <Vazio
           acao={
-            <Link className="botao" href="/carteiras">
+            <Link className="botao botao-secundario" href="/carteiras">
               Cadastrar carteira
             </Link>
           }

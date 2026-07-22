@@ -10,6 +10,8 @@ import { criarTipoOportunidade } from "@/app/acoes/oportunidades";
 import { listarOportunidades, tiposDeOportunidade } from "@/lib/oportunidades";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
+import { BotaoExcluir } from "@/components/botao-excluir";
+import { excluirTipoFrente, excluirTipoOportunidade } from "@/app/acoes/exclusoes";
 
 export const dynamic = "force-dynamic";
 
@@ -177,6 +179,12 @@ export default async function PaginaConfiguracoes({
                 <span className="selo selo-neutro">
                   {frentes.filter((f) => f.catalogo_id === t.id).length} em uso
                 </span>
+                {gereCatalogo && (
+                  <form action={excluirTipoFrente}>
+                    <input type="hidden" name="id" value={t.id} />
+                    <BotaoExcluir compacto rotulo="Excluir" />
+                  </form>
+                )}
               </li>
             ))}
           </ul>
@@ -223,6 +231,12 @@ export default async function PaginaConfiguracoes({
                 <span className="selo selo-neutro">
                   {oportunidades.filter((o) => o.catalogo_id === t.id).length} em uso
                 </span>
+                {gereCatalogo && (
+                  <form action={excluirTipoOportunidade}>
+                    <input type="hidden" name="id" value={t.id} />
+                    <BotaoExcluir compacto rotulo="Excluir" />
+                  </form>
+                )}
               </li>
             ))}
           </ul>

@@ -144,7 +144,7 @@ export async function criarClausula(formData: FormData) {
   if (error) comErro(rota, traduzir(error.message, error.code));
 
   revalidatePath(rota);
-  redirect(rota);
+  redirect(`${rota}?ok=${encodeURIComponent("Cláusula incluída.")}`);
 }
 
 export async function excluirClausula(formData: FormData) {
@@ -158,5 +158,5 @@ export async function excluirClausula(formData: FormData) {
   if (error) comErro(rota, traduzir(error.message, error.code));
 
   revalidatePath(rota);
-  redirect(rota);
+  redirect(`${rota}?ok=${encodeURIComponent("Cláusula removida.")}`);
 }

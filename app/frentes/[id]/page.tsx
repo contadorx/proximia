@@ -13,6 +13,8 @@ import {
 import { atualizarFrente, incluirLink, removerLink } from "@/app/acoes/frentes";
 import { Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
+import { BotaoExcluir } from "@/components/botao-excluir";
+import { excluirFrente } from "@/app/acoes/exclusoes";
 import { Pencil } from "lucide-react";
 import { Historico } from "@/components/historico";
 
@@ -36,6 +38,8 @@ export default async function PaginaFrente({
   ]);
 
   const editavel = podeEscrever(org.papel);
+  const podeExcluir = org.papel !== "ponto_focal" && podeEscrever(org.papel);
+  const id = frente.id;
   const carteira = carteiras.find((c) => c.id === frente.carteira_id);
   const links = frente.links ?? [];
 
@@ -286,7 +290,7 @@ export default async function PaginaFrente({
               <textarea name="observacoes" rows={4} defaultValue={frente.observacoes ?? ""} />
             </label>
 
-            <button className="botao" type="submit">
+            <button className="botao botao-primario" type="submit">
               Salvar alterações
             </button>
           </form>
@@ -299,6 +303,19 @@ export default async function PaginaFrente({
         pessoas={pessoas}
         editavel={editavel}
       />
+
+      {podeExcluir && (
+        <section className="painel">
+          <div className="zona-perigo" style={{ borderTop: 0, marginTop: 0, paddingTop: 0 }}>
+            <h2>Excluir frente</h2>
+            <p className="nota">Apaga o histórico registrado nela. Se a frente não se sustenta, prefira descartar com motivo — o aprendizado fica.</p>
+            <form action={excluirFrente}>
+              <input type="hidden" name="id" value={id} />
+              <BotaoExcluir rotulo="Excluir frente" aviso="Não há como desfazer." />
+            </form>
+          </div>
+        </section>
+      )}
     </>
   );
 }

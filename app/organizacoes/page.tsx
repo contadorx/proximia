@@ -23,7 +23,7 @@ export default async function PaginaOrganizacoes({
         <p className="chamada">Você entra como {rotuloPapel(unica.papel).toLowerCase()}.</p>
         <form action={selecionarOrganizacao}>
           <input type="hidden" name="org_id" value={unica.orgId} />
-          <button className="botao" type="submit">
+          <button className="botao botao-primario" type="submit">
             Continuar
           </button>
         </form>
@@ -80,7 +80,7 @@ export default async function PaginaOrganizacoes({
             />
             <small>Letras minúsculas, números e hífen. Usado nos endereços.</small>
           </label>
-          <button className="botao" type="submit">
+          <button className="botao botao-primario" type="submit">
             Criar organização
           </button>
         </form>

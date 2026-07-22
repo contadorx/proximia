@@ -46,7 +46,7 @@ export async function criarDimensao(formData: FormData) {
 
   if (error) comErro("/maturidade", traduzir(error.message, error.code));
   revalidatePath("/maturidade");
-  redirect("/maturidade");
+  redirect(`/maturidade?ok=${encodeURIComponent("Dimensão criada.")}`);
 }
 
 export async function criarPergunta(formData: FormData) {
@@ -69,7 +69,7 @@ export async function criarPergunta(formData: FormData) {
 
   if (error) comErro("/maturidade", traduzir(error.message, error.code));
   revalidatePath("/maturidade");
-  redirect("/maturidade");
+  redirect(`/maturidade?ok=${encodeURIComponent("Pergunta criada.")}`);
 }
 
 /**
@@ -171,7 +171,7 @@ export async function criarCiclo(formData: FormData) {
 
   if (error) comErro("/maturidade", traduzir(error.message, error.code));
   revalidatePath("/maturidade");
-  redirect("/maturidade");
+  redirect(`/maturidade?ok=${encodeURIComponent("Ciclo criado.")}`);
 }
 
 export async function iniciarAvaliacao(formData: FormData) {
@@ -282,5 +282,5 @@ export async function reabrirAvaliacao(formData: FormData) {
   await supabase.from("maturidade_avaliacoes").update({ status: "rascunho" }).eq("id", id);
 
   revalidatePath(rota);
-  redirect(rota);
+  redirect(`${rota}?ok=${encodeURIComponent("Avaliação reaberta.")}`);
 }

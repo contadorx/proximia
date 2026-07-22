@@ -145,7 +145,7 @@ export async function criarContato(formData: FormData) {
   if (error) comErro(rota, traduzir(error.message, error.code));
 
   revalidatePath(rota);
-  redirect(rota);
+  redirect(`${rota}?ok=${encodeURIComponent("Contato incluído.")}`);
 }
 
 export async function excluirContato(formData: FormData) {
@@ -159,5 +159,5 @@ export async function excluirContato(formData: FormData) {
   if (error) comErro(rota, traduzir(error.message, error.code));
 
   revalidatePath(rota);
-  redirect(rota);
+  redirect(`${rota}?ok=${encodeURIComponent("Contato removido.")}`);
 }

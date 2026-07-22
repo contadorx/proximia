@@ -81,7 +81,7 @@ export default async function PaginaImportacao({
             />
           </label>
 
-          <button className="botao" type="submit">
+          <button className="botao botao-primario" type="submit">
             Conferir arquivo
           </button>
           <p className="nota" style={{ marginTop: 4 }}>

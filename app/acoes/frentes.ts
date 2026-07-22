@@ -53,7 +53,7 @@ export async function criarTipoFrente(formData: FormData) {
   if (error) comErro("/frentes", traduzir(error.message, error.code));
 
   revalidatePath("/frentes");
-  redirect("/frentes");
+  redirect(`/configuracoes?ok=${encodeURIComponent("Tipo de frente incluído.")}`);
 }
 
 export async function criarFrente(formData: FormData) {
@@ -170,7 +170,7 @@ export async function incluirLink(formData: FormData) {
   if (error) comErro(rota, traduzir(error.message, error.code));
 
   revalidatePath(rota);
-  redirect(rota);
+  redirect(`${rota}?ok=${encodeURIComponent("Link incluído.")}`);
 }
 
 export async function removerLink(formData: FormData) {
@@ -191,5 +191,5 @@ export async function removerLink(formData: FormData) {
   if (error) comErro(rota, traduzir(error.message, error.code));
 
   revalidatePath(rota);
-  redirect(rota);
+  redirect(`${rota}?ok=${encodeURIComponent("Link removido.")}`);
 }

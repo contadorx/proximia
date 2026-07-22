@@ -1,12 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 
 /**
- * Formulario dentro de modal, aberto por botao. A tela mostra o que existe;
- * o formulario aparece quando a pessoa pede. Fecha no Esc, no clique fora e
- * no botao — e trava a rolagem do fundo enquanto esta aberto.
+ * Formulario dentro de modal, aberto por botao.
+ *
+ * O modal fecha sozinho quando a acao termina. Como toda acao de servidor
+ * redireciona ao final, basta observar a mudanca de endereco: mudou, a
+ * gravacao aconteceu e o modal sai da frente para a pessoa ver o aviso.
+ * Enquanto isso, o conteudo fica em estado de espera — sem isso, nao da
+ * para saber se algo aconteceu.
  */
 export function Modal({
   rotulo,
@@ -20,17 +25,40 @@ export function Modal({
   rotulo: string;
   titulo: string;
   descricao?: string;
-  variante?: "primario" | "secundario" | "link";
+  variante?: "primario" | "secundario" | "link" | "perigo";
   largo?: boolean;
   icone?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const [aberto, setAberto] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+
+  const caminho = usePathname();
+  const busca = useSearchParams().toString();
+  const enderecoAtual = `${caminho}?${busca}`;
+  const [enderecoAoAbrir, setEnderecoAoAbrir] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!aberto) return;
+    if (aberto) setEnderecoAoAbrir(enderecoAtual);
+    // Registrado só na abertura: é a referência de comparação.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aberto]);
+
+  useEffect(() => {
+    if (aberto && enderecoAoAbrir !== null && enderecoAtual !== enderecoAoAbrir) {
+      setAberto(false);
+      setEnviando(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enderecoAtual]);
+
+  useEffect(() => {
+    if (!aberto) {
+      setEnviando(false);
+      return;
+    }
     const aoTeclar = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setAberto(false);
+      if (e.key === "Escape" && !enviando) setAberto(false);
     };
     document.addEventListener("keydown", aoTeclar);
     const anterior = document.body.style.overflow;
@@ -39,14 +67,16 @@ export function Modal({
       document.removeEventListener("keydown", aoTeclar);
       document.body.style.overflow = anterior;
     };
-  }, [aberto]);
+  }, [aberto, enviando]);
 
   const classe =
     variante === "link"
       ? "link-acao"
       : variante === "secundario"
         ? "botao botao-secundario"
-        : "botao botao-primario";
+        : variante === "perigo"
+          ? "botao botao-perigo"
+          : "botao botao-primario";
 
   return (
     <>
@@ -56,7 +86,7 @@ export function Modal({
       </button>
 
       {aberto && (
-        <div className="modal-fundo" onClick={() => setAberto(false)}>
+        <div className="modal-fundo" onClick={() => !enviando && setAberto(false)}>
           <div
             className={largo ? "modal largo" : "modal"}
             role="dialog"
@@ -74,11 +104,19 @@ export function Modal({
                 className="modal-fechar"
                 onClick={() => setAberto(false)}
                 aria-label="Fechar"
+                disabled={enviando}
               >
                 <X size={18} />
               </button>
             </div>
-            <div className="modal-corpo">{children}</div>
+
+            <div
+              className={enviando ? "modal-corpo enviando" : "modal-corpo"}
+              onSubmit={() => setEnviando(true)}
+            >
+              {children}
+              {enviando && <p className="modal-espera">Salvando…</p>}
+            </div>
           </div>
         </div>
       )}

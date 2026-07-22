@@ -21,6 +21,8 @@ import {
 } from "@/app/acoes/oportunidades";
 import { Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
+import { BotaoExcluir } from "@/components/botao-excluir";
+import { excluirOportunidade } from "@/app/acoes/exclusoes";
 import { CampoValor } from "@/components/campos";
 import { Historico } from "@/components/historico";
 
@@ -45,6 +47,8 @@ export default async function PaginaOportunidade({
   ]);
 
   const editavel = podeEscrever(org.papel);
+  const podeExcluir = org.papel !== "ponto_focal" && podeEscrever(org.papel);
+  const id = oportunidade.id;
   const carteira = carteiras.find((c) => c.id === oportunidade.carteira_id);
   const conta = contas.find((c) => c.id === oportunidade.conta_id);
   const dias = diasNaFase(oportunidade);
@@ -406,6 +410,19 @@ export default async function PaginaOportunidade({
         pessoas={pessoas}
         editavel={editavel}
       />
+
+      {podeExcluir && (
+        <section className="painel">
+          <div className="zona-perigo" style={{ borderTop: 0, marginTop: 0, paddingTop: 0 }}>
+            <h2>Excluir oportunidade</h2>
+            <p className="nota">Apaga o histórico registrado nela. Se ela não se sustenta, prefira descartar com motivo.</p>
+            <form action={excluirOportunidade}>
+              <input type="hidden" name="id" value={id} />
+              <BotaoExcluir rotulo="Excluir oportunidade" aviso="Não há como desfazer." />
+            </form>
+          </div>
+        </section>
+      )}
     </>
   );
 }

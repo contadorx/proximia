@@ -20,6 +20,8 @@ import {
   iniciarAvaliacao,
 } from "@/app/acoes/maturidade";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
+import { BotaoExcluir } from "@/components/botao-excluir";
+import { excluirCiclo, excluirDimensao, excluirPergunta } from "@/app/acoes/exclusoes";
 import { Modal } from "@/components/modal";
 
 export const dynamic = "force-dynamic";
@@ -51,20 +53,33 @@ export default async function PaginaMaturidade({
   const mediana = ordenados.length
     ? ordenados[Math.floor(ordenados.length / 2)]
     : 0;
-  const maiorPotencial = Math.max(1, ...potenciais);
+  const maiorPotencial = Math.max(0, ...potenciais);
 
-  const pontos = linhasPanorama.map((l) => {
+  const todosPontos = linhasPanorama.map((l) => {
     const resultado = resultados.find((r) => r.carteira_id === l.carteira_id);
     const potencial = Number(l.frentes_potencial) + Number(l.contas_potencial);
     const score = resultado?.score ?? l.score_maturidade ?? null;
     return {
       id: l.carteira_id,
       nome: l.nome,
+      etiqueta: l.codigo ?? l.nome.slice(0, 12),
       score,
       potencial,
       q: quadrante(score, potencial, mediana),
     };
   });
+
+  // Sem avaliação não entra no gráfico: um ponto no chão do eixo diria que a
+  // carteira tem maturidade zero, quando o que se sabe é que ela não foi
+  // avaliada. São coisas diferentes e viram listas diferentes.
+  const pontos = todosPontos.filter((p) => p.score !== null);
+  const semAvaliacao = todosPontos.filter((p) => p.score === null);
+
+  // Enquanto não houver potencial registrado em contas e frentes, o eixo
+  // horizontal não tem o que mostrar — e a matriz vira uma fileira grudada
+  // na esquerda. Nesse caso mostramos o ranking, que é honesto e útil.
+  const temPotencial = maiorPotencial > 0 && pontos.some((p) => p.potencial > 0);
+  const ranking = [...pontos].sort((a, b) => Number(b.score) - Number(a.score));
 
   const semQuestionario = dimensoes.length === 0;
 
@@ -196,46 +211,97 @@ export default async function PaginaMaturidade({
 
           <section className="painel">
             <div className="linha-titulo">
-              <h2>Maturidade × potencial</h2>
-              <span className="passos-contagem">corte no potencial mediano</span>
+              <h2>{temPotencial ? "Maturidade × potencial" : "Maturidade por carteira"}</h2>
+              <span className="passos-contagem">
+                {temPotencial ? "corte no potencial mediano" : `${pontos.length} carteiras avaliadas`}
+              </span>
             </div>
 
-            <div className="matriz">
-              <div className="matriz-rotulo-y">maturidade</div>
-              <div className="matriz-area">
-                {["Estruturar", "Acelerar", "Observar", "Sustentar"].map((nome) => (
-                  <div className="matriz-quadrante" key={nome}>
-                    <span>{nome}</span>
+            {pontos.length === 0 ? (
+              <Vazio>Nenhuma carteira avaliada ainda neste ciclo.</Vazio>
+            ) : temPotencial ? (
+              <>
+                <div className="matriz">
+                  <div className="matriz-rotulo-y">maturidade</div>
+                  <div className="matriz-area">
+                    {["Estruturar", "Acelerar", "Observar", "Sustentar"].map((nome) => (
+                      <div className="matriz-quadrante" key={nome}>
+                        <span>{nome}</span>
+                      </div>
+                    ))}
+
+                    {pontos.map((p, i) => {
+                      const x = Math.min(94, (p.potencial / maiorPotencial) * 88 + 4);
+                      const y = Math.min(92, Number(p.score) * 0.86 + 4);
+                      return (
+                        <Link
+                          key={p.id}
+                          href={`/carteiras/${p.id}`}
+                          className="matriz-ponto"
+                          style={{ left: `${x}%`, bottom: `${y}%`, zIndex: i + 1 }}
+                          title={`${p.nome} · maturidade ${p.score} · potencial ${formatarValor(p.potencial)} · ${p.q.nome}`}
+                        >
+                          {p.etiqueta}
+                        </Link>
+                      );
+                    })}
                   </div>
-                ))}
+                  <div className="matriz-rotulo-x">potencial estimado</div>
+                </div>
 
-                {pontos.map((p) => {
-                  const x = Math.min(96, (p.potencial / maiorPotencial) * 92 + 2);
-                  const y = Math.min(94, (p.score ?? 0) * 0.9 + 2);
-                  return (
-                    <Link
-                      key={p.id}
-                      href={`/carteiras/${p.id}`}
-                      className="matriz-ponto"
-                      style={{ left: `${x}%`, bottom: `${y}%` }}
-                      title={`${p.nome} · maturidade ${p.score ?? "sem avaliação"} · potencial ${formatarValor(p.potencial)} · ${p.q.nome}`}
-                    >
-                      <span>{p.nome}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-              <div className="matriz-rotulo-x">potencial estimado</div>
-            </div>
+                <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
+                  Acelerar: base pronta e muito a capturar. Estruturar: muito a capturar, base ainda
+                  frágil. Sustentar: base boa, potencial menor. Observar: pouco de cada.
+                </p>
+              </>
+            ) : (
+              <>
+                <ul className="lista-estado">
+                  {ranking.map((p) => (
+                    <li key={p.id}>
+                      <span className="rotulo">
+                        <Link href={`/carteiras/${p.id}`}>{p.nome}</Link>
+                      </span>
+                      <span className="barra-score" aria-hidden="true">
+                        <span style={{ width: `${Math.max(2, Number(p.score))}%` }} />
+                      </span>
+                      <span className="dado" style={{ minWidth: 44, textAlign: "right" }}>
+                        {p.score}
+                      </span>
+                      <span className={faixa(p.score).classe}>{faixa(p.score).rotulo}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
+                  A matriz maturidade × potencial aparece assim que houver potencial registrado nas
+                  contas e frentes. O potencial não é digitado aqui: ele é a soma do que já está
+                  registrado, para que o eixo tenha origem rastreável.
+                </p>
+              </>
+            )}
 
-            <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
-              Acelerar: base pronta e muito a capturar. Estruturar: muito a capturar, base ainda
-              frágil. Sustentar: base boa, potencial menor. Observar: pouco de cada.
-            </p>
+            {semAvaliacao.length > 0 && (
+              <p className="nota" style={{ marginTop: 12, marginBottom: 0 }}>
+                Fora do gráfico por não terem avaliação:{" "}
+                {semAvaliacao.map((p) => p.nome).join(", ")}.
+              </p>
+            )}
           </section>
 
           <section className="painel">
-            <h2>Avaliações do ciclo</h2>
+            <div className="linha-titulo">
+              <h2>Avaliações do ciclo</h2>
+              {gere && cicloAtual && (
+                <form action={excluirCiclo}>
+                  <input type="hidden" name="id" value={cicloAtual} />
+                  <BotaoExcluir
+                    compacto
+                    rotulo="Excluir ciclo"
+                    aviso="Apaga as avaliações deste ciclo."
+                  />
+                </form>
+              )}
+            </div>
             {resultados.length === 0 ? (
               <Vazio>
                 {ciclos.length === 0
@@ -352,20 +418,47 @@ export default async function PaginaMaturidade({
               )}
             </div>
 
-            <ul className="lista-estado">
-              {dimensoes.map((d) => (
-                <li key={d.id}>
-                  <span className="rotulo">
-                    {d.nome}
-                    <span className="dica">
-                      {perguntas.filter((p) => p.dimensao_id === d.id).length} perguntas
-                      {d.descricao ? ` · ${d.descricao}` : ""}
-                    </span>
+            {dimensoes.map((d) => (
+              <div className="bloco-dimensao" key={d.id}>
+                <div className="linha-titulo" style={{ marginBottom: 6 }}>
+                  <h3>{d.nome}</h3>
+                  <span className="cabeca-acoes">
+                    <span className="selo selo-neutro">peso {d.peso}</span>
+                    {gere && (
+                      <form action={excluirDimensao}>
+                        <input type="hidden" name="id" value={d.id} />
+                        <BotaoExcluir
+                          compacto
+                          rotulo="Excluir dimensão"
+                          aviso="Apaga as perguntas e as respostas dela."
+                        />
+                      </form>
+                    )}
                   </span>
-                  <span className="selo selo-neutro">peso {d.peso}</span>
-                </li>
-              ))}
-            </ul>
+                </div>
+                {d.descricao && <p className="nota">{d.descricao}</p>}
+
+                <ul className="lista-estado">
+                  {perguntas
+                    .filter((p) => p.dimensao_id === d.id)
+                    .map((p) => (
+                      <li key={p.id}>
+                        <span className="rotulo">
+                          {p.texto}
+                          {p.ajuda && <span className="dica">{p.ajuda}</span>}
+                        </span>
+                        <span className="selo selo-neutro">peso {p.peso}</span>
+                        {gere && (
+                          <form action={excluirPergunta}>
+                            <input type="hidden" name="id" value={p.id} />
+                            <BotaoExcluir compacto rotulo="Excluir" />
+                          </form>
+                        )}
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            ))}
           </section>
         </>
       )}

@@ -15,6 +15,8 @@ import { classeSelo, listarContratos, urgencia } from "@/lib/contratos";
 import { atualizarConta, criarContato, excluirContato } from "@/app/acoes/contas";
 import { Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
+import { BotaoExcluir } from "@/components/botao-excluir";
+import { excluirConta } from "@/app/acoes/exclusoes";
 import { Pencil } from "lucide-react";
 import { Historico } from "@/components/historico";
 import { classeFase, formatarPayback, listarOportunidades, rotuloFase } from "@/lib/oportunidades";
@@ -42,6 +44,8 @@ export default async function PaginaConta({
   ]);
 
   const editavel = podeEscrever(org.papel);
+  const podeExcluir = org.papel !== "ponto_focal" && podeEscrever(org.papel);
+  const id = conta.id;
   const carteira = carteiras.find((c) => c.id === conta.carteira_id);
 
   return (
@@ -196,7 +200,7 @@ export default async function PaginaConta({
               <span>Principal</span>
               <input type="checkbox" name="principal" />
             </label>
-            <button className="botao" type="submit">
+            <button className="botao botao-primario" type="submit">
               Incluir contato
             </button>
           </form>
@@ -324,7 +328,7 @@ export default async function PaginaConta({
               <textarea name="observacoes" rows={4} defaultValue={conta.observacoes ?? ""} />
             </label>
 
-            <button className="botao" type="submit">
+            <button className="botao botao-primario" type="submit">
               Salvar alterações
             </button>
           </form>
@@ -338,6 +342,19 @@ export default async function PaginaConta({
         pessoas={pessoas}
         editavel={editavel}
       />
+
+      {podeExcluir && (
+        <section className="painel">
+          <div className="zona-perigo" style={{ borderTop: 0, marginTop: 0, paddingTop: 0 }}>
+            <h2>Excluir conta</h2>
+            <p className="nota">Apaga também os contratos, contatos e o histórico desta conta.</p>
+            <form action={excluirConta}>
+              <input type="hidden" name="id" value={id} />
+              <BotaoExcluir rotulo="Excluir conta" aviso="Não há como desfazer." />
+            </form>
+          </div>
+        </section>
+      )}
     </>
   );
 }

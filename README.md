@@ -113,6 +113,10 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 
 **A régua é do assinante.** Nenhum questionário vem embutido: dimensões e perguntas são cadastradas por quem usa, cada uma com peso. O produto entrega a mecânica — escala de 0 a 4, média ponderada, ciclos comparáveis e matriz maturidade × potencial —, não um modelo de maturidade de setor. Pergunta sem resposta fica fora do cálculo em vez de virar zero, então avaliação parcial mostra o score do que foi de fato avaliado.
 
+**Formulário fecha quando termina.** Toda ação de servidor devolve confirmação no endereço, e o modal observa essa mudança para se fechar sozinho — com o conteúdo em estado de espera enquanto grava. Sem isso não dá para saber se algo aconteceu.
+
+**Exclusão em duas etapas.** O primeiro clique pergunta, o segundo executa, e o aviso diz o que vai junto. Excluir carteira leva contas, contratos, frentes, oportunidades e histórico; excluir dimensão leva perguntas e respostas. Frente e oportunidade têm o descarte com motivo como caminho preferido — apagar perde o aprendizado.
+
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
 ## Rotas

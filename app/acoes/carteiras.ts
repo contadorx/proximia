@@ -117,7 +117,7 @@ export async function vincularPessoaCarteira(formData: FormData) {
   if (error && error.code !== "23505") comErro(rota, traduzir(error.message, error.code));
 
   revalidatePath(rota);
-  redirect(rota);
+  redirect(`${rota}?ok=${encodeURIComponent("Pessoa vinculada à carteira.")}`);
 }
 
 export async function desvincularPessoaCarteira(formData: FormData) {
@@ -137,5 +137,5 @@ export async function desvincularPessoaCarteira(formData: FormData) {
   if (error) comErro(rota, traduzir(error.message, error.code));
 
   revalidatePath(rota);
-  redirect(rota);
+  redirect(`${rota}?ok=${encodeURIComponent("Vínculo removido.")}`);
 }
