@@ -104,3 +104,12 @@ export function podeAdministrar(papel: Papel): boolean {
 export function podeEscrever(papel: Papel): boolean {
   return papel !== "leitura_ampla";
 }
+
+/**
+ * Quem cria, edita e arquiva a estrutura da carteira. Gêmeo em TypeScript
+ * da função pode_gerir_carteiras do banco: o ponto focal opera dentro da
+ * carteira, mas não redesenha a estrutura dela.
+ */
+export function podeGerirCarteiras(papel: Papel): boolean {
+  return papel === "owner" || papel === "admin" || papel === "analista";
+}
