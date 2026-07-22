@@ -54,6 +54,7 @@ Aplicadas até aqui:
 | `0009_importacoes.sql` | F10 | Registro das cargas, com conferência antes de gravar, e RLS |
 | `0010_oportunidades.sql` | F12 | Oportunidades com investimento, retorno, payback e RLS |
 | `0011_extrato_automatico.sql` | F13 | Cadência do extrato por carteira, registro de envios e RLS |
+| `0012_maturidade.sql` | F14 | Questionário ponderado, ciclos, avaliações, score e RLS |
 
 Testes de banco ficam em `supabase/testes` e **não são migrations** — são scripts avulsos, para rodar no editor SQL quando quiser conferir. `0001_isolamento.sql` prova que uma organização não enxerga a outra.
 
@@ -110,6 +111,8 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 
 **Envio deixa rastro, inclusive quando falha.** Cada extrato enviado vira linha em `envios`, com destinatários, período e resultado. Envio simulado (sem provedor configurado) e envio com falha não marcam a carteira como atendida — são tentados de novo no ciclo seguinte. Sem esse registro, "não recebi o relatório" não tem resposta.
 
+**A régua é do assinante.** Nenhum questionário vem embutido: dimensões e perguntas são cadastradas por quem usa, cada uma com peso. O produto entrega a mecânica — escala de 0 a 4, média ponderada, ciclos comparáveis e matriz maturidade × potencial —, não um modelo de maturidade de setor. Pergunta sem resposta fica fora do cálculo em vez de virar zero, então avaliação parcial mostra o score do que foi de fato avaliado.
+
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
 ## Rotas
@@ -131,6 +134,7 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 | `/importacao`, `/importacao/[id]` | Envio de CSV, conferência linha a linha e confirmação |
 | `/configuracoes` | Pessoas e alcance, catálogos e dados da organização |
 | `/oportunidades`, `/oportunidades/[id]` | Iniciativas com investimento, retorno e payback |
+| `/maturidade`, `/maturidade/[id]` | Régua, ciclos, matriz maturidade × potencial e questionário |
 | `/instalacao` | Estado da configuração e trilha de construção |
 | `/diagnostico` | Testa configuração, conexão, sessão e banco |
 | `/api/saude` | Verificação de saúde |
@@ -174,6 +178,6 @@ supabase/
 
 F0 esqueleto ✓ · F1 acesso, organizações e papéis ✓ · F2 carteiras ✓ · F3 contas nomeadas ✓ · F4 contratos e cláusulas ✓ · F5 frentes ✓ · F6 timeline e memória institucional ✓ · F7 compromissos e alertas ✓ · F8 painel multi-carteira ✓ · F9 situação da carteira ✓ · F10 importação ✓ · F11 camada de interface ✓ — **fatia 1 completa**.
 
-Fase 2 em andamento: F12 oportunidades ✓ · F13 extrato automático por e-mail ✓ · motor de maturidade · portal da unidade · anexos · alertas proativos.
+Fase 2 em andamento: F12 oportunidades ✓ · F13 extrato automático ✓ · F14 motor de maturidade ✓ · portal da unidade · anexos · alertas proativos.
 
 Uma feature por vez, com build passando entre cada uma.

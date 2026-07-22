@@ -1492,3 +1492,193 @@ input[type="file"] {
 input[aria-invalid="true"] {
   border-color: var(--vermelho);
 }
+
+/* ---------------- maturidade ---------------- */
+
+.matriz {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  grid-template-rows: 1fr 22px;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.matriz-rotulo-y {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--g400);
+  text-align: center;
+  align-self: center;
+}
+
+.matriz-rotulo-x {
+  grid-column: 2;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--g400);
+  text-align: center;
+}
+
+.matriz-area {
+  position: relative;
+  height: 320px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  border: 1px solid var(--g200);
+  border-radius: var(--r-p);
+  overflow: hidden;
+  background: var(--g50);
+}
+
+.matriz-quadrante {
+  border-right: 1px dashed var(--g200);
+  border-bottom: 1px dashed var(--g200);
+  padding: 8px 10px;
+}
+
+.matriz-quadrante:nth-child(2),
+.matriz-quadrante:nth-child(4) {
+  border-right: 0;
+}
+
+.matriz-quadrante:nth-child(3),
+.matriz-quadrante:nth-child(4) {
+  border-bottom: 0;
+}
+
+.matriz-quadrante span {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--g300);
+}
+
+.matriz-ponto {
+  position: absolute;
+  transform: translate(-50%, 50%);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--branco);
+  border: 1px solid var(--g300);
+  border-left: 3px solid var(--esmeralda);
+  border-radius: 100px;
+  padding: 3px 10px 3px 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--navy);
+  box-shadow: var(--sombra);
+  white-space: nowrap;
+  max-width: 44%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.matriz-ponto:hover {
+  border-color: var(--esmeralda);
+  z-index: 2;
+}
+
+.barra-score {
+  flex: 0 0 130px;
+  height: 6px;
+  border-radius: 100px;
+  background: var(--g100);
+  overflow: hidden;
+}
+
+.barra-score span {
+  display: block;
+  height: 100%;
+  background: var(--esmeralda);
+  border-radius: 100px;
+}
+
+.lista-perguntas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lista-perguntas li {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--g100);
+}
+
+.lista-perguntas li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.pergunta-texto {
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+
+.escala {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.escala-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--g200);
+  border-radius: 100px;
+  padding: 5px 13px 5px 9px;
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--g500);
+  background: var(--branco);
+}
+
+.escala-item:hover {
+  border-color: var(--g400);
+}
+
+.escala-item.marcado {
+  border-color: var(--esmeralda);
+  background: var(--esmeralda-pale);
+  color: var(--esmeralda-forte);
+  font-weight: 600;
+}
+
+.escala-item input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.escala-nota {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.campo-observacao {
+  font-size: 12.5px;
+}
+
+@media (max-width: 640px) {
+  .escala-rotulo {
+    display: none;
+  }
+
+  .matriz-ponto {
+    max-width: 40%;
+  }
+
+  .barra-score {
+    flex: 0 0 70px;
+  }
+}

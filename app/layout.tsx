@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   Building2,
   CalendarClock,
+  Gauge,
   ClipboardList,
   Coins,
   FileText,
@@ -33,6 +34,7 @@ const GRUPOS = [
       { href: "/painel", rotulo: "Painel", icone: <LayoutGrid size={TAMANHO} /> },
       { href: "/panorama", rotulo: "Panorama", icone: <Building2 size={TAMANHO} /> },
       { href: "/compromissos", rotulo: "Compromissos", icone: <CalendarClock size={TAMANHO} /> },
+      { href: "/maturidade", rotulo: "Maturidade", icone: <Gauge size={TAMANHO} /> },
     ],
   },
   {

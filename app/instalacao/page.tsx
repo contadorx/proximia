@@ -16,6 +16,7 @@ const TRILHA: { fase: string; titulo: string; feito: boolean }[] = [
   { fase: "F10", titulo: "Importação de dados", feito: true },
   { fase: "F12", titulo: "Oportunidades com investimento e retorno", feito: true },
   { fase: "F13", titulo: "Extrato periódico automático por e-mail", feito: true },
+  { fase: "F14", titulo: "Motor de maturidade com ciclos e evolução", feito: true },
 ];
 
 export default function PaginaInstalacao() {
