@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Plus, Sparkles } from "lucide-react";
 import { exigirOrg, podeEscrever } from "@/lib/auth";
 import { fasesConfiguradas, motivosDescarte } from "@/lib/pipeline";
+import { formatarTaxa, taxaDaOrganizacao } from "@/lib/financeiro";
+import { salvarTaxaDesconto } from "@/app/acoes/financeiro";
 import { criarMotivo, criarReguaFases, excluirMotivo, salvarFase } from "@/app/acoes/pipeline";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
@@ -15,9 +17,10 @@ export default async function PaginaPipeline({
   searchParams: { erro?: string; ok?: string };
 }) {
   const org = await exigirOrg();
-  const [fases, motivos] = await Promise.all([
+  const [fases, motivos, taxa] = await Promise.all([
     fasesConfiguradas(org.orgId),
     motivosDescarte(org.orgId),
+    taxaDaOrganizacao(org.orgId),
   ]);
 
   const gere = podeEscrever(org.papel) && org.papel !== "ponto_focal";
@@ -126,6 +129,53 @@ export default async function PaginaPipeline({
         <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
           Implantação nasce sem prazo de propósito: ela depende de obra e fornecedor, não do ritmo
           comercial — cobrar ritmo ali gera alerta que ninguém consegue resolver.
+        </p>
+      </section>
+
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>Custo de capital</h2>
+          <span className="passos-contagem">hoje: {formatarTaxa(taxa)}</span>
+        </div>
+
+        <p className="nota">
+          É a taxa que o dinheiro da sua operação precisa render para valer a pena. Ela desconta o
+          tempo nas análises: com ela, o sistema calcula valor presente, taxa interna de retorno e
+          payback descontado de cada oportunidade.
+        </p>
+
+        {gere && (
+          <form action={salvarTaxaDesconto} className="formulario">
+            <div className="formulario-linha">
+              <label className="campo campo-numerico">
+                <span>Taxa ao ano (%)</span>
+                <input
+                  type="text"
+                  name="taxa"
+                  inputMode="decimal"
+                  defaultValue={(taxa * 100).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}
+                  required
+                />
+              </label>
+              <label className="campo">
+                <span>De onde veio esse número</span>
+                <input
+                  type="text"
+                  name="observacao"
+                  maxLength={160}
+                  placeholder="ex.: custo médio de capital aprovado pela diretoria"
+                />
+              </label>
+              <button className="botao botao-primario" type="submit">
+                Salvar taxa
+              </button>
+            </div>
+          </form>
+        )}
+
+        <p className="nota" style={{ marginBottom: 0 }}>
+          O padrão de 12% ao ano é ponto de partida, não recomendação — cravar um número seria opinar
+          sobre o seu negócio. Mudar a taxa recalcula todas as análises na hora.
         </p>
       </section>
 

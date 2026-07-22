@@ -69,6 +69,17 @@ Aplicadas até aqui:
 | `0024_playbooks.sql` | B31 | Cadência: compromissos que nascem da mudança de etapa |
 | `0025_resumo_diario.sql` | B32 | Resumo diário por pessoa e preferência de aviso |
 | `0026_exportacoes.sql` | B33 | Trilha de extrações de dados |
+| `0027_historico_estado.sql` | B36 | Fotos mensais das carteiras e histórico de etapas |
+| `0028_financeiro.sql` | B37 | VPL, TIR, payback descontado e custo de capital |
+
+## Verificação
+
+```bash
+npm run teste       # testes de unidade
+npm run verificar   # tipos + testes + compilação
+```
+
+Os testes de banco exigem um Postgres — instruções em `supabase/testes/README.md`.
 
 Testes de banco ficam em `supabase/testes` e **não são migrations** — são scripts avulsos, para rodar no editor SQL quando quiser conferir. `0001_isolamento.sql` prova que uma organização não enxerga a outra.
 
@@ -174,6 +185,12 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 **A exportação não tem filtro próprio.** A consulta roda sob a sessão de quem pede, então a RLS decide o que sai — ponto focal exporta só as carteiras dele pelo mesmo mecanismo que protege as telas, e não por um filtro paralelo que alguém pode esquecer de aplicar. A rota também não aceita identificador de organização: recebê-lo abriria a porta para tentar exportar a de outro.
 
 **Guardamos o registro do ato, nunca a cópia.** Toda extração fica com autor, recurso, formato e contagem de linhas. Guardar o conteúdo exportado dobraria a exposição em vez de reduzi-la.
+
+**A suíte roda no repositório, não só na minha máquina.** `npm run verificar` encadeia tipos, testes e compilação; `npm run teste` roda só os testes. Os de banco ficam em `supabase/testes`, em SQL, porque as regras que mais importam — políticas de acesso, gatilhos, colunas geradas — vivem lá e não dá para verificá-las por fora.
+
+**Foto não se retoca.** O histórico mensal é escrito só pela rotina — não há política de escrita para usuário. Foto que alguém pode ajustar depois não serve de série histórica.
+
+**As contas financeiras descontam o tempo.** Payback simples e retorno percentual ignoram que mil reais daqui a cinco anos valem menos que mil hoje, e decidir por eles favorece sistematicamente projeto longo. Entram valor presente líquido, taxa interna de retorno e payback descontado, sobre um custo de capital que é do assinante. O modelo assume fluxo constante, que é a forma do dado coletado: supor mais precisão seria falso rigor.
 
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 

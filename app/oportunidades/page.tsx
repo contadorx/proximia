@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutGrid, Plus, Search } from "lucide-react";
+import { LayoutGrid, List, Plus, Search } from "lucide-react";
 import { exigirOrg, podeEscrever } from "@/lib/auth";
 import { listarCarteiras, nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
 import { formatarData, formatarValor, listarContas } from "@/lib/contas";
@@ -66,9 +66,13 @@ export default async function PaginaOportunidades({
           <h1>Oportunidades</h1>
         </div>
         <div className="cabeca-acoes">
+          <Link className="botao botao-secundario ativo" href="/oportunidades">
+            <List size={15} />
+            Lista
+          </Link>
           <Link className="botao botao-secundario" href="/oportunidades/quadro">
             <LayoutGrid size={15} />
-            Ver no quadro
+            Quadro
           </Link>
         </div>
         {podeCriar && (

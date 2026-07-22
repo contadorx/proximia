@@ -1,0 +1,33 @@
+# Verificação a cada envio. Roda o que dá para rodar sem banco: tipos,
+# testes de unidade e compilação. Os testes de banco ficam em
+# supabase/testes e precisam de um Postgres — instruções no README.
+name: verificação
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Tipos
+        run: npm run typecheck
+
+      - name: Testes
+        run: npm run teste
+
+      - name: Compilação
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://exemplo.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: chave-de-compilacao

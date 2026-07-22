@@ -84,6 +84,10 @@ export async function GET(requisicao: Request) {
       const { data: dif } = await supabase.rpc("gerar_alertas", { p_org: o.id });
       const { data: atribuidos } = await supabase.rpc("atribuir_alertas", { p_org: o.id });
       await supabase.rpc("atribuir_compromissos", { p_org: o.id });
+
+      // A foto do mês é atualizada a cada passagem: até o mês fechar, o
+      // retrato é do dia. Depois disso ele congela e vira série.
+      await supabase.rpc("tirar_foto", { p_org: o.id, p_referencia: null });
       alertas.push({
         org: o.nome,
         diferenca: Number(dif ?? 0),

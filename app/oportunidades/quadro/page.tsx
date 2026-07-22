@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { List } from "lucide-react";
+import { LayoutGrid, List } from "lucide-react";
 import { exigirOrg } from "@/lib/auth";
 import { listarCarteiras, nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
 import { formatarValor } from "@/lib/contas";
@@ -60,7 +60,14 @@ export default async function PaginaQuadro({
         <div className="cabeca-acoes">
           <Link className="botao botao-secundario" href="/oportunidades">
             <List size={15} />
-            Ver em lista
+            Lista
+          </Link>
+          <Link className="botao botao-secundario ativo" href="/oportunidades/quadro">
+            <LayoutGrid size={15} />
+            Quadro
+          </Link>
+          <Link className="link-acao" href="/configuracoes/pipeline">
+            Etapas e prazos
           </Link>
         </div>
       </div>

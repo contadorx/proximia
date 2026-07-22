@@ -315,8 +315,8 @@ export default async function PaginaPainel({
         <section className="painel">
           <div className="linha-titulo">
             <h2>Oportunidades por fase</h2>
-            <Link className="link-acao" href="/oportunidades">
-              Ver todas
+            <Link className="link-acao" href="/oportunidades/quadro">
+              Ver no quadro
             </Link>
           </div>
           {oportunidades.length === 0 ? (

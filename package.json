@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "teste": "vitest run",
+    "teste:observar": "vitest",
+    "verificar": "npm run typecheck && npm run teste && npm run build"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
@@ -21,6 +24,7 @@
     "@types/node": "^20.16.11",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.0",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.9"
   }
 }

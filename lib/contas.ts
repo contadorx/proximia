@@ -132,9 +132,21 @@ export function cnpjValido(documento: string): boolean {
   return digito(d.slice(0, 12)) === Number(d[12]) && digito(d.slice(0, 13)) === Number(d[13]);
 }
 
-export function formatarValor(valor: number | null): string {
-  if (valor === null) return "—";
-  return valor.toLocaleString("pt-BR", {
+export function formatarValor(valor: number | string | null | undefined): string {
+  // Três armadilhas, todas encontradas por teste:
+  //
+  //   1. `undefined` chegava e quebrava a página. Campo opcional é comum,
+  //      e ausência não pode derrubar a tela.
+  //   2. O Postgres devolve `numeric` como texto no cliente JavaScript, e
+  //      String.toLocaleString ignora as opções em silêncio — o valor
+  //      aparecia sem separador, parecendo dado sujo.
+  //   3. Texto não numérico virava "R$ NaN".
+  if (valor === null || valor === undefined || valor === "") return "—";
+
+  const numero = typeof valor === "number" ? valor : Number(valor);
+  if (Number.isNaN(numero)) return "—";
+
+  return numero.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",
     maximumFractionDigits: 0,

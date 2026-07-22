@@ -25,6 +25,7 @@ import { BotaoExcluir } from "@/components/botao-excluir";
 import { excluirOportunidade } from "@/app/acoes/exclusoes";
 import { CampoValor } from "@/components/campos";
 import { Historico } from "@/components/historico";
+import { AnaliseFinanceira } from "@/components/analise-financeira";
 import { Anexos } from "@/components/anexos";
 
 export const dynamic = "force-dynamic";
@@ -332,6 +333,8 @@ export default async function PaginaOportunidade({
           <p className="cartao-nota">sobre o investimento</p>
         </div>
       </div>
+
+      <AnaliseFinanceira oportunidadeId={oportunidade.id} />
 
       <section className="painel">
         <h2>Base da estimativa</h2>
