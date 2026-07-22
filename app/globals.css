@@ -2291,3 +2291,72 @@ input[aria-invalid="true"] {
     flex: 0 0 84px;
   }
 }
+
+/* ---------------- ranking e lente ativa ---------------- */
+
+.ranking {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ranking li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--g100);
+}
+
+.ranking li:last-child {
+  border-bottom: 0;
+}
+
+.ranking-rotulo {
+  flex: 0 0 34%;
+  font-size: 13px;
+  font-weight: 500;
+  min-width: 0;
+}
+
+.ranking-rotulo .celula-sub {
+  margin-top: 1px;
+}
+
+.ranking-barra {
+  flex: 1;
+  height: 8px;
+  border-radius: 100px;
+  background: var(--g100);
+  overflow: hidden;
+}
+
+.ranking-barra > span {
+  display: block;
+  height: 100%;
+  border-radius: 100px;
+  background: var(--navy-claro);
+}
+
+.ranking-valor {
+  flex: 0 0 92px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--g500);
+}
+
+.botao-secundario.ativo {
+  border-color: var(--esmeralda);
+  color: var(--esmeralda-forte);
+  background: var(--esmeralda-pale);
+}
+
+@media (max-width: 900px) {
+  .ranking-rotulo {
+    flex: 0 0 42%;
+  }
+
+  .ranking-valor {
+    flex: 0 0 78px;
+  }
+}

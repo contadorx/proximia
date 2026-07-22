@@ -123,3 +123,95 @@ export function totaisGerais(linhas: ResumoCarteira[]) {
     },
   );
 }
+
+
+/* ---------------- lente por responsável ---------------- */
+
+export type LinhaResponsavel = {
+  userId: string | null;
+  carteiras: ResumoCarteira[];
+  alertasAbertos: number;
+  alertasAltos: number;
+  compromissosAtrasados: number;
+  contratosVencidos: number;
+  contratosJanela: number;
+  potencial: number;
+  capturado: number;
+  contas: number;
+  frentes: number;
+  parada: number;
+};
+
+/**
+ * Agrupa o panorama por quem responde, e não por carteira.
+ *
+ * A carteira aparece na linha de cada pessoa que responde por ela — uma
+ * unidade com responsável local e apoio corporativo conta para os dois.
+ * Somar valor por pessoa, aqui, seria errado duas vezes: contaria em
+ * dobro e sugeriria mérito individual sobre um número que é da carteira.
+ * Por isso o que se soma é carga: quantas carteiras, quantos prazos
+ * vencidos, quantos alertas na mão.
+ */
+export function agruparPorResponsavel(
+  linhas: ResumoCarteira[],
+  vinculos: { carteira_id: string; user_id: string }[],
+  alertas: { carteira_id: string; dono_id: string | null; severidade: string }[],
+  compromissos: { carteira_id: string; dono_id: string | null; vence_em: string }[],
+): LinhaResponsavel[] {
+  const hoje = new Date().toISOString().slice(0, 10);
+  const porPessoa = new Map<string, ResumoCarteira[]>();
+
+  for (const v of vinculos) {
+    const carteira = linhas.find((l) => l.carteira_id === v.carteira_id);
+    if (!carteira) continue;
+    const lista = porPessoa.get(v.user_id) ?? [];
+    if (!lista.some((c) => c.carteira_id === carteira.carteira_id)) lista.push(carteira);
+    porPessoa.set(v.user_id, lista);
+  }
+
+  // Carteira sem ninguém definido não some: vira uma linha própria, que é
+  // exatamente o que a coordenação precisa enxergar.
+  const cobertas = new Set(vinculos.map((v) => v.carteira_id));
+  const orfas = linhas.filter((l) => !cobertas.has(l.carteira_id));
+
+  const montar = (userId: string | null, carteiras: ResumoCarteira[]): LinhaResponsavel => {
+    const ids = new Set(carteiras.map((c) => c.carteira_id));
+    const meusAlertas = alertas.filter((a) =>
+      userId ? a.dono_id === userId : a.dono_id === null && ids.has(a.carteira_id),
+    );
+
+    return {
+      userId,
+      carteiras,
+      alertasAbertos: meusAlertas.length,
+      alertasAltos: meusAlertas.filter((a) => a.severidade === "alta").length,
+      compromissosAtrasados: compromissos.filter(
+        (c) =>
+          c.vence_em < hoje && (userId ? c.dono_id === userId : c.dono_id === null && ids.has(c.carteira_id)),
+      ).length,
+      contratosVencidos: carteiras.reduce((t, c) => t + Number(c.contratos_vencidos), 0),
+      contratosJanela: carteiras.reduce((t, c) => t + Number(c.contratos_janela), 0),
+      potencial: carteiras.reduce(
+        (t, c) => t + Number(c.frentes_potencial) + Number(c.contas_potencial),
+        0,
+      ),
+      capturado: carteiras.reduce(
+        (t, c) => t + Number(c.frentes_capturado) + Number(c.contas_capturado),
+        0,
+      ),
+      contas: carteiras.reduce((t, c) => t + Number(c.contas_total), 0),
+      frentes: carteiras.reduce((t, c) => t + Number(c.frentes_abertas), 0),
+      parada: carteiras.filter((c) => diasSemMovimento(c) > 30).length,
+    };
+  };
+
+  const resultado = [...porPessoa.entries()].map(([userId, carteiras]) => montar(userId, carteiras));
+  if (orfas.length > 0) resultado.push(montar(null, orfas));
+
+  return resultado.sort((a, b) => {
+    const pesoA = a.contratosVencidos * 10 + a.alertasAltos * 6 + a.compromissosAtrasados * 4;
+    const pesoB = b.contratosVencidos * 10 + b.alertasAltos * 6 + b.compromissosAtrasados * 4;
+    if (pesoA !== pesoB) return pesoB - pesoA;
+    return b.carteiras.length - a.carteiras.length;
+  });
+}

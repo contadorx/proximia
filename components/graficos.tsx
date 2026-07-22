@@ -113,3 +113,33 @@ export function Funil({
     </ul>
   );
 }
+
+/** Ranking horizontal. Serve para comparar carteiras ou pessoas na mesma escala. */
+export function Ranking({
+  itens,
+  formato = "valor",
+}: {
+  itens: { rotulo: string; valor: number; detalhe?: string; href?: string }[];
+  formato?: "valor" | "numero";
+}) {
+  const maior = Math.max(1, ...itens.map((i) => i.valor));
+
+  return (
+    <ul className="ranking">
+      {itens.map((i) => (
+        <li key={i.rotulo}>
+          <span className="ranking-rotulo">
+            {i.rotulo}
+            {i.detalhe && <span className="celula-sub">{i.detalhe}</span>}
+          </span>
+          <span className="ranking-barra">
+            <span style={{ width: `${Math.max(2, (i.valor / maior) * 100)}%` }} />
+          </span>
+          <span className="ranking-valor dado">
+            {formato === "valor" ? formatarValor(i.valor) : i.valor.toLocaleString("pt-BR")}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}

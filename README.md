@@ -144,6 +144,8 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 
 **A curva não inventa histórico.** A série de captura sai da data de confirmação que já existe em contas, frentes e oportunidades — não há tabela de fatos nem carimbo automático. A consequência é honesta e fica dita na tela: valor capturado sem data de confirmação não entra na curva, e o painel mostra quanto ficou de fora em vez de somar tudo no mês corrente e criar um pico falso.
 
+**Duas lentes sobre a mesma operação.** O panorama lê por unidade, para comparar carteiras entre si, e por responsável, para ver a carga de cada pessoa. Uma carteira com responsável local e apoio corporativo aparece na linha dos dois — então a soma por pessoa é maior que o total da rede, de propósito: ali se compara carga, não mérito, e valor por pessoa seria dupla contagem disfarçada de desempenho. Carteira sem ninguém definido vira uma linha própria, que é justamente o que a coordenação precisa enxergar.
+
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
 ## Rotas

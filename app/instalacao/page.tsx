@@ -27,6 +27,7 @@ const TRILHA: { fase: string; titulo: string; feito: boolean }[] = [
   { fase: "F23", titulo: "Primeiro acesso e recuperação de senha", feito: true },
   { fase: "B24", titulo: "Navegação e espinha de responsabilidade", feito: true },
   { fase: "B25", titulo: "Painel de decisão", feito: true },
+  { fase: "B26", titulo: "Panorama por unidade e por responsável", feito: true },
 ];
 
 export default function PaginaInstalacao() {
