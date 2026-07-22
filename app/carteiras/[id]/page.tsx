@@ -90,6 +90,12 @@ export default async function PaginaCarteira({
         )}
       </section>
 
+      <p style={{ marginTop: -8, marginBottom: 24 }}>
+        <Link className="botao botao-secundario" href={`/carteiras/${carteira.id}/situacao`}>
+          Ver situação da carteira (imprimível)
+        </Link>
+      </p>
+
       <section className="painel">
         <h2>Frentes desta carteira</h2>
         {frentes.length === 0 ? (

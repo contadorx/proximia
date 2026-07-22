@@ -1080,3 +1080,219 @@ textarea:focus {
 .texto-alerta {
   color: var(--alerta);
 }
+
+/* ---------- extrato imprimível (F9) ---------- */
+
+.barra-extrato {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: var(--gap);
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--linha);
+}
+
+.folha {
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+  border-radius: var(--r);
+  padding: 34px 38px 30px;
+  max-width: 860px;
+}
+
+.folha-cabeca {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--tinta);
+  margin-bottom: 20px;
+}
+
+.folha-cabeca h1 {
+  font-size: 24px;
+  margin: 0 0 6px;
+}
+
+.folha-sub {
+  color: var(--aco);
+  font-size: 13px;
+  margin: 0;
+}
+
+.folha-periodo {
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--aco);
+  white-space: nowrap;
+  padding-top: 4px;
+}
+
+.folha-numeros {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--linha);
+  margin-bottom: 22px;
+}
+
+.numero-folha {
+  font-size: 19px;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.folha-bloco {
+  margin-bottom: 22px;
+  break-inside: avoid;
+}
+
+.folha-bloco h2 {
+  font-size: 12px;
+  font-family: var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--aco);
+  font-weight: 500;
+  margin: 0 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--linha);
+}
+
+.folha-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.folha-tabela th {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--aco);
+  font-weight: 500;
+  text-align: left;
+  padding: 5px 10px 5px 0;
+  border-bottom: 1px solid var(--linha);
+}
+
+.folha-tabela td {
+  padding: 6px 10px 6px 0;
+  border-bottom: 1px dashed var(--linha);
+  vertical-align: top;
+}
+
+.folha-tabela .numero {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.folha-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 12.5px;
+}
+
+.folha-lista li {
+  display: flex;
+  gap: 14px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--linha);
+}
+
+.folha-lista li:last-child {
+  border-bottom: 0;
+}
+
+.folha-data {
+  flex: 0 0 74px;
+  color: var(--aco);
+  font-size: 11.5px;
+  padding-top: 1px;
+}
+
+.folha-vazio,
+.folha-nota {
+  font-size: 12.5px;
+  color: var(--aco);
+  margin: 6px 0 0;
+}
+
+.folha-rodape {
+  border-top: 1px solid var(--linha);
+  padding-top: 12px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--aco);
+}
+
+.folha-rodape p {
+  margin: 0 0 4px;
+}
+
+@media (max-width: 640px) {
+  .folha {
+    padding: 22px 18px;
+  }
+
+  .folha-numeros {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ---------- impressão ---------- */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .lateral,
+  .rodape,
+  .barra-extrato,
+  .nao-imprimir {
+    display: none !important;
+  }
+
+  .com-lateral,
+  .area {
+    display: block;
+  }
+
+  .area .conteudo {
+    padding: 0;
+    max-width: none;
+  }
+
+  .folha {
+    border: 0;
+    padding: 0;
+    max-width: none;
+  }
+
+  .folha-bloco,
+  .folha-tabela tr {
+    break-inside: avoid;
+  }
+
+  .folha-tabela,
+  .folha-lista {
+    font-size: 10.5px;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}

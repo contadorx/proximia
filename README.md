@@ -91,6 +91,8 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 
 **Visão consolidada não fura a RLS.** `carteira_resumo` é criada com `security_invoker = on`: roda com as permissões de quem consulta, não com as do dono. Sem isso, uma visão viraria porta lateral — o ponto focal veria números de carteiras que não pode abrir.
 
+**O extrato é o entregável.** A situação da carteira sai em uma página, com frentes em aberto, contratos que exigem decisão, o que foi entregue no período e as pendências. Impressão é CSS: a barra lateral e os controles somem, o conteúdo ocupa a folha inteira e nenhum bloco quebra no meio.
+
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
 ## Rotas
@@ -108,6 +110,7 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 | `/historico` | Tudo o que foi registrado, por dia, com filtros |
 | `/compromissos` | Atrasados, meus, próximos e geração retroativa |
 | `/panorama` | Todas as carteiras em uma tela, ordenadas por atenção |
+| `/carteiras/[id]/situacao` | Extrato de uma página, pronto para imprimir ou salvar em PDF |
 | `/instalacao` | Estado da configuração e trilha de construção |
 | `/diagnostico` | Testa configuração, conexão, sessão e banco |
 | `/api/saude` | Verificação de saúde |
@@ -149,6 +152,6 @@ supabase/
 
 ## Trilha de construção
 
-F0 esqueleto ✓ · F1 acesso, organizações e papéis ✓ · F2 carteiras ✓ · F3 contas nomeadas ✓ · F4 contratos e cláusulas ✓ · F5 frentes ✓ · F6 timeline e memória institucional ✓ · F7 compromissos e alertas ✓ · F8 painel multi-carteira ✓ · F9 situação da carteira · F10 importação.
+F0 esqueleto ✓ · F1 acesso, organizações e papéis ✓ · F2 carteiras ✓ · F3 contas nomeadas ✓ · F4 contratos e cláusulas ✓ · F5 frentes ✓ · F6 timeline e memória institucional ✓ · F7 compromissos e alertas ✓ · F8 painel multi-carteira ✓ · F9 situação da carteira ✓ · F10 importação.
 
 Uma feature por vez, com build passando entre cada uma.
