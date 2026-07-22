@@ -68,6 +68,7 @@ Aplicadas até aqui:
 | `0023_pipeline.sql` | B30 | Etapas com prazo esperado, motivos de perda e leitura de conversão |
 | `0024_playbooks.sql` | B31 | Cadência: compromissos que nascem da mudança de etapa |
 | `0025_resumo_diario.sql` | B32 | Resumo diário por pessoa e preferência de aviso |
+| `0026_exportacoes.sql` | B33 | Trilha de extrações de dados |
 
 Testes de banco ficam em `supabase/testes` e **não são migrations** — são scripts avulsos, para rodar no editor SQL quando quiser conferir. `0001_isolamento.sql` prova que uma organização não enxerga a outra.
 
@@ -170,6 +171,10 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 
 **A preferência é de quem recebe.** Cada pessoa liga, desliga e escolhe receber só severidade alta. Ninguém edita a preferência de outro — aviso que um terceiro liga por você é spam com autorização.
 
+**A exportação não tem filtro próprio.** A consulta roda sob a sessão de quem pede, então a RLS decide o que sai — ponto focal exporta só as carteiras dele pelo mesmo mecanismo que protege as telas, e não por um filtro paralelo que alguém pode esquecer de aplicar. A rota também não aceita identificador de organização: recebê-lo abriria a porta para tentar exportar a de outro.
+
+**Guardamos o registro do ato, nunca a cópia.** Toda extração fica com autor, recurso, formato e contagem de linhas. Guardar o conteúdo exportado dobraria a exposição em vez de reduzi-la.
+
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
 ## Rotas
@@ -195,6 +200,7 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 | `/oportunidades/quadro` | Quadro por etapa, taxa de conversão e por que perdemos |
 | `/configuracoes/pipeline` | Nome e ritmo de cada etapa, catálogo de motivos de perda |
 | `/configuracoes/playbooks` | Cadência por etapa: o que criar, com que prazo e para quem |
+| `/configuracoes/exportacao` | Dados em CSV por recurso ou pacote completo em JSON |
 | `/maturidade`, `/maturidade/[id]` | Régua, ciclos, matriz maturidade × potencial e questionário |
 | `/alertas` | O que saiu do trilho, com silenciar e varredura sob demanda |
 | `/convite/[token]` | Aceite de convite de acesso |
