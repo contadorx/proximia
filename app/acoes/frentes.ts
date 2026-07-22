@@ -132,8 +132,7 @@ export async function atualizarFrente(formData: FormData) {
           potencial === null
             ? null
             : (texto(formData, "potencial_data") ?? new Date().toISOString().slice(0, 10)),
-        valor_capturado: numero(formData, "valor_capturado"),
-        capturado_confirmado_em: texto(formData, "capturado_confirmado_em"),
+      // valor_capturado é soma dos lançamentos de captura: não se escreve aqui.
         proxima_etapa: texto(formData, "proxima_etapa"),
         prazo: texto(formData, "prazo"),
         observacoes: texto(formData, "observacoes"),

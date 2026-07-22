@@ -20,6 +20,7 @@ import { excluirConta } from "@/app/acoes/exclusoes";
 import { Pencil } from "lucide-react";
 import { Historico } from "@/components/historico";
 import { Anexos } from "@/components/anexos";
+import { Capturas } from "@/components/capturas";
 import { classeFase, formatarPayback, listarOportunidades, rotuloFase } from "@/lib/oportunidades";
 
 
@@ -303,26 +304,10 @@ export default async function PaginaConta({
                 <input type="date" name="potencial_data" defaultValue={conta.potencial_data ?? ""} />
               </label>
             </div>
-
-            <div className="formulario-linha">
-              <label className="campo">
-                <span>Capturado</span>
-                <input
-                  type="text"
-                  name="valor_capturado"
-                  inputMode="decimal"
-                  defaultValue={conta.valor_capturado ?? ""}
-                />
-              </label>
-              <label className="campo">
-                <span>Confirmado em</span>
-                <input
-                  type="date"
-                  name="capturado_confirmado_em"
-                  defaultValue={conta.capturado_confirmado_em ?? ""}
-                />
-              </label>
-            </div>
+              <p className="nota">
+                O valor capturado não é mais editado aqui: ele é a soma dos lançamentos registrados
+                no bloco &ldquo;Capturado&rdquo;, cada um com data, autor e comprovação.
+              </p>
 
             <label className="campo">
               <span>Observações</span>
@@ -335,6 +320,15 @@ export default async function PaginaConta({
           </form>
         </Modal>
       )}
+
+      <Capturas
+        entidadeTipo="conta"
+        entidadeId={conta.id}
+        carteiraId={conta.carteira_id}
+        potencial={conta.potencial_bruto}
+        pessoas={pessoas}
+        editavel={editavel}
+      />
 
       <Anexos
         entidadeTipo="conta"

@@ -60,8 +60,7 @@ function montarDados(formData: FormData) {
       // Sem data informada, vale hoje: estimativa precisa de referência no tempo.
       potencial_data:
         potencial === null ? null : (dataPotencial ?? new Date().toISOString().slice(0, 10)),
-      valor_capturado: numero(formData, "valor_capturado"),
-      capturado_confirmado_em: texto(formData, "capturado_confirmado_em"),
+      // valor_capturado é soma dos lançamentos de captura: não se escreve aqui.
     },
     potencial,
     origem,

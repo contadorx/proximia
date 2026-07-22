@@ -64,6 +64,7 @@ Aplicadas até aqui:
 | `0019_captura_mensal.sql` | B25 | Série mensal de captura e o que ficou sem data |
 | `0020_atribuir_compromissos.sql` | B27 | Distribuição de compromissos sem dono pela cadeia de responsabilidade |
 | `0021_gestao_acesso.sql` | B28 | Travas de acesso e visão consolidada de quem vê, responde e carrega |
+| `0022_capturas.sql` | B29 | Captura como evento, com estorno, e o campo virando soma |
 
 Testes de banco ficam em `supabase/testes` e **não são migrations** — são scripts avulsos, para rodar no editor SQL quando quiser conferir. `0001_isolamento.sql` prova que uma organização não enxerga a outra.
 
@@ -151,6 +152,8 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 **Varredura não desfaz decisão de gente.** A distribuição automática só toca em compromisso sem dono. Quem foi reatribuído à mão fica como está — se a máquina pudesse reverter uma escolha humana toda noite, ninguém confiaria na atribuição.
 
 **Ninguém se tranca para fora, e a organização não fica sem dono.** As travas de acesso vivem no banco, não na tela: não dá para alterar o próprio papel, se desativar, se remover, rebaixar o único dono ou promover alguém a dono sem ser dono. Suspender preserva o histórico — o que a pessoa registrou continua onde está, com o nome dela.
+
+**Capturado é registrado, não digitado.** Cada captura é um evento com valor, data de confirmação, autor e comprovação — e `valor_capturado` deixou de ser campo editável para virar a soma desses eventos, mantida por gatilho. Não há política de UPDATE: lançamento não se reescreve. Errou o valor? Lança um estorno, que corrige o saldo sem apagar o que aconteceu. A série mensal do painel passou a ler os eventos, então a curva é consequência do trabalho e não de alguém lembrar de preencher uma data.
 
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 

@@ -18,6 +18,7 @@ import { excluirFrente } from "@/app/acoes/exclusoes";
 import { Pencil } from "lucide-react";
 import { Historico } from "@/components/historico";
 import { Anexos } from "@/components/anexos";
+import { Capturas } from "@/components/capturas";
 
 export const dynamic = "force-dynamic";
 
@@ -265,26 +266,10 @@ export default async function PaginaFrente({
                 <input type="date" name="potencial_data" defaultValue={frente.potencial_data ?? ""} />
               </label>
             </div>
-
-            <div className="formulario-linha">
-              <label className="campo">
-                <span>Capturado</span>
-                <input
-                  type="text"
-                  name="valor_capturado"
-                  inputMode="decimal"
-                  defaultValue={frente.valor_capturado ?? ""}
-                />
-              </label>
-              <label className="campo">
-                <span>Confirmado em</span>
-                <input
-                  type="date"
-                  name="capturado_confirmado_em"
-                  defaultValue={frente.capturado_confirmado_em ?? ""}
-                />
-              </label>
-            </div>
+              <p className="nota">
+                O valor capturado não é mais editado aqui: ele é a soma dos lançamentos registrados
+                no bloco &ldquo;Capturado&rdquo;.
+              </p>
 
             <label className="campo">
               <span>Observações</span>
@@ -297,6 +282,15 @@ export default async function PaginaFrente({
           </form>
         </Modal>
       )}
+      <Capturas
+        entidadeTipo="frente"
+        entidadeId={frente.id}
+        carteiraId={frente.carteira_id}
+        potencial={frente.potencial_bruto}
+        pessoas={pessoas}
+        editavel={editavel}
+      />
+
       <Anexos
         entidadeTipo="frente"
         entidadeId={frente.id}
