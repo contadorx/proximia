@@ -1,7 +1,13 @@
 import { cnpjValido, somenteDigitos } from "./contas";
 import { booleano, data, inteiro, numero, texto, type Linha } from "./csv";
 
-export type TipoImportacao = "carteiras" | "contas" | "contratos" | "frentes";
+export type TipoImportacao =
+  | "carteiras"
+  | "contas"
+  | "contratos"
+  | "frentes"
+  | "oportunidades"
+  | "maturidade";
 
 export type Coluna = { chave: string; rotulo: string; obrigatoria?: boolean; ajuda?: string };
 
@@ -77,11 +83,53 @@ export const MODELOS: Record<
       { chave: "observacoes", rotulo: "observacoes" },
     ],
   },
+  oportunidades: {
+    rotulo: "Oportunidades",
+    explicacao:
+      "Iniciativas com investimento e retorno. Informar investimento ou retorno exige dizer de onde veio a estimativa.",
+    colunas: [
+      { chave: "titulo", rotulo: "titulo", obrigatoria: true },
+      { chave: "carteira", rotulo: "carteira", obrigatoria: true, ajuda: "código ou nome da carteira" },
+      { chave: "conta", rotulo: "conta", ajuda: "nome exato da conta, se houver" },
+      {
+        chave: "fase",
+        rotulo: "fase",
+        ajuda: "identificacao, viabilidade, proposta, negociacao, aprovada, implantacao, concluida",
+      },
+      { chave: "investimento", rotulo: "investimento" },
+      { chave: "retorno_mensal", rotulo: "retorno_mensal" },
+      { chave: "custo_mensal", rotulo: "custo_mensal" },
+      { chave: "horizonte_meses", rotulo: "horizonte_meses", ajuda: "padrão 60" },
+      {
+        chave: "estimativa_origem",
+        rotulo: "estimativa_origem",
+        ajuda: "obrigatório se houver investimento ou retorno",
+      },
+      { chave: "estimativa_data", rotulo: "estimativa_data" },
+      { chave: "proxima_etapa", rotulo: "proxima_etapa" },
+      { chave: "prazo", rotulo: "prazo" },
+      { chave: "observacoes", rotulo: "observacoes" },
+    ],
+  },
+  maturidade: {
+    rotulo: "Maturidade",
+    explicacao:
+      "Respostas de um ciclo, uma linha por carteira e pergunta. A régua e o ciclo precisam existir antes.",
+    colunas: [
+      { chave: "carteira", rotulo: "carteira", obrigatoria: true, ajuda: "código ou nome da carteira" },
+      { chave: "ciclo", rotulo: "ciclo", obrigatoria: true, ajuda: "nome do ciclo já cadastrado" },
+      { chave: "pergunta", rotulo: "pergunta", obrigatoria: true, ajuda: "texto exato da pergunta" },
+      { chave: "nota", rotulo: "nota", obrigatoria: true, ajuda: "0 a 4" },
+      { chave: "observacao", rotulo: "observacao" },
+    ],
+  },
 };
 
 export type Referencias = {
   carteiras: { id: string; nome: string; codigo: string | null }[];
   contas: { id: string; nome: string; carteira_id: string }[];
+  perguntas?: { id: string; texto: string; dimensao: string }[];
+  ciclos?: { id: string; nome: string }[];
 };
 
 export type Resultado = {
@@ -273,6 +321,119 @@ export function validar(
       return;
     }
 
+    if (tipo === "oportunidades") {
+      const titulo = texto(linha.titulo);
+      if (!titulo) return falhar("titulo está vazio.");
+
+      const refCarteira = texto(linha.carteira);
+      if (!refCarteira) return falhar("carteira está vazia.");
+      const carteira = acharCarteira(refCarteira, refs);
+      if (!carteira) return falhar(`carteira "${refCarteira}" não existe. Cadastre-a antes.`);
+
+      const refConta = texto(linha.conta);
+      let contaId: string | null = null;
+      if (refConta) {
+        const conta = acharConta(refConta, refs);
+        if (conta === "ambigua") {
+          return falhar(`conta "${refConta}" aparece em mais de uma carteira. Use um nome único.`);
+        }
+        if (!conta) return falhar(`conta "${refConta}" não existe.`);
+        contaId = conta.id;
+      }
+
+      const fase = texto(linha.fase);
+      const FASES = [
+        "identificacao",
+        "viabilidade",
+        "proposta",
+        "negociacao",
+        "aprovada",
+        "implantacao",
+        "concluida",
+      ];
+      if (!DENTRO(fase, FASES)) {
+        return falhar(
+          `fase "${fase}": use ${FASES.join(", ")}. Descarte exige motivo e é feito na tela.`,
+        );
+      }
+
+      const investimento = num("investimento");
+      if (investimento === undefined) return;
+      const retorno = num("retorno_mensal");
+      if (retorno === undefined) return;
+      const custo = num("custo_mensal");
+      if (custo === undefined) return;
+
+      const origem = texto(linha.estimativa_origem);
+      if ((investimento !== null || retorno !== null) && !origem) {
+        return falhar(
+          "informou investimento ou retorno sem estimativa_origem. Número estimado entra com procedência.",
+        );
+      }
+
+      const horizonte = inteiro(linha.horizonte_meses);
+      if (horizonte === "invalido") return falhar("horizonte_meses não é um número.");
+
+      validas.push({
+        carteira_id: carteira.id,
+        conta_id: contaId,
+        titulo,
+        fase: fase?.toLowerCase() ?? "identificacao",
+        investimento,
+        retorno_mensal: retorno,
+        custo_mensal: custo ?? 0,
+        horizonte_meses: horizonte ?? 60,
+        estimativa_origem: origem,
+        estimativa_data:
+          investimento !== null || retorno !== null
+            ? (data(linha.estimativa_data) ?? new Date().toISOString().slice(0, 10))
+            : null,
+        proxima_etapa: texto(linha.proxima_etapa),
+        prazo: data(linha.prazo),
+        observacoes: texto(linha.observacoes),
+      });
+      return;
+    }
+
+    if (tipo === "maturidade") {
+      const refCarteira = texto(linha.carteira);
+      if (!refCarteira) return falhar("carteira está vazia.");
+      const carteira = acharCarteira(refCarteira, refs);
+      if (!carteira) return falhar(`carteira "${refCarteira}" não existe.`);
+
+      const refCiclo = texto(linha.ciclo);
+      if (!refCiclo) return falhar("ciclo está vazio.");
+      const ciclo = (refs.ciclos ?? []).find(
+        (c) => c.nome.toLowerCase() === refCiclo.toLowerCase(),
+      );
+      if (!ciclo) return falhar(`ciclo "${refCiclo}" não existe. Crie-o em Maturidade antes.`);
+
+      const refPergunta = texto(linha.pergunta);
+      if (!refPergunta) return falhar("pergunta está vazia.");
+      const achadas = (refs.perguntas ?? []).filter(
+        (p) => p.texto.trim().toLowerCase() === refPergunta.trim().toLowerCase(),
+      );
+      if (achadas.length === 0) {
+        return falhar(`pergunta "${refPergunta}" não está na régua. Confira o texto exato.`);
+      }
+      if (achadas.length > 1) {
+        return falhar(`pergunta "${refPergunta}" aparece em mais de uma dimensão.`);
+      }
+
+      const nota = inteiro(linha.nota);
+      if (nota === "invalido" || nota === null) return falhar("nota está vazia ou não é um número.");
+      if (nota < 0 || nota > 4) return falhar(`nota ${nota}: a escala vai de 0 a 4.`);
+
+      validas.push({
+        carteira_id: carteira.id,
+        ciclo_id: ciclo.id,
+        pergunta_id: achadas[0].id,
+        nota,
+        observacao: texto(linha.observacao),
+      });
+      return;
+    }
+
     // frentes
     const titulo = texto(linha.titulo);
     if (!titulo) return falhar("titulo está vazio.");
@@ -325,11 +486,15 @@ export function validar(
 }
 
 export function tabelaDestino(tipo: TipoImportacao): string {
-  return tipo === "carteiras"
-    ? "carteiras"
-    : tipo === "contas"
-      ? "contas"
-      : tipo === "contratos"
-        ? "contratos"
-        : "frentes";
+  const mapa: Record<TipoImportacao, string> = {
+    carteiras: "carteiras",
+    contas: "contas",
+    contratos: "contratos",
+    frentes: "frentes",
+    oportunidades: "oportunidades",
+    // Maturidade não grava numa tabela só: a carga cria avaliação e
+    // respostas juntas, e por isso tem caminho próprio na ação.
+    maturidade: "maturidade_respostas",
+  };
+  return mapa[tipo];
 }

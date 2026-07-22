@@ -13,13 +13,25 @@ function comErro(rota: string, mensagem: string): never {
 
 async function referencias(orgId: string): Promise<Referencias> {
   const supabase = criarClienteServidor();
-  const [{ data: carteiras }, { data: contas }] = await Promise.all([
-    supabase.from("carteiras").select("id, nome, codigo").eq("org_id", orgId),
-    supabase.from("contas").select("id, nome, carteira_id").eq("org_id", orgId),
-  ]);
+  const [{ data: carteiras }, { data: contas }, { data: perguntas }, { data: ciclos }] =
+    await Promise.all([
+      supabase.from("carteiras").select("id, nome, codigo").eq("org_id", orgId),
+      supabase.from("contas").select("id, nome, carteira_id").eq("org_id", orgId),
+      supabase
+        .from("maturidade_perguntas")
+        .select("id, texto, dimensao_id")
+        .eq("org_id", orgId)
+        .eq("ativo", true),
+      supabase.from("maturidade_ciclos").select("id, nome").eq("org_id", orgId),
+    ]);
+
   return {
     carteiras: (carteiras ?? []) as Referencias["carteiras"],
     contas: (contas ?? []) as Referencias["contas"],
+    perguntas: ((perguntas ?? []) as { id: string; texto: string; dimensao_id: string }[]).map(
+      (p) => ({ id: p.id, texto: p.texto, dimensao: p.dimensao_id }),
+    ),
+    ciclos: (ciclos ?? []) as Referencias["ciclos"],
   };
 }
 
@@ -105,6 +117,74 @@ export async function confirmarImportacao(formData: FormData) {
 
   if (imp.status !== "conferida") comErro(rota, "Esta importação já foi concluída ou descartada.");
   if (!imp.payload?.length) comErro(rota, "Nenhuma linha válida para gravar.");
+
+  // Maturidade não é uma linha por registro: cada resposta precisa de uma
+  // avaliação da carteira naquele ciclo. Criamos as que faltam antes,
+  // senão a resposta não tem onde pendurar.
+  if (imp.tipo === "maturidade") {
+    const combinacoes = new Map<string, { carteira_id: string; ciclo_id: string }>();
+    for (const l of imp.payload) {
+      const chave = `${l.carteira_id}:${l.ciclo_id}`;
+      if (!combinacoes.has(chave)) {
+        combinacoes.set(chave, {
+          carteira_id: String(l.carteira_id),
+          ciclo_id: String(l.ciclo_id),
+        });
+      }
+    }
+
+    const { error: erroAval } = await supabase.from("maturidade_avaliacoes").upsert(
+      [...combinacoes.values()].map((c) => ({
+        org_id: org.orgId,
+        carteira_id: c.carteira_id,
+        ciclo_id: c.ciclo_id,
+        observacoes: "Carga por importação.",
+        criado_por: usuario.id,
+      })),
+      { onConflict: "carteira_id,ciclo_id", ignoreDuplicates: true },
+    );
+
+    if (erroAval) comErro(rota, `Não foi possível preparar as avaliações: ${erroAval.message}`);
+
+    const { data: avaliacoes } = await supabase
+      .from("maturidade_avaliacoes")
+      .select("id, carteira_id, ciclo_id")
+      .eq("org_id", org.orgId);
+
+    const porChave = new Map(
+      ((avaliacoes ?? []) as { id: string; carteira_id: string; ciclo_id: string }[]).map((a) => [
+        `${a.carteira_id}:${a.ciclo_id}`,
+        a.id,
+      ]),
+    );
+
+    const respostas = imp.payload.map((l) => ({
+      org_id: org.orgId,
+      avaliacao_id: porChave.get(`${l.carteira_id}:${l.ciclo_id}`),
+      pergunta_id: l.pergunta_id,
+      nota: l.nota,
+      observacao: l.observacao ?? null,
+      criado_por: usuario.id,
+    }));
+
+    const { error: erroResp } = await supabase
+      .from("maturidade_respostas")
+      .upsert(respostas, { onConflict: "avaliacao_id,pergunta_id" });
+
+    if (erroResp) comErro(rota, `Não foi possível gravar as respostas: ${erroResp.message}`);
+
+    await supabase
+      .from("importacoes")
+      .update({ status: "concluida", linhas_gravadas: respostas.length })
+      .eq("id", id);
+
+    revalidatePath("/maturidade");
+    redirect(
+      `/maturidade?ok=${encodeURIComponent(
+        `${respostas.length} respostas gravadas em ${combinacoes.size} avaliação(ões). Conclua cada uma para publicar o score.`,
+      )}`,
+    );
+  }
 
   const linhas = imp.payload.map((l) => ({
     ...l,
