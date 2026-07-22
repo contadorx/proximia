@@ -17,6 +17,8 @@ import { atualizarContrato, criarClausula, excluirClausula } from "@/app/acoes/c
 import { Vazio } from "@/components/intro-secao";
 import { Historico } from "@/components/historico";
 import { pessoasDaOrganizacao } from "@/lib/carteiras";
+import { classeSituacao, listarCompromissos, situacao } from "@/lib/compromissos";
+import { mudarStatusCompromisso } from "@/app/acoes/compromissos";
 
 export const dynamic = "force-dynamic";
 
@@ -32,10 +34,11 @@ export default async function PaginaContrato({
   if (!contrato) notFound();
 
   const org = await exigirOrg();
-  const [conta, clausulas, pessoas] = await Promise.all([
+  const [conta, clausulas, pessoas, compromissos] = await Promise.all([
     obterConta(contrato.conta_id),
     clausulasDoContrato(contrato.id),
     pessoasDaOrganizacao(org.orgId),
+    listarCompromissos({ orgId: org.orgId, entidadeTipo: "contrato", entidadeId: contrato.id }),
   ]);
 
   const editavel = podeEscrever(org.papel);
@@ -117,6 +120,40 @@ export default async function PaginaContrato({
           </p>
         )}
       </section>
+
+      {compromissos.length > 0 && (
+        <section className="painel">
+          <h2>Compromissos deste contrato</h2>
+          <ul className="lista-estado">
+            {compromissos.map((c) => {
+              const sit = situacao(c);
+              return (
+                <li key={c.id}>
+                  <span className="rotulo">
+                    {c.titulo}
+                    <span className="dica">
+                      {formatarData(c.vence_em)}
+                      {sit.detalhe ? ` · ${sit.detalhe}` : ""}
+                      {c.origem !== "manual" ? " · gerado automaticamente" : ""}
+                    </span>
+                  </span>
+                  <span className={classeSituacao(sit.tom)}>{sit.rotulo}</span>
+                  {editavel && c.status === "aberto" && (
+                    <form action={mudarStatusCompromisso}>
+                      <input type="hidden" name="id" value={c.id} />
+                      <input type="hidden" name="status" value="concluido" />
+                      <input type="hidden" name="volta" value={`/contratos/${contrato.id}`} />
+                      <button className="link-acao" type="submit">
+                        Concluir
+                      </button>
+                    </form>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       <section className="painel">
         <div className="linha-titulo">

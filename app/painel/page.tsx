@@ -6,6 +6,14 @@ import { listarCarteiras } from "@/lib/carteiras";
 import { formatarData, listarContas } from "@/lib/contas";
 import { classeSelo, listarContratos, urgencia } from "@/lib/contratos";
 import { classeStatus, listarFrentes, rotuloStatus, totais } from "@/lib/frentes";
+import {
+  classeSituacao,
+  listarCompromissos,
+  precisaAtencao,
+  situacao,
+} from "@/lib/compromissos";
+import { caminhoEntidade } from "@/lib/registros";
+import { mudarStatusCompromisso } from "@/app/acoes/compromissos";
 import { vincularMembro } from "@/app/acoes/organizacoes";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { PrimeirosPassos, type Passo } from "@/components/primeiros-passos";
@@ -53,13 +61,16 @@ export default async function PaginaPainel({
 }) {
   const org = await exigirOrg();
 
-  const [pessoas, carteiras, contas, contratos, frentes] = await Promise.all([
+  const [pessoas, carteiras, contas, contratos, frentes, compromissos] = await Promise.all([
     pessoasDaOrg(org.orgId),
     listarCarteiras(org.orgId),
     listarContas({ orgId: org.orgId }),
     listarContratos({ orgId: org.orgId }),
     listarFrentes({ orgId: org.orgId }),
+    listarCompromissos({ orgId: org.orgId, status: "aberto" }),
   ]);
+
+  const compromissosAtencao = compromissos.filter(precisaAtencao).slice(0, 8);
 
   const emAndamento = frentes
     .filter((f) => f.status === "em_execucao" || f.status === "em_analise")
@@ -144,9 +155,54 @@ export default async function PaginaPainel({
 
       <PrimeirosPassos passos={passos} />
 
+      <section className={compromissosAtencao.length ? "painel painel-alerta" : "painel"}>
+        <div className="linha-titulo">
+          <h2>Compromissos do período</h2>
+          {compromissos.length > 0 && (
+            <Link className="link-acao" href="/compromissos">
+              Ver todos
+            </Link>
+          )}
+        </div>
+
+        {compromissosAtencao.length === 0 ? (
+          <Vazio>
+            {compromissos.length === 0
+              ? "Nenhum compromisso em aberto. Contratos com vigência geram os seus sozinhos."
+              : "Nada vencido nem vencendo nos próximos dias."}
+          </Vazio>
+        ) : (
+          <ul className="lista-estado">
+            {compromissosAtencao.map((c) => {
+              const s = situacao(c);
+              return (
+                <li key={c.id}>
+                  <span className="rotulo">
+                    <Link href={caminhoEntidade(c.entidade_tipo, c.entidade_id)}>{c.titulo}</Link>
+                    <span className="dica">
+                      {formatarData(c.vence_em)} · {s.detalhe} ·{" "}
+                      {nomeCarteira(c.carteira_id)}
+                    </span>
+                  </span>
+                  <span className={classeSituacao(s.tom)}>{s.rotulo}</span>
+                  <form action={mudarStatusCompromisso}>
+                    <input type="hidden" name="id" value={c.id} />
+                    <input type="hidden" name="status" value="concluido" />
+                    <input type="hidden" name="volta" value="/painel" />
+                    <button className="link-acao" type="submit">
+                      Concluir
+                    </button>
+                  </form>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
       <section className={urgentes.length ? "painel painel-alerta" : "painel"}>
         <div className="linha-titulo">
-          <h2>Precisa de atenção</h2>
+          <h2>Contratos que precisam de atenção</h2>
           {contratos.length > 0 && (
             <Link className="link-acao" href="/contratos">
               Ver todos os contratos
