@@ -79,13 +79,18 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 | `/organizacoes` | Escolher ou criar organização |
 | `/painel` | Organização atual, pessoas e papéis |
 | `/instalacao` | Estado da configuração e trilha de construção |
+| `/diagnostico` | Testa configuração, conexão, sessão e banco |
 | `/api/saude` | Verificação de saúde |
 
 ## Se algo der errado na publicação
 
 **Erro 500 com `MIDDLEWARE_INVOCATION_FAILED`** — em geral são as variáveis de ambiente. Cadastre `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` no projeto da Vercel e **refaça o deploy**: variáveis `NEXT_PUBLIC_` entram no pacote na compilação, então cadastrá-las depois de publicar não muda o que já está no ar.
 
-**Como conferir** — abra `/instalacao`. A página lista cada variável e diz qual está faltando, e funciona mesmo sem configuração nenhuma. Se lá estiver tudo definido e o erro continuar, o motivo é outro: veja o log da função em Deployments › Functions.
+**Erro de servidor com `Digest: <número>`** — abra `/diagnostico`. A página testa, em ordem, as variáveis, o formato da URL, a chave, a conexão com o projeto, a sessão e se as tabelas existem, e aponta qual item falhou. Ela não expõe chaves.
+
+**Como achar o erro exato na Vercel** — em Deployments › a implantação atual › Functions (ou Logs), procure a linha com o mesmo digest do erro exibido na tela. É ali que está a mensagem original.
+
+**Causas mais comuns, em ordem:** variáveis cadastradas depois do build (refaça o deploy); URL e chave de projetos diferentes; barra no fim da URL; migrations ainda não aplicadas no banco.
 
 ## Estrutura
 

@@ -16,9 +16,17 @@ export function exigirConfiguracao() {
 
 export async function usuarioAtual() {
   if (!ambienteCompleto()) return null;
-  const supabase = criarClienteServidor();
-  const { data } = await supabase.auth.getUser();
-  return data.user ?? null;
+
+  // Falha de rede ou credencial errada nao pode derrubar a pagina inteira:
+  // sem sessao confirmada, tratamos como visitante e a tela de acesso aparece.
+  try {
+    const supabase = criarClienteServidor();
+    const { data } = await supabase.auth.getUser();
+    return data.user ?? null;
+  } catch (e) {
+    console.error("[auth] nao foi possivel confirmar a sessao:", e);
+    return null;
+  }
 }
 
 export async function exigirUsuario() {
@@ -30,6 +38,15 @@ export async function exigirUsuario() {
 
 /** Organizações em que a pessoa tem vínculo ativo. */
 export async function vinculosDoUsuario(): Promise<Vinculo[]> {
+  try {
+    return await consultarVinculos();
+  } catch (e) {
+    console.error("[auth] nao foi possivel ler os vinculos:", e);
+    return [];
+  }
+}
+
+async function consultarVinculos(): Promise<Vinculo[]> {
   const supabase = criarClienteServidor();
 
   const { data: vinculos, error } = await supabase
