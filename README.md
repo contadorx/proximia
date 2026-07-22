@@ -65,6 +65,7 @@ Aplicadas até aqui:
 | `0020_atribuir_compromissos.sql` | B27 | Distribuição de compromissos sem dono pela cadeia de responsabilidade |
 | `0021_gestao_acesso.sql` | B28 | Travas de acesso e visão consolidada de quem vê, responde e carrega |
 | `0022_capturas.sql` | B29 | Captura como evento, com estorno, e o campo virando soma |
+| `0023_pipeline.sql` | B30 | Etapas com prazo esperado, motivos de perda e leitura de conversão |
 
 Testes de banco ficam em `supabase/testes` e **não são migrations** — são scripts avulsos, para rodar no editor SQL quando quiser conferir. `0001_isolamento.sql` prova que uma organização não enxerga a outra.
 
@@ -155,6 +156,10 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 
 **Capturado é registrado, não digitado.** Cada captura é um evento com valor, data de confirmação, autor e comprovação — e `valor_capturado` deixou de ser campo editável para virar a soma desses eventos, mantida por gatilho. Não há política de UPDATE: lançamento não se reescreve. Errou o valor? Lança um estorno, que corrige o saldo sem apagar o que aconteceu. A série mensal do painel passou a ler os eventos, então a curva é consequência do trabalho e não de alguém lembrar de preencher uma data.
 
+**A forma do funil é do produto; o ritmo é do assinante.** As etapas continuam sendo as mesmas — identificação até concluída ou descartada —, porque essa é a forma de uma conversão em qualquer setor e deixá-las livres faria cada cliente inventar um significado próprio para "ganhou". O que o assinante define é o nome de cada etapa, o prazo esperado e quais estão em uso. Esse prazo é o mesmo limite do alerta de parada: etapa sem prazo não gera alerta, o que é proposital para etapas que dependem de obra e não de ritmo comercial.
+
+**Taxa de conversão só conta o que saiu do funil.** Oportunidade em andamento não é perda. Incluí-la achata a taxa e faz a equipe parecer pior do que é — e é o erro mais comum nesse número.
+
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
 ## Rotas
@@ -177,6 +182,8 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 | `/configuracoes` | Catálogos, dados da organização e atalhos administrativos |
 | `/configuracoes/acesso` | Quem vê, quem edita, quem responde e quanto carrega |
 | `/oportunidades`, `/oportunidades/[id]` | Iniciativas com investimento, retorno e payback |
+| `/oportunidades/quadro` | Quadro por etapa, taxa de conversão e por que perdemos |
+| `/configuracoes/pipeline` | Nome e ritmo de cada etapa, catálogo de motivos de perda |
 | `/maturidade`, `/maturidade/[id]` | Régua, ciclos, matriz maturidade × potencial e questionário |
 | `/alertas` | O que saiu do trilho, com silenciar e varredura sob demanda |
 | `/convite/[token]` | Aceite de convite de acesso |

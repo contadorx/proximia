@@ -2413,3 +2413,117 @@ input[aria-invalid="true"] {
   border-radius: 50%;
   background: var(--esmeralda);
 }
+
+/* ---------------- quadro de conversão ---------------- */
+
+.quadro {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  margin-bottom: var(--gap);
+}
+
+.coluna-quadro {
+  flex: 0 0 232px;
+  background: var(--g50);
+  border: 1px solid var(--g200);
+  border-radius: var(--r);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.coluna-quadro header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.coluna-titulo {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.coluna-contagem {
+  font-size: 11.5px;
+  color: var(--g500);
+  background: var(--branco);
+  border: 1px solid var(--g200);
+  border-radius: 100px;
+  padding: 1px 8px;
+}
+
+.coluna-prazo {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--g400);
+  margin: 4px 0 0;
+}
+
+.coluna-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.coluna-vazia {
+  color: var(--g300);
+  font-size: 13px;
+  text-align: center;
+  margin: 12px 0;
+}
+
+.cartao-quadro {
+  display: block;
+  background: var(--branco);
+  border: 1px solid var(--g200);
+  border-left: 3px solid var(--navy-claro);
+  border-radius: var(--r-p);
+  padding: 10px 12px;
+  text-decoration: none;
+  box-shadow: var(--sombra);
+}
+
+.cartao-quadro:hover {
+  border-color: var(--g400);
+  border-left-color: var(--esmeralda);
+}
+
+.cartao-quadro.atrasado {
+  border-left-color: var(--vermelho);
+}
+
+.cartao-quadro strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--navy);
+  margin-bottom: 5px;
+  line-height: 1.35;
+}
+
+.cartao-quadro-linha {
+  display: block;
+  font-size: 11.5px;
+  color: var(--g500);
+}
+
+.cartao-quadro-dias {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--g400);
+  margin-top: 5px;
+}
+
+@media (max-width: 900px) {
+  .coluna-quadro {
+    flex: 0 0 200px;
+  }
+}

@@ -378,6 +378,12 @@ export default async function PaginaConfiguracoes({
           </li>
           <li>
             <span className="rotulo">
+              <Link href="/configuracoes/pipeline">Pipeline de conversão</Link>
+              <span className="dica">Etapas, prazo esperado de cada uma e motivos de perda</span>
+            </span>
+          </li>
+          <li>
+            <span className="rotulo">
               <Link href="/auditoria">Registro de alterações</Link>
               <span className="dica">Quem alterou o quê, e quando</span>
             </span>

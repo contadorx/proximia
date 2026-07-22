@@ -31,6 +31,7 @@ const TRILHA: { fase: string; titulo: string; feito: boolean }[] = [
   { fase: "B27", titulo: "Filas de trabalho com dono e carga", feito: true },
   { fase: "B28", titulo: "Gestão de acesso e permissões", feito: true },
   { fase: "B29", titulo: "Evento de captura", feito: true },
+  { fase: "B30", titulo: "Pipeline de conversão", feito: true },
 ];
 
 export default function PaginaInstalacao() {
