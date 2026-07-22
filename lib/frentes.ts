@@ -77,13 +77,15 @@ const ORDEM: Record<StatusFrente, number> = {
 export async function listarFrentes(opcoes: {
   orgId: string;
   carteiraId?: string;
-  status?: string;
+  carteiras?: string[];
+  status?: string[];
 }): Promise<Frente[]> {
   const supabase = criarClienteServidor();
   let consulta = supabase.from("frentes").select(CAMPOS).eq("org_id", opcoes.orgId);
 
   if (opcoes.carteiraId) consulta = consulta.eq("carteira_id", opcoes.carteiraId);
-  if (opcoes.status) consulta = consulta.eq("status", opcoes.status);
+  if (opcoes.carteiras?.length) consulta = consulta.in("carteira_id", opcoes.carteiras);
+  if (opcoes.status?.length) consulta = consulta.in("status", opcoes.status);
 
   const { data, error } = await consulta.limit(300);
   if (error) {

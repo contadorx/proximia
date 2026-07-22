@@ -55,7 +55,8 @@ export async function registrosDaEntidade(
 export async function historico(opcoes: {
   orgId: string;
   carteiraId?: string;
-  tipo?: string;
+  carteiras?: string[];
+  tipos?: string[];
   desde?: string;
 }): Promise<Registro[]> {
   const supabase = criarClienteServidor();
@@ -66,7 +67,8 @@ export async function historico(opcoes: {
     .eq("ativo", true);
 
   if (opcoes.carteiraId) consulta = consulta.eq("carteira_id", opcoes.carteiraId);
-  if (opcoes.tipo) consulta = consulta.eq("tipo", opcoes.tipo);
+  if (opcoes.carteiras?.length) consulta = consulta.in("carteira_id", opcoes.carteiras);
+  if (opcoes.tipos?.length) consulta = consulta.in("tipo", opcoes.tipos);
   if (opcoes.desde) consulta = consulta.gte("ocorrido_em", opcoes.desde);
 
   const { data, error } = await consulta

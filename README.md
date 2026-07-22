@@ -55,6 +55,8 @@ Aplicadas até aqui:
 | `0010_oportunidades.sql` | F12 | Oportunidades com investimento, retorno, payback e RLS |
 | `0011_extrato_automatico.sql` | F13 | Cadência do extrato por carteira, registro de envios e RLS |
 | `0012_maturidade.sql` | F14 | Questionário ponderado, ciclos, avaliações, score e RLS |
+| `0013_panorama_oportunidades_convites.sql` | F17/F18 | Panorama com oportunidades e convites por e-mail |
+| `0014_alertas.sql` | F19 | Alertas proativos gerados pelo banco, com silenciar e reabrir |
 
 Testes de banco ficam em `supabase/testes` e **não são migrations** — são scripts avulsos, para rodar no editor SQL quando quiser conferir. `0001_isolamento.sql` prova que uma organização não enxerga a outra.
 
@@ -117,6 +119,12 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 
 **Exclusão em duas etapas.** O primeiro clique pergunta, o segundo executa, e o aviso diz o que vai junto. Excluir carteira leva contas, contratos, frentes, oportunidades e histórico; excluir dimensão leva perguntas e respostas. Frente e oportunidade têm o descarte com motivo como caminho preferido — apagar perde o aprendizado.
 
+**Busca sempre; múltipla onde faz sentido.** Todo seletor tem busca. Filtro aceita vários — três carteiras ao mesmo tempo. Campo de vínculo continua único: a conta pertence a uma carteira, e permitir marcar várias criaria ambiguidade na hora de gravar.
+
+**Alerta some sozinho.** A varredura diária abre alerta para o que saiu do trilho e fecha o que deixou de valer — contrato renovado, compromisso concluído. Cada situação tem uma chave, então o mesmo problema nunca vira dez alertas. O que a pessoa silenciar não volta a insistir enquanto a situação for a mesma.
+
+**Convite em vez de cadastro prévio.** O link vale 14 dias, só para o e-mail convidado, e uma vez só. Vincular quem já tem acesso continua existindo, para quando não houver espera.
+
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
 ## Rotas
@@ -139,6 +147,8 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 | `/configuracoes` | Pessoas e alcance, catálogos e dados da organização |
 | `/oportunidades`, `/oportunidades/[id]` | Iniciativas com investimento, retorno e payback |
 | `/maturidade`, `/maturidade/[id]` | Régua, ciclos, matriz maturidade × potencial e questionário |
+| `/alertas` | O que saiu do trilho, com silenciar e varredura sob demanda |
+| `/convite/[token]` | Aceite de convite de acesso |
 | `/instalacao` | Estado da configuração e trilha de construção |
 | `/diagnostico` | Testa configuração, conexão, sessão e banco |
 | `/api/saude` | Verificação de saúde |
@@ -182,6 +192,6 @@ supabase/
 
 F0 esqueleto ✓ · F1 acesso, organizações e papéis ✓ · F2 carteiras ✓ · F3 contas nomeadas ✓ · F4 contratos e cláusulas ✓ · F5 frentes ✓ · F6 timeline e memória institucional ✓ · F7 compromissos e alertas ✓ · F8 painel multi-carteira ✓ · F9 situação da carteira ✓ · F10 importação ✓ · F11 camada de interface ✓ — **fatia 1 completa**.
 
-Fase 2 em andamento: F12 oportunidades ✓ · F13 extrato automático ✓ · F14 motor de maturidade ✓ · portal da unidade · anexos · alertas proativos.
+Fase 2: F12 oportunidades ✓ · F13 extrato automático ✓ · F14 motor de maturidade ✓ · F16 seletor com busca ✓ · F17 panorama com oportunidades ✓ · F18 convite por e-mail ✓ · F19 alertas proativos ✓ · faltam portal da unidade, anexos e registro de acesso.
 
 Uma feature por vez, com build passando entre cada uma.

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Building2,
+  Bell,
   CalendarClock,
   Gauge,
   ClipboardList,
@@ -32,6 +33,7 @@ const GRUPOS = [
     titulo: "Acompanhar",
     itens: [
       { href: "/painel", rotulo: "Painel", icone: <LayoutGrid size={TAMANHO} /> },
+      { href: "/alertas", rotulo: "Alertas", icone: <Bell size={TAMANHO} /> },
       { href: "/panorama", rotulo: "Panorama", icone: <Building2 size={TAMANHO} /> },
       { href: "/compromissos", rotulo: "Compromissos", icone: <CalendarClock size={TAMANHO} /> },
       { href: "/maturidade", rotulo: "Maturidade", icone: <Gauge size={TAMANHO} /> },

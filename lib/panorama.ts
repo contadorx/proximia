@@ -20,6 +20,9 @@ export type ResumoCarteira = {
   contratos_total: number;
   contratos_vencidos: number;
   contratos_janela: number;
+  oportunidades_abertas: number;
+  oportunidades_investimento: number;
+  oportunidades_resultado: number;
   compromissos_abertos: number;
   compromissos_atrasados: number;
   ultima_movimentacao: string | null;
@@ -97,6 +100,9 @@ export function totaisGerais(linhas: ResumoCarteira[]) {
       casos: t.casos + Number(r.frentes_casos),
       potencial: t.potencial + Number(r.frentes_potencial) + Number(r.contas_potencial),
       capturado: t.capturado + Number(r.frentes_capturado) + Number(r.contas_capturado),
+      oportunidades: t.oportunidades + Number(r.oportunidades_abertas),
+      investimento: t.investimento + Number(r.oportunidades_investimento),
+      resultadoMensal: t.resultadoMensal + Number(r.oportunidades_resultado),
       vencidos: t.vencidos + Number(r.contratos_vencidos),
       janela: t.janela + Number(r.contratos_janela),
       atrasados: t.atrasados + Number(r.compromissos_atrasados),
@@ -108,6 +114,9 @@ export function totaisGerais(linhas: ResumoCarteira[]) {
       casos: 0,
       potencial: 0,
       capturado: 0,
+      oportunidades: 0,
+      investimento: 0,
+      resultadoMensal: 0,
       vencidos: 0,
       janela: 0,
       atrasados: 0,

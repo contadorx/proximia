@@ -13,6 +13,8 @@ import {
 import { criarConta } from "@/app/acoes/contas";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
+import { Seletor, SeletorMultiplo } from "@/components/seletor";
+import { paraLista, temFiltro } from "@/lib/consulta";
 import { CampoCnpj } from "@/components/campos";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +22,12 @@ export const dynamic = "force-dynamic";
 export default async function PaginaContas({
   searchParams,
 }: {
-  searchParams: { erro?: string; busca?: string; carteira?: string; relacao?: string };
+  searchParams: {
+    erro?: string;
+    busca?: string;
+    carteira?: string | string[];
+    relacao?: string | string[];
+  };
 }) {
   const org = await exigirOrg();
   const [carteiras, contas] = await Promise.all([
@@ -28,14 +35,19 @@ export default async function PaginaContas({
     listarContas({
       orgId: org.orgId,
       busca: searchParams.busca,
-      carteiraId: searchParams.carteira,
-      relacao: searchParams.relacao,
+      carteiras: paraLista(searchParams.carteira),
+      relacoes: paraLista(searchParams.relacao),
     }),
   ]);
 
   const podeCriar = podeEscrever(org.papel) && carteiras.length > 0;
   const nomeCarteira = (id: string) => carteiras.find((c) => c.id === id)?.nome ?? "—";
-  const filtrando = Boolean(searchParams.busca || searchParams.carteira || searchParams.relacao);
+  const filtrando = Boolean(searchParams.busca) || temFiltro(searchParams.carteira, searchParams.relacao);
+  const opcoesCarteira = carteiras.map((c) => ({
+    valor: c.id,
+    rotulo: c.nome,
+    detalhe: c.codigo ?? undefined,
+  }));
 
   return (
     <>
@@ -58,19 +70,13 @@ export default async function PaginaContas({
                     <span>Nome</span>
                     <input type="text" name="nome" required maxLength={160} autoFocus />
                   </label>
-                  <label className="campo">
-                    <span>Carteira</span>
-                    <select name="carteira_id" required defaultValue="">
-                      <option value="" disabled>
-                        Escolha
-                      </option>
-                      {carteiras.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.nome}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <Seletor
+                    nome="carteira_id"
+                    rotulo="Carteira"
+                    opcoes={opcoesCarteira}
+                    vazio="Escolha a carteira"
+                    obrigatorio
+                  />
                 </div>
                 <div className="formulario-linha">
                   <CampoCnpj />
@@ -128,28 +134,18 @@ export default async function PaginaContas({
             placeholder="nome, razão social ou CNPJ"
           />
         </label>
-        <label className="campo">
-          <span>Carteira</span>
-          <select name="carteira" defaultValue={searchParams.carteira ?? ""}>
-            <option value="">Todas</option>
-            {carteiras.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nome}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="campo">
-          <span>Relação</span>
-          <select name="relacao" defaultValue={searchParams.relacao ?? ""}>
-            <option value="">Todas</option>
-            {RELACOES.map((r) => (
-              <option key={r.valor} value={r.valor}>
-                {r.rotulo}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SeletorMultiplo
+          nome="carteira"
+          rotulo="Carteira"
+          opcoes={opcoesCarteira}
+          inicial={paraLista(searchParams.carteira)}
+        />
+        <SeletorMultiplo
+          nome="relacao"
+          rotulo="Relação"
+          opcoes={RELACOES.map((r) => ({ valor: r.valor, rotulo: r.rotulo }))}
+          inicial={paraLista(searchParams.relacao)}
+        />
         <button className="botao botao-secundario" type="submit">
           <Search size={14} />
           Filtrar

@@ -18,6 +18,7 @@ export type DadosExtrato = {
   contratos: { numero: string | null; conta: string; fim: string | null; situacao: string }[];
   entregas: { data: string; titulo: string; corpo: string }[];
   pendencias: { titulo: string; vence: string }[];
+  oportunidades: { titulo: string; fase: string; investimento: number | null; payback: number | null }[];
   potencial: number;
   capturado: number;
 };
@@ -35,8 +36,14 @@ export async function montarExtrato(
 
   if (!carteira) return null;
 
-  const [{ data: contas }, { data: frentes }, { data: contratos }, { data: registros }, { data: compromissos }] =
-    await Promise.all([
+  const [
+    { data: contas },
+    { data: frentes },
+    { data: contratos },
+    { data: registros },
+    { data: compromissos },
+    { data: oportunidades },
+  ] = await Promise.all([
       supabase
         .from("contas")
         .select("id, nome, potencial_bruto, valor_capturado")
@@ -68,6 +75,13 @@ export async function montarExtrato(
         .eq("status", "aberto")
         .order("vence_em")
         .limit(10),
+      supabase
+        .from("oportunidades")
+        .select("titulo, fase, investimento, payback_meses")
+        .eq("carteira_id", carteiraId)
+        .not("fase", "in", "(concluida,descartada)")
+        .order("investimento", { ascending: false, nullsFirst: false })
+        .limit(8),
     ]);
 
   const listaContas = contas ?? [];
@@ -108,6 +122,12 @@ export async function montarExtrato(
       data: r.ocorrido_em as string,
       titulo: (r.titulo as string) ?? (r.tipo === "decisao" ? "Decisão" : "Entrega"),
       corpo: r.corpo as string,
+    })),
+    oportunidades: (oportunidades ?? []).map((o) => ({
+      titulo: o.titulo as string,
+      fase: o.fase as string,
+      investimento: o.investimento as number | null,
+      payback: o.payback_meses as number | null,
     })),
     pendencias: (compromissos ?? []).map((c) => ({
       titulo: c.titulo as string,
@@ -179,6 +199,25 @@ export function htmlExtrato(d: DadosExtrato): string {
         .join("")}</table>`
     : vazio("Nenhum contrato vencido ou com janela aberta.");
 
+  const oportunidades = d.oportunidades.length
+    ? `<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">${d.oportunidades
+        .map(
+          (o) => `<tr>
+            <td style="padding:7px 0;border-bottom:1px solid ${linha};font:400 13px/1.45 Arial,sans-serif;color:${tinta};">
+              <strong>${escapar(o.titulo)}</strong>
+              <div style="color:${cinza};font-size:12px;">${escapar(o.fase)}</div>
+            </td>
+            <td align="right" style="padding:7px 0;border-bottom:1px solid ${linha};white-space:nowrap;font:400 12px/1.5 Arial,sans-serif;">
+              <span style="color:${cinza};">${formatarValor(o.investimento)}</span><br>
+              <span style="color:${o.payback === null ? "#c2410c" : verde};">${
+                o.payback === null ? "sem payback" : `payback ${Math.round(o.payback)} meses`
+              }</span>
+            </td>
+          </tr>`,
+        )
+        .join("")}</table>`
+    : vazio("Nenhuma oportunidade em análise.");
+
   const entregas = d.entregas.length
     ? d.entregas
         .map(
@@ -233,6 +272,7 @@ export function htmlExtrato(d: DadosExtrato): string {
     <table width="100%" cellpadding="0" cellspacing="0">
       ${bloco("Frentes em aberto", frentes)}
       ${bloco("Contratos que exigem decisão", contratos)}
+      ${bloco("Oportunidades em análise", oportunidades)}
       ${bloco("Entregue no período", entregas)}
       ${bloco("Pendências", pendencias)}
     </table>

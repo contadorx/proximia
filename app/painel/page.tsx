@@ -16,6 +16,8 @@ import { caminhoEntidade } from "@/lib/registros";
 import { mudarStatusCompromisso } from "@/app/acoes/compromissos";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { PrimeirosPassos, type Passo } from "@/components/primeiros-passos";
+import { ROTULO_TIPO, classeSeveridade, listarAlertas } from "@/lib/alertas";
+import { silenciarAlerta } from "@/app/acoes/alertas";
 
 export const dynamic = "force-dynamic";
 
@@ -60,13 +62,14 @@ export default async function PaginaPainel({
 }) {
   const org = await exigirOrg();
 
-  const [pessoas, carteiras, contas, contratos, frentes, compromissos] = await Promise.all([
+  const [pessoas, carteiras, contas, contratos, frentes, compromissos, alertas] = await Promise.all([
     pessoasDaOrg(org.orgId),
     listarCarteiras(org.orgId),
     listarContas({ orgId: org.orgId }),
     listarContratos({ orgId: org.orgId }),
     listarFrentes({ orgId: org.orgId }),
     listarCompromissos({ orgId: org.orgId, status: "aberto" }),
+    listarAlertas({ orgId: org.orgId, status: "aberto" }),
   ]);
 
   const compromissosAtencao = compromissos.filter(precisaAtencao).slice(0, 8);
@@ -161,6 +164,44 @@ export default async function PaginaPainel({
       {searchParams.ok && <p className="aviso aviso-ok">{searchParams.ok}</p>}
 
       <PrimeirosPassos passos={passos} />
+
+      {alertas.length > 0 && (
+        <section className="painel painel-alerta">
+          <div className="linha-titulo">
+            <h2>Alertas</h2>
+            <Link className="link-acao" href="/alertas">
+              Ver todos os {alertas.length}
+            </Link>
+          </div>
+          <ul className="lista-estado">
+            {alertas.slice(0, 5).map((a) => (
+              <li key={a.id}>
+                <span className="rotulo">
+                  {a.entidade_tipo && a.entidade_id ? (
+                    <Link href={caminhoEntidade(a.entidade_tipo, a.entidade_id)}>{a.titulo}</Link>
+                  ) : (
+                    a.titulo
+                  )}
+                  <span className="dica">
+                    {ROTULO_TIPO[a.tipo]} · {nomeCarteira(a.carteira_id)}
+                    {a.detalhe ? ` · ${a.detalhe}` : ""}
+                  </span>
+                </span>
+                <span className={classeSeveridade(a.severidade)}>
+                  {a.severidade === "alta" ? "Alta" : a.severidade === "atencao" ? "Atenção" : "Info"}
+                </span>
+                <form action={silenciarAlerta}>
+                  <input type="hidden" name="id" value={a.id} />
+                  <input type="hidden" name="volta" value="/painel" />
+                  <button className="link-acao" type="submit">
+                    Silenciar
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className={compromissosAtencao.length ? "painel painel-alerta" : "painel"}>
         <div className="linha-titulo">

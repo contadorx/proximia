@@ -7,6 +7,8 @@ import { PERIODICIDADES, classeSelo, listarContratos, urgencia } from "@/lib/con
 import { criarContrato } from "@/app/acoes/contratos";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
+import { Seletor, SeletorMultiplo } from "@/components/seletor";
+import { paraLista, temFiltro } from "@/lib/consulta";
 import { CampoValor } from "@/components/campos";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +24,7 @@ const SITUACOES = [
 export default async function PaginaContratos({
   searchParams,
 }: {
-  searchParams: { erro?: string; carteira?: string; situacao?: string };
+  searchParams: { erro?: string; carteira?: string | string[]; situacao?: string | string[] };
 }) {
   const org = await exigirOrg();
   const [todos, contas, carteiras] = await Promise.all([
@@ -31,11 +33,18 @@ export default async function PaginaContratos({
     listarCarteiras(org.orgId),
   ]);
 
+  const filtroCarteiras = paraLista(searchParams.carteira);
+  const filtroSituacoes = paraLista(searchParams.situacao);
   const contratos = todos.filter((c) => {
-    if (searchParams.carteira && c.carteira_id !== searchParams.carteira) return false;
-    if (searchParams.situacao && urgencia(c).chave !== searchParams.situacao) return false;
+    if (filtroCarteiras.length && !filtroCarteiras.includes(c.carteira_id)) return false;
+    if (filtroSituacoes.length && !filtroSituacoes.includes(urgencia(c).chave)) return false;
     return true;
   });
+  const opcoesCarteira = carteiras.map((c) => ({
+    valor: c.id,
+    rotulo: c.nome,
+    detalhe: c.codigo ?? undefined,
+  }));
 
   const nomeConta = (id: string) => contas.find((c) => c.id === id)?.nome ?? "conta removida";
   const podeCriar = podeEscrever(org.papel) && contas.length > 0;
@@ -61,19 +70,17 @@ export default async function PaginaContratos({
               <form action={criarContrato} className="formulario">
                 <input type="hidden" name="volta" value="/contratos" />
                 <div className="formulario-linha">
-                  <label className="campo">
-                    <span>Conta</span>
-                    <select name="conta_id" required defaultValue="" autoFocus>
-                      <option value="" disabled>
-                        Escolha
-                      </option>
-                      {contas.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.nome}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <Seletor
+                    nome="conta_id"
+                    rotulo="Conta"
+                    opcoes={contas.map((c) => ({
+                      valor: c.id,
+                      rotulo: c.nome,
+                      detalhe: carteiras.find((k) => k.id === c.carteira_id)?.nome,
+                    }))}
+                    vazio="Escolha a conta"
+                    obrigatorio
+                  />
                   <label className="campo">
                     <span>Número</span>
                     <input type="text" name="numero" maxLength={60} placeholder="opcional" />
@@ -167,33 +174,23 @@ export default async function PaginaContratos({
       )}
 
       <form className="filtros" method="get">
-        <label className="campo">
-          <span>Carteira</span>
-          <select name="carteira" defaultValue={searchParams.carteira ?? ""}>
-            <option value="">Todas</option>
-            {carteiras.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nome}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="campo">
-          <span>Situação</span>
-          <select name="situacao" defaultValue={searchParams.situacao ?? ""}>
-            <option value="">Todas</option>
-            {SITUACOES.map((s) => (
-              <option key={s.valor} value={s.valor}>
-                {s.rotulo}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SeletorMultiplo
+          nome="carteira"
+          rotulo="Carteira"
+          opcoes={opcoesCarteira}
+          inicial={filtroCarteiras}
+        />
+        <SeletorMultiplo
+          nome="situacao"
+          rotulo="Situação"
+          opcoes={SITUACOES.map((s) => ({ valor: s.valor, rotulo: s.rotulo }))}
+          inicial={filtroSituacoes}
+        />
         <button className="botao botao-secundario" type="submit">
           <Search size={14} />
           Filtrar
         </button>
-        {(searchParams.carteira || searchParams.situacao) && (
+        {temFiltro(searchParams.carteira, searchParams.situacao) && (
           <Link className="link-acao" href="/contratos">
             Limpar
           </Link>

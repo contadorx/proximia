@@ -17,6 +17,10 @@ const TRILHA: { fase: string; titulo: string; feito: boolean }[] = [
   { fase: "F12", titulo: "Oportunidades com investimento e retorno", feito: true },
   { fase: "F13", titulo: "Extrato periódico automático por e-mail", feito: true },
   { fase: "F14", titulo: "Motor de maturidade com ciclos e evolução", feito: true },
+  { fase: "F16", titulo: "Seletor com busca e filtro múltiplo", feito: true },
+  { fase: "F17", titulo: "Panorama e extrato com oportunidades", feito: true },
+  { fase: "F18", titulo: "Convite de acesso por e-mail", feito: true },
+  { fase: "F19", titulo: "Alertas proativos", feito: true },
 ];
 
 export default function PaginaInstalacao() {

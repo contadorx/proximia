@@ -17,6 +17,8 @@ import {
 } from "@/app/acoes/compromissos";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
+import { Seletor, SeletorMultiplo } from "@/components/seletor";
+import { paraLista, temFiltro } from "@/lib/consulta";
 import { Plus, RefreshCw } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -84,13 +86,13 @@ function Lista({
 export default async function PaginaCompromissos({
   searchParams,
 }: {
-  searchParams: { erro?: string; ok?: string; carteira?: string; ver?: string };
+  searchParams: { erro?: string; ok?: string; carteira?: string | string[]; ver?: string };
 }) {
   const org = await exigirOrg();
   const usuario = await exigirUsuario();
 
   const [todos, carteiras, pessoas] = await Promise.all([
-    listarCompromissos({ orgId: org.orgId, carteiraId: searchParams.carteira }),
+    listarCompromissos({ orgId: org.orgId, carteiras: paraLista(searchParams.carteira) }),
     listarCarteiras(org.orgId),
     pessoasDaOrganizacao(org.orgId),
   ]);
@@ -131,19 +133,17 @@ export default async function PaginaCompromissos({
                     <span>O que precisa ser feito</span>
                     <input type="text" name="titulo" required maxLength={160} autoFocus />
                   </label>
-                  <label className="campo">
-                    <span>Carteira</span>
-                    <select name="carteira_id" required defaultValue="">
-                      <option value="" disabled>
-                        Escolha
-                      </option>
-                      {carteiras.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.nome}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <Seletor
+                    nome="carteira_id"
+                    rotulo="Carteira"
+                    opcoes={carteiras.map((c) => ({
+                      valor: c.id,
+                      rotulo: c.nome,
+                      detalhe: c.codigo ?? undefined,
+                    }))}
+                    vazio="Escolha a carteira"
+                    obrigatorio
+                  />
                 </div>
                 <div className="formulario-linha">
                   <label className="campo">
@@ -160,6 +160,7 @@ export default async function PaginaCompromissos({
                       ))}
                     </select>
                   </label>
+                  {/* dono continua único: compromisso sem um responsável claro não é compromisso */}
                   <label className="campo campo-numerico">
                     <span>Avisar (dias antes)</span>
                     <input type="number" name="alerta_dias" min={0} max={365} defaultValue={7} />
@@ -228,21 +229,20 @@ export default async function PaginaCompromissos({
       </div>
 
       <form className="filtros" method="get">
-        <label className="campo">
-          <span>Carteira</span>
-          <select name="carteira" defaultValue={searchParams.carteira ?? ""}>
-            <option value="">Todas</option>
-            {carteiras.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nome}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SeletorMultiplo
+          nome="carteira"
+          rotulo="Carteira"
+          opcoes={carteiras.map((c) => ({
+            valor: c.id,
+            rotulo: c.nome,
+            detalhe: c.codigo ?? undefined,
+          }))}
+          inicial={paraLista(searchParams.carteira)}
+        />
         <button className="botao botao-secundario" type="submit">
           Filtrar
         </button>
-        {searchParams.carteira && (
+        {temFiltro(searchParams.carteira) && (
           <Link className="link-acao" href="/compromissos">
             Limpar
           </Link>

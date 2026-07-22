@@ -77,13 +77,15 @@ export async function listarContratos(opcoes: {
   orgId: string;
   contaId?: string;
   carteiraId?: string;
-  situacao?: string;
+  carteiras?: string[];
+  situacoes?: string[];
 }): Promise<Contrato[]> {
   const supabase = criarClienteServidor();
   let consulta = supabase.from("contratos").select(CAMPOS).eq("org_id", opcoes.orgId);
 
   if (opcoes.contaId) consulta = consulta.eq("conta_id", opcoes.contaId);
   if (opcoes.carteiraId) consulta = consulta.eq("carteira_id", opcoes.carteiraId);
+  if (opcoes.carteiras?.length) consulta = consulta.in("carteira_id", opcoes.carteiras);
 
   const { data, error } = await consulta.order("fim", { nullsFirst: false }).limit(300);
   if (error) {
@@ -92,8 +94,8 @@ export async function listarContratos(opcoes: {
   }
 
   const contratos = (data ?? []) as Contrato[];
-  const filtrados = opcoes.situacao
-    ? contratos.filter((c) => urgencia(c).chave === opcoes.situacao)
+  const filtrados = opcoes.situacoes?.length
+    ? contratos.filter((c) => opcoes.situacoes!.includes(urgencia(c).chave))
     : contratos;
 
   // Mais urgente primeiro: vencido, depois janela aberta, depois o resto.

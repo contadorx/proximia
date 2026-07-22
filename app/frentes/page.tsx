@@ -14,6 +14,8 @@ import {
 import { criarFrente } from "@/app/acoes/frentes";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
+import { Seletor, SeletorMultiplo } from "@/components/seletor";
+import { paraLista, temFiltro } from "@/lib/consulta";
 import { CampoQuantidade, CampoValor } from "@/components/campos";
 
 export const dynamic = "force-dynamic";
@@ -21,11 +23,15 @@ export const dynamic = "force-dynamic";
 export default async function PaginaFrentes({
   searchParams,
 }: {
-  searchParams: { erro?: string; carteira?: string; status?: string };
+  searchParams: { erro?: string; carteira?: string | string[]; status?: string | string[] };
 }) {
   const org = await exigirOrg();
   const [frentes, carteiras, tipos, pessoas] = await Promise.all([
-    listarFrentes({ orgId: org.orgId, carteiraId: searchParams.carteira, status: searchParams.status }),
+    listarFrentes({
+      orgId: org.orgId,
+      carteiras: paraLista(searchParams.carteira),
+      status: paraLista(searchParams.status),
+    }),
     listarCarteiras(org.orgId),
     tiposDeFrente(org.orgId),
     pessoasDaOrganizacao(org.orgId),
@@ -34,6 +40,12 @@ export default async function PaginaFrentes({
   const t = totais(frentes);
   const podeCriar = podeEscrever(org.papel) && carteiras.length > 0;
   const nomeCarteira = (id: string) => carteiras.find((c) => c.id === id)?.nome ?? "—";
+  const opcoesCarteira = carteiras.map((c) => ({
+    valor: c.id,
+    rotulo: c.nome,
+    detalhe: c.codigo ?? undefined,
+  }));
+  const opcoesPessoa = pessoas.map((p) => ({ valor: p.id, rotulo: nomePessoa(p) }));
 
   return (
     <>
@@ -57,19 +69,13 @@ export default async function PaginaFrentes({
                     <span>Título</span>
                     <input type="text" name="titulo" required maxLength={160} autoFocus />
                   </label>
-                  <label className="campo">
-                    <span>Carteira</span>
-                    <select name="carteira_id" required defaultValue="">
-                      <option value="" disabled>
-                        Escolha
-                      </option>
-                      {carteiras.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.nome}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <Seletor
+                    nome="carteira_id"
+                    rotulo="Carteira"
+                    opcoes={opcoesCarteira}
+                    vazio="Escolha a carteira"
+                    obrigatorio
+                  />
                   <label className="campo">
                     <span>Tipo</span>
                     <select name="catalogo_id" defaultValue="">
@@ -96,17 +102,12 @@ export default async function PaginaFrentes({
                       ))}
                     </select>
                   </label>
-                  <label className="campo">
-                    <span>Dono</span>
-                    <select name="dono_id" defaultValue="">
-                      <option value="">Definir depois</option>
-                      {pessoas.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {nomePessoa(p)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <Seletor
+                    nome="dono_id"
+                    rotulo="Dono"
+                    opcoes={opcoesPessoa}
+                    vazio="Definir depois"
+                  />
                   <CampoQuantidade nome="qtd_casos" rotulo="Casos" ajuda="Quantos itens a frente representa." />
                 </div>
 
@@ -176,33 +177,23 @@ export default async function PaginaFrentes({
       )}
 
       <form className="filtros" method="get">
-        <label className="campo">
-          <span>Carteira</span>
-          <select name="carteira" defaultValue={searchParams.carteira ?? ""}>
-            <option value="">Todas</option>
-            {carteiras.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nome}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="campo">
-          <span>Situação</span>
-          <select name="status" defaultValue={searchParams.status ?? ""}>
-            <option value="">Todas</option>
-            {STATUS_FRENTE.map((s) => (
-              <option key={s.valor} value={s.valor}>
-                {s.rotulo}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SeletorMultiplo
+          nome="carteira"
+          rotulo="Carteira"
+          opcoes={opcoesCarteira}
+          inicial={paraLista(searchParams.carteira)}
+        />
+        <SeletorMultiplo
+          nome="status"
+          rotulo="Situação"
+          opcoes={STATUS_FRENTE.map((s) => ({ valor: s.valor, rotulo: s.rotulo }))}
+          inicial={paraLista(searchParams.status)}
+        />
         <button className="botao botao-secundario" type="submit">
           <Search size={14} />
           Filtrar
         </button>
-        {(searchParams.carteira || searchParams.status) && (
+        {temFiltro(searchParams.carteira, searchParams.status) && (
           <Link className="link-acao" href="/frentes">
             Limpar
           </Link>

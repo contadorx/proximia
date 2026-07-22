@@ -10,6 +10,8 @@ import {
   rotuloTipo,
 } from "@/lib/registros";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
+import { SeletorMultiplo } from "@/components/seletor";
+import { paraLista } from "@/lib/consulta";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +34,7 @@ function desdeDias(dias: string | undefined): string | undefined {
 export default async function PaginaHistorico({
   searchParams,
 }: {
-  searchParams: { carteira?: string; tipo?: string; periodo?: string };
+  searchParams: { carteira?: string | string[]; tipo?: string | string[]; periodo?: string };
 }) {
   const org = await exigirOrg();
   const periodo = searchParams.periodo ?? "90";
@@ -40,8 +42,8 @@ export default async function PaginaHistorico({
   const [registros, carteiras, pessoas] = await Promise.all([
     historico({
       orgId: org.orgId,
-      carteiraId: searchParams.carteira,
-      tipo: searchParams.tipo,
+      carteiras: paraLista(searchParams.carteira),
+      tipos: paraLista(searchParams.tipo),
       desde: desdeDias(periodo),
     }),
     listarCarteiras(org.orgId),
@@ -69,28 +71,19 @@ export default async function PaginaHistorico({
       </IntroSecao>
 
       <form className="filtros" method="get">
-        <label className="campo">
-          <span>Carteira</span>
-          <select name="carteira" defaultValue={searchParams.carteira ?? ""}>
-            <option value="">Todas</option>
-            {carteiras.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nome}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="campo">
-          <span>Tipo</span>
-          <select name="tipo" defaultValue={searchParams.tipo ?? ""}>
-            <option value="">Todos</option>
-            {TIPOS_REGISTRO.map((t) => (
-              <option key={t.valor} value={t.valor}>
-                {t.rotulo}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SeletorMultiplo
+          nome="carteira"
+          rotulo="Carteira"
+          opcoes={carteiras.map((c) => ({ valor: c.id, rotulo: c.nome, detalhe: c.codigo ?? undefined }))}
+          inicial={paraLista(searchParams.carteira)}
+        />
+        <SeletorMultiplo
+          nome="tipo"
+          rotulo="Tipo"
+          opcoes={TIPOS_REGISTRO.map((t) => ({ valor: t.valor, rotulo: t.rotulo }))}
+          inicial={paraLista(searchParams.tipo)}
+          rotuloTodas="Todos"
+        />
         <label className="campo">
           <span>Período</span>
           <select name="periodo" defaultValue={periodo}>

@@ -57,13 +57,15 @@ export async function listarContas(opcoes: {
   orgId: string;
   busca?: string;
   carteiraId?: string;
-  relacao?: string;
+  carteiras?: string[];
+  relacoes?: string[];
 }): Promise<Conta[]> {
   const supabase = criarClienteServidor();
   let consulta = supabase.from("contas").select(CAMPOS).eq("org_id", opcoes.orgId);
 
   if (opcoes.carteiraId) consulta = consulta.eq("carteira_id", opcoes.carteiraId);
-  if (opcoes.relacao) consulta = consulta.eq("relacao", opcoes.relacao);
+  if (opcoes.carteiras?.length) consulta = consulta.in("carteira_id", opcoes.carteiras);
+  if (opcoes.relacoes?.length) consulta = consulta.in("relacao", opcoes.relacoes);
 
   const busca = (opcoes.busca ?? "").trim();
   if (busca) {

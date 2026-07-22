@@ -5,6 +5,7 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { PAPEIS, rotuloPapel, type Papel } from "@/lib/tipos";
 import { listarFrentes, tiposDeFrente } from "@/lib/frentes";
 import { vincularMembro } from "@/app/acoes/organizacoes";
+import { cancelarConvite, convidarPessoa } from "@/app/acoes/convites";
 import { criarTipoFrente } from "@/app/acoes/frentes";
 import { criarTipoOportunidade } from "@/app/acoes/oportunidades";
 import { listarOportunidades, tiposDeOportunidade } from "@/lib/oportunidades";
@@ -55,6 +56,21 @@ export default async function PaginaConfiguracoes({
   searchParams: { erro?: string; ok?: string };
 }) {
   const org = await exigirOrg();
+  const supabase = criarClienteServidor();
+  const { data: convitesBrutos } = await supabase
+    .from("convites")
+    .select("id, email, papel, status, expira_em, criado_em")
+    .eq("org_id", org.orgId)
+    .eq("status", "pendente")
+    .order("criado_em", { ascending: false });
+  const convites = (convitesBrutos ?? []) as {
+    id: string;
+    email: string;
+    papel: Papel;
+    status: string;
+    expira_em: string;
+  }[];
+
   const [pessoas, tipos, frentes, tiposOportunidade, oportunidades] = await Promise.all([
     pessoasDaOrg(org.orgId),
     tiposDeFrente(org.orgId),
@@ -88,11 +104,39 @@ export default async function PaginaConfiguracoes({
         <div className="linha-titulo">
           <h2>Pessoas e alcance</h2>
           {administra && (
+            <span className="cabeca-acoes">
             <Modal
-              rotulo="Incluir pessoa"
-              titulo="Incluir pessoa na organização"
-              descricao="A pessoa precisa ter criado o acesso antes, com o mesmo e-mail."
+              rotulo="Convidar pessoa"
+              titulo="Convidar pessoa"
+              descricao="Ela recebe um link por e-mail, válido por 14 dias e só para o endereço informado."
               icone={<UserPlus size={15} />}
+            >
+              <form action={convidarPessoa} className="formulario">
+                <label className="campo">
+                  <span>E-mail</span>
+                  <input type="email" name="email" required autoFocus />
+                </label>
+                <label className="campo">
+                  <span>Alcance</span>
+                  <select name="papel" defaultValue="analista">
+                    {PAPEIS.filter((p) => p.valor !== "owner").map((p) => (
+                      <option key={p.valor} value={p.valor}>
+                        {p.rotulo} — {p.explicacao}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button className="botao botao-primario" type="submit">
+                  Enviar convite
+                </button>
+              </form>
+            </Modal>
+
+            <Modal
+              rotulo="Vincular quem já tem acesso"
+              titulo="Vincular pessoa existente"
+              descricao="Para quem já criou o acesso: entra na hora, sem convite."
+              variante="secundario"
             >
               <form action={vincularMembro} className="formulario">
                 <input type="hidden" name="org_id" value={org.orgId} />
@@ -111,10 +155,11 @@ export default async function PaginaConfiguracoes({
                   </select>
                 </label>
                 <button className="botao botao-primario" type="submit">
-                  Incluir
+                  Vincular
                 </button>
               </form>
             </Modal>
+            </span>
           )}
         </div>
 
@@ -129,6 +174,33 @@ export default async function PaginaConfiguracoes({
             </li>
           ))}
         </ul>
+
+        {convites.length > 0 && (
+          <>
+            <h3 style={{ marginTop: 22 }}>Convites pendentes</h3>
+            <ul className="lista-estado">
+              {convites.map((c) => (
+                <li key={c.id}>
+                  <span className="rotulo">
+                    {c.email}
+                    <span className="dica">
+                      {rotuloPapel(c.papel)} · expira em{" "}
+                      {new Date(c.expira_em).toLocaleDateString("pt-BR")}
+                    </span>
+                  </span>
+                  {administra && (
+                    <form action={cancelarConvite}>
+                      <input type="hidden" name="id" value={c.id} />
+                      <button className="link-acao" type="submit">
+                        Cancelar
+                      </button>
+                    </form>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
 
         <p className="nota" style={{ marginTop: 16, marginBottom: 0 }}>
           Ponto focal enxerga apenas as carteiras em que estiver vinculado — o vínculo é feito na

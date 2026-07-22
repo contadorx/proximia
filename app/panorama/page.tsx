@@ -89,6 +89,16 @@ export default async function PaginaPanorama({
                   {formatarValor(t.capturado)}
                 </p>
               </div>
+              <div>
+                <p className="olho">Investimento em análise</p>
+                <p className="dado destaque-dado valor-teto" style={{ fontSize: 16 }}>
+                  {formatarValor(t.investimento)}
+                </p>
+                <p className="nota">
+                  {t.oportunidades} oportunidades · {formatarValor(t.resultadoMensal)} por mês
+                  esperados
+                </p>
+              </div>
             </div>
 
             {(t.vencidos > 0 || t.janela > 0 || t.atrasados > 0) && (
@@ -146,6 +156,7 @@ export default async function PaginaPanorama({
                     <th className="numero">Contas</th>
                     <th className="numero">Frentes</th>
                     <th className="numero">Casos</th>
+                    <th className="numero">Oportunidades</th>
                     <th className="numero">Potencial</th>
                     <th className="numero">Capturado</th>
                     <th>Atenção</th>
@@ -184,6 +195,18 @@ export default async function PaginaPanorama({
                         <td className="numero dado">{r.frentes_abertas}</td>
                         <td className="numero dado">
                           {Number(r.frentes_casos ?? 0).toLocaleString("pt-BR")}
+                        </td>
+                        <td className="numero dado">
+                          {Number(r.oportunidades_abertas) > 0 ? (
+                            <>
+                              {r.oportunidades_abertas}
+                              <span className="celula-sub">
+                                {formatarValor(Number(r.oportunidades_investimento))} a investir
+                              </span>
+                            </>
+                          ) : (
+                            "—"
+                          )}
                         </td>
                         <td className="numero dado valor-teto">
                           {formatarValor(Number(r.frentes_potencial) + Number(r.contas_potencial))}

@@ -89,15 +89,17 @@ const ORDEM: Record<Fase, number> = {
 export async function listarOportunidades(opcoes: {
   orgId: string;
   carteiraId?: string;
+  carteiras?: string[];
   contaId?: string;
-  fase?: string;
+  fases?: string[];
 }): Promise<Oportunidade[]> {
   const supabase = criarClienteServidor();
   let consulta = supabase.from("oportunidades").select(CAMPOS).eq("org_id", opcoes.orgId);
 
   if (opcoes.carteiraId) consulta = consulta.eq("carteira_id", opcoes.carteiraId);
+  if (opcoes.carteiras?.length) consulta = consulta.in("carteira_id", opcoes.carteiras);
   if (opcoes.contaId) consulta = consulta.eq("conta_id", opcoes.contaId);
-  if (opcoes.fase) consulta = consulta.eq("fase", opcoes.fase);
+  if (opcoes.fases?.length) consulta = consulta.in("fase", opcoes.fases);
 
   const { data, error } = await consulta.limit(300);
   if (error) {

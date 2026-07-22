@@ -75,6 +75,18 @@ export async function GET(requisicao: Request) {
   const fim = new Date();
   fim.setDate(fim.getDate() - 1);
 
+  // Alertas primeiro: assim o extrato do dia já sai com a situação varrida.
+  const alertas: { org: string; diferenca: number }[] = [];
+  try {
+    const { data: orgs } = await supabase.from("orgs").select("id, nome");
+    for (const o of (orgs ?? []) as { id: string; nome: string }[]) {
+      const { data: dif } = await supabase.rpc("gerar_alertas", { p_org: o.id });
+      alertas.push({ org: o.nome, diferenca: Number(dif ?? 0) });
+    }
+  } catch (e) {
+    console.error("[cron] falha ao gerar alertas:", e);
+  }
+
   const resultados: { carteira: string; status: string; detalhe?: string }[] = [];
 
   for (const item of fila) {
@@ -139,6 +151,7 @@ export async function GET(requisicao: Request) {
 
   return NextResponse.json({
     data: hoje,
+    alertas,
     provedor: provedorConfigurado() ? "configurado" : "não configurado (envios simulados)",
     carteiras_na_fila: fila.length,
     resultados,

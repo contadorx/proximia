@@ -27,6 +27,7 @@ const CAMPOS =
 export async function listarCompromissos(opcoes: {
   orgId: string;
   carteiraId?: string;
+  carteiras?: string[];
   donoId?: string;
   status?: string;
   entidadeTipo?: EntidadeTipo;
@@ -36,6 +37,7 @@ export async function listarCompromissos(opcoes: {
   let consulta = supabase.from("compromissos").select(CAMPOS).eq("org_id", opcoes.orgId);
 
   if (opcoes.carteiraId) consulta = consulta.eq("carteira_id", opcoes.carteiraId);
+  if (opcoes.carteiras?.length) consulta = consulta.in("carteira_id", opcoes.carteiras);
   if (opcoes.donoId) consulta = consulta.eq("dono_id", opcoes.donoId);
   if (opcoes.status) consulta = consulta.eq("status", opcoes.status);
   if (opcoes.entidadeTipo) consulta = consulta.eq("entidade_tipo", opcoes.entidadeTipo);
