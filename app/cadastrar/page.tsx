@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { usuarioAtual } from "@/lib/auth";
+import { exigirConfiguracao, usuarioAtual } from "@/lib/auth";
 import FormularioAcesso from "../entrar/formulario";
 
 export const dynamic = "force-dynamic";
 
 export default async function PaginaCadastrar() {
+  exigirConfiguracao();
   if (await usuarioAtual()) redirect("/");
 
   return (

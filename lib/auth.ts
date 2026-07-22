@@ -1,17 +1,28 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { criarClienteServidor } from "./supabase/server";
+import { ambienteCompleto } from "./env";
 import type { Papel, Vinculo } from "./tipos";
 
 export const COOKIE_ORG = "proximia_org";
 
+/**
+ * Sem configuracao nao ha o que consultar. Melhor levar a pessoa para a tela
+ * que diz o que falta do que estourar um erro sem explicacao.
+ */
+export function exigirConfiguracao() {
+  if (!ambienteCompleto()) redirect("/instalacao");
+}
+
 export async function usuarioAtual() {
+  if (!ambienteCompleto()) return null;
   const supabase = criarClienteServidor();
   const { data } = await supabase.auth.getUser();
   return data.user ?? null;
 }
 
 export async function exigirUsuario() {
+  exigirConfiguracao();
   const usuario = await usuarioAtual();
   if (!usuario) redirect("/entrar");
   return usuario;

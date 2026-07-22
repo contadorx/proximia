@@ -52,6 +52,16 @@ export default function PaginaInstalacao() {
       </section>
 
       <section className="painel">
+        <h2>Publicação na Vercel</h2>
+        <p className="nota">
+          As variáveis que começam com <span className="dado">NEXT_PUBLIC_</span> entram no pacote
+          no momento da compilação. Se você as cadastrou depois de publicar, refaça o deploy — sem
+          isso o aplicativo continua rodando com a configuração antiga. Em Deployments, use
+          Redeploy.
+        </p>
+      </section>
+
+      <section className="painel">
         <h2>Banco de dados</h2>
         <p className="nota">
           As migrações ficam em <span className="dado">supabase/migrations</span> e são aplicadas em

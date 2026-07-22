@@ -81,6 +81,12 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 | `/instalacao` | Estado da configuração e trilha de construção |
 | `/api/saude` | Verificação de saúde |
 
+## Se algo der errado na publicação
+
+**Erro 500 com `MIDDLEWARE_INVOCATION_FAILED`** — em geral são as variáveis de ambiente. Cadastre `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` no projeto da Vercel e **refaça o deploy**: variáveis `NEXT_PUBLIC_` entram no pacote na compilação, então cadastrá-las depois de publicar não muda o que já está no ar.
+
+**Como conferir** — abra `/instalacao`. A página lista cada variável e diz qual está faltando, e funciona mesmo sem configuração nenhuma. Se lá estiver tudo definido e o erro continuar, o motivo é outro: veja o log da função em Deployments › Functions.
+
 ## Estrutura
 
 ```
