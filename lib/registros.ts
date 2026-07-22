@@ -1,6 +1,6 @@
 import { criarClienteServidor } from "./supabase/server";
 
-export type EntidadeTipo = "carteira" | "conta" | "contrato" | "frente";
+export type EntidadeTipo = "carteira" | "conta" | "contrato" | "frente" | "oportunidade";
 export type TipoRegistro = "nota" | "reuniao" | "decisao" | "entrega" | "envio";
 
 export const TIPOS_REGISTRO: { valor: TipoRegistro; rotulo: string; explicacao: string }[] = [
@@ -111,6 +111,7 @@ export function rotuloEntidade(tipo: EntidadeTipo): string {
     conta: "Conta",
     contrato: "Contrato",
     frente: "Frente",
+    oportunidade: "Oportunidade",
   };
   return mapa[tipo];
 }
@@ -121,6 +122,7 @@ export function caminhoEntidade(tipo: EntidadeTipo, id: string): string {
     conta: "/contas",
     contrato: "/contratos",
     frente: "/frentes",
+    oportunidade: "/oportunidades",
   };
   return `${mapa[tipo]}/${id}`;
 }

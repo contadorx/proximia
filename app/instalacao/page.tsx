@@ -14,6 +14,7 @@ const TRILHA: { fase: string; titulo: string; feito: boolean }[] = [
   { fase: "F8", titulo: "Painel multi-carteira", feito: true },
   { fase: "F9", titulo: "Situação da carteira (imprimível)", feito: true },
   { fase: "F10", titulo: "Importação de dados", feito: true },
+  { fase: "F12", titulo: "Oportunidades com investimento e retorno", feito: true },
 ];
 
 export default function PaginaInstalacao() {

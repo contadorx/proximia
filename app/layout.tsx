@@ -4,6 +4,7 @@ import {
   Building2,
   CalendarClock,
   ClipboardList,
+  Coins,
   FileText,
   Layers,
   LayoutGrid,
@@ -41,6 +42,7 @@ const GRUPOS = [
       { href: "/contas", rotulo: "Contas", icone: <Users size={TAMANHO} /> },
       { href: "/contratos", rotulo: "Contratos", icone: <FileText size={TAMANHO} /> },
       { href: "/frentes", rotulo: "Frentes", icone: <ClipboardList size={TAMANHO} /> },
+      { href: "/oportunidades", rotulo: "Oportunidades", icone: <Coins size={TAMANHO} /> },
     ],
   },
   {

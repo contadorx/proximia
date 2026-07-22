@@ -17,6 +17,8 @@ import { Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
 import { Pencil } from "lucide-react";
 import { Historico } from "@/components/historico";
+import { classeFase, formatarPayback, listarOportunidades, rotuloFase } from "@/lib/oportunidades";
+
 
 export const dynamic = "force-dynamic";
 
@@ -31,11 +33,12 @@ export default async function PaginaConta({
   const conta = await obterConta(params.id);
   if (!conta) notFound();
 
-  const [carteiras, pessoas, contatos, contratos] = await Promise.all([
+  const [carteiras, pessoas, contatos, contratos, oportunidades] = await Promise.all([
     listarCarteiras(org.orgId),
     pessoasDaOrganizacao(org.orgId),
     contatosDaConta(conta.id),
     listarContratos({ orgId: org.orgId, contaId: conta.id }),
+    listarOportunidades({ orgId: org.orgId, contaId: conta.id }),
   ]);
 
   const editavel = podeEscrever(org.papel);
@@ -120,6 +123,26 @@ export default async function PaginaConta({
           </ul>
         )}
       </section>
+
+      {oportunidades.length > 0 && (
+        <section className="painel">
+          <h2>Oportunidades</h2>
+          <ul className="lista-estado">
+            {oportunidades.map((o) => (
+              <li key={o.id}>
+                <span className="rotulo">
+                  <Link href={`/oportunidades/${o.id}`}>{o.titulo}</Link>
+                  <span className="dica">
+                    investimento {formatarValor(o.investimento)} · payback{" "}
+                    {formatarPayback(o.payback_meses)}
+                  </span>
+                </span>
+                <span className={classeFase(o.fase)}>{rotuloFase(o.fase)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="painel">
         <h2>Contatos</h2>

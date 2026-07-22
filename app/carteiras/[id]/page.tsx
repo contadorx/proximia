@@ -14,6 +14,7 @@ import {
 import { formatarValor, listarContas, rotuloRelacao } from "@/lib/contas";
 import { Historico } from "@/components/historico";
 import { classeStatus, listarFrentes, rotuloStatus } from "@/lib/frentes";
+import { classeFase, formatarPayback, listarOportunidades, rotuloFase } from "@/lib/oportunidades";
 import {
   atualizarCarteira,
   desvincularPessoaCarteira,
@@ -36,11 +37,12 @@ export default async function PaginaCarteira({
   // se não veio nada, para quem pediu ela não existe.
   if (!carteira) notFound();
 
-  const [pessoasOrg, pessoasCart, contas, frentes] = await Promise.all([
+  const [pessoasOrg, pessoasCart, contas, frentes, oportunidades] = await Promise.all([
     pessoasDaOrganizacao(org.orgId),
     pessoasDaCarteira(carteira.id),
     listarContas({ orgId: org.orgId, carteiraId: carteira.id }),
     listarFrentes({ orgId: org.orgId, carteiraId: carteira.id }),
+    listarOportunidades({ orgId: org.orgId, carteiraId: carteira.id }),
   ]);
 
   const podeEditar = podeEscrever(org.papel) && org.papel !== "ponto_focal";
@@ -122,6 +124,26 @@ export default async function PaginaCarteira({
           </ul>
         )}
       </section>
+
+      {oportunidades.length > 0 && (
+        <section className="painel">
+          <h2>Oportunidades desta carteira</h2>
+          <ul className="lista-estado">
+            {oportunidades.map((o) => (
+              <li key={o.id}>
+                <span className="rotulo">
+                  <Link href={`/oportunidades/${o.id}`}>{o.titulo}</Link>
+                  <span className="dica">
+                    investimento {formatarValor(o.investimento)} · payback{" "}
+                    {formatarPayback(o.payback_meses)}
+                  </span>
+                </span>
+                <span className={classeFase(o.fase)}>{rotuloFase(o.fase)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="painel">
         <h2>Quem acompanha</h2>

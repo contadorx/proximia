@@ -6,6 +6,8 @@ import { PAPEIS, rotuloPapel, type Papel } from "@/lib/tipos";
 import { listarFrentes, tiposDeFrente } from "@/lib/frentes";
 import { vincularMembro } from "@/app/acoes/organizacoes";
 import { criarTipoFrente } from "@/app/acoes/frentes";
+import { criarTipoOportunidade } from "@/app/acoes/oportunidades";
+import { listarOportunidades, tiposDeOportunidade } from "@/lib/oportunidades";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
 
@@ -51,10 +53,12 @@ export default async function PaginaConfiguracoes({
   searchParams: { erro?: string; ok?: string };
 }) {
   const org = await exigirOrg();
-  const [pessoas, tipos, frentes] = await Promise.all([
+  const [pessoas, tipos, frentes, tiposOportunidade, oportunidades] = await Promise.all([
     pessoasDaOrg(org.orgId),
     tiposDeFrente(org.orgId),
     listarFrentes({ orgId: org.orgId }),
+    tiposDeOportunidade(org.orgId),
+    listarOportunidades({ orgId: org.orgId }),
   ]);
 
   const administra = podeAdministrar(org.papel);
@@ -172,6 +176,52 @@ export default async function PaginaConfiguracoes({
                 </span>
                 <span className="selo selo-neutro">
                   {frentes.filter((f) => f.catalogo_id === t.id).length} em uso
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>Tipos de oportunidade</h2>
+          {gereCatalogo && (
+            <Modal
+              rotulo="Novo tipo"
+              titulo="Novo tipo de oportunidade"
+              descricao="Ex.: expansão, novo serviço, substituição de equipamento."
+              icone={<Plus size={15} />}
+            >
+              <form action={criarTipoOportunidade} className="formulario">
+                <label className="campo">
+                  <span>Nome</span>
+                  <input type="text" name="nome" required maxLength={80} autoFocus />
+                </label>
+                <label className="campo">
+                  <span>Descrição</span>
+                  <input type="text" name="descricao" maxLength={160} placeholder="opcional" />
+                </label>
+                <button className="botao botao-primario" type="submit">
+                  Incluir tipo
+                </button>
+              </form>
+            </Modal>
+          )}
+        </div>
+
+        {tiposOportunidade.length === 0 ? (
+          <Vazio>Nenhum tipo cadastrado ainda.</Vazio>
+        ) : (
+          <ul className="lista-estado">
+            {tiposOportunidade.map((t) => (
+              <li key={t.id}>
+                <span className="rotulo">
+                  {t.nome}
+                  {t.descricao && <span className="dica">{t.descricao}</span>}
+                </span>
+                <span className="selo selo-neutro">
+                  {oportunidades.filter((o) => o.catalogo_id === t.id).length} em uso
                 </span>
               </li>
             ))}
