@@ -202,6 +202,10 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 
 **A busca não tem privilégio.** A função no banco roda com o privilégio de quem chama — sem `security definer`, de propósito. Assim ela enxerga exatamente o que a pessoa enxergaria navegando: ponto focal não descobre a existência de uma conta de outra carteira por um resultado de busca. Buscar por CNPJ funciona com ou sem pontuação, porque ninguém guarda a máscara.
 
+**A importação resolve por texto, não por identificador.** A planilha traz o nome da carteira, o texto da pergunta, o nome do ciclo — porque é isso que existe numa planilha de trabalho. O sistema é que procura o identificador correspondente e recusa a linha inteira quando não acha, dizendo qual linha e qual valor. Pedir identificador interno seria transferir para a pessoa um problema que é do sistema.
+
+**Reimportar corrige, não duplica.** Resposta de maturidade da mesma pergunta na mesma avaliação atualiza a nota; a avaliação da mesma carteira no mesmo ciclo é uma só. Carga que duplica a cada tentativa faz as pessoas terem medo de reimportar — e aí o dado errado fica.
+
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
 ## Rotas
