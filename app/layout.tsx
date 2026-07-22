@@ -27,6 +27,7 @@ export default async function LayoutRaiz({ children }: { children: React.ReactNo
                 <nav className="navegacao">
                   <Link href="/painel">Painel</Link>
                   <Link href="/carteiras">Carteiras</Link>
+                  <Link href="/contas">Contas</Link>
                   <span className="org-atual">{org.nome}</span>
                 </nav>
               ) : (

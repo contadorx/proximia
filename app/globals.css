@@ -511,3 +511,74 @@ textarea:focus {
     border-left: 0;
   }
 }
+
+/* ---------- contas (F3) ---------- */
+
+.filtros {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: var(--gap);
+}
+
+.filtros .campo {
+  flex: 1 1 180px;
+}
+
+.par-valores {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.valor-teto {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--aco);
+  white-space: nowrap;
+}
+
+.valor-capturado {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--sinal);
+  white-space: nowrap;
+}
+
+.dois-valores {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  padding-top: 6px;
+}
+
+.numero-grande {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+}
+
+.campo-marcador {
+  flex: 0 0 auto;
+}
+
+.campo-marcador input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--sinal);
+  margin-bottom: 9px;
+}
+
+@media (max-width: 640px) {
+  .dois-valores {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+}

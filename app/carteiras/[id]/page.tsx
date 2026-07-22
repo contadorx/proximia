@@ -9,6 +9,7 @@ import {
   pessoasDaOrganizacao,
   STATUS_CARTEIRA,
 } from "@/lib/carteiras";
+import { formatarValor, listarContas, rotuloRelacao } from "@/lib/contas";
 import {
   atualizarCarteira,
   desvincularPessoaCarteira,
@@ -31,9 +32,10 @@ export default async function PaginaCarteira({
   // se não veio nada, para quem pediu ela não existe.
   if (!carteira) notFound();
 
-  const [pessoasOrg, pessoasCart] = await Promise.all([
+  const [pessoasOrg, pessoasCart, contas] = await Promise.all([
     pessoasDaOrganizacao(org.orgId),
     pessoasDaCarteira(carteira.id),
+    listarContas({ orgId: org.orgId, carteiraId: carteira.id }),
   ]);
 
   const podeEditar = podeEscrever(org.papel) && org.papel !== "ponto_focal";
@@ -60,6 +62,30 @@ export default async function PaginaCarteira({
 
       {searchParams.erro && <p className="aviso aviso-erro">{searchParams.erro}</p>}
       {searchParams.ok && <p className="aviso aviso-ok">{searchParams.ok}</p>}
+
+      <section className="painel">
+        <h2>Contas desta carteira</h2>
+        {contas.length === 0 ? (
+          <p className="nota">
+            Nenhuma conta ainda. <Link href="/contas">Cadastre a primeira</Link>.
+          </p>
+        ) : (
+          <ul className="lista-estado">
+            {contas.map((c) => (
+              <li key={c.id}>
+                <span className="rotulo">
+                  <Link href={`/contas/${c.id}`}>{c.nome}</Link>
+                  <span className="dica">{rotuloRelacao(c.relacao)}</span>
+                </span>
+                <span className="par-valores">
+                  <span className="valor-teto">teto {formatarValor(c.potencial_bruto)}</span>
+                  <span className="valor-capturado">capt. {formatarValor(c.valor_capturado)}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section className="painel">
         <h2>Quem acompanha</h2>

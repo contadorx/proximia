@@ -1,0 +1,280 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { exigirOrg, podeEscrever } from "@/lib/auth";
+import { listarCarteiras, nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
+import {
+  CRITICIDADES,
+  RELACOES,
+  contatosDaConta,
+  formatarData,
+  formatarDocumento,
+  formatarValor,
+  obterConta,
+} from "@/lib/contas";
+import { atualizarConta, criarContato, excluirContato } from "@/app/acoes/contas";
+
+export const dynamic = "force-dynamic";
+
+export default async function PaginaConta({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { erro?: string; ok?: string };
+}) {
+  const org = await exigirOrg();
+  const conta = await obterConta(params.id);
+  if (!conta) notFound();
+
+  const [carteiras, pessoas, contatos] = await Promise.all([
+    listarCarteiras(org.orgId),
+    pessoasDaOrganizacao(org.orgId),
+    contatosDaConta(conta.id),
+  ]);
+
+  const editavel = podeEscrever(org.papel);
+  const carteira = carteiras.find((c) => c.id === conta.carteira_id);
+
+  return (
+    <>
+      <p className="olho">
+        <Link href="/contas">Contas</Link>
+        {carteira && (
+          <>
+            {" · "}
+            <Link href={`/carteiras/${carteira.id}`}>{carteira.nome}</Link>
+          </>
+        )}
+      </p>
+      <h1>{conta.nome}</h1>
+      <p className="chamada">
+        {[conta.razao_social, formatarDocumento(conta.documento), conta.segmento]
+          .filter((v) => v && v !== "—")
+          .join(" · ") || "Sem razão social, CNPJ ou segmento registrados."}
+      </p>
+
+      {searchParams.erro && <p className="aviso aviso-erro">{searchParams.erro}</p>}
+      {searchParams.ok && <p className="aviso aviso-ok">{searchParams.ok}</p>}
+
+      <section className="painel">
+        <h2>Potencial e realizado</h2>
+        <div className="dois-valores">
+          <div>
+            <p className="olho">Potencial estimado</p>
+            <p className="numero-grande valor-teto">{formatarValor(conta.potencial_bruto)}</p>
+            <p className="nota">
+              {conta.potencial_bruto === null
+                ? "Nenhuma estimativa registrada."
+                : `${conta.potencial_origem} · apurado em ${formatarData(conta.potencial_data)}`}
+            </p>
+          </div>
+          <div>
+            <p className="olho">Capturado</p>
+            <p className="numero-grande valor-capturado">{formatarValor(conta.valor_capturado)}</p>
+            <p className="nota">
+              {conta.valor_capturado === null
+                ? "Nada confirmado ainda."
+                : `Confirmado em ${formatarData(conta.capturado_confirmado_em)}`}
+            </p>
+          </div>
+        </div>
+        <p className="nota" style={{ marginTop: 16 }}>
+          Os dois números têm naturezas diferentes e não se somam. Potencial é teto estimado, com
+          origem e data; capturado é o que já se confirmou.
+        </p>
+      </section>
+
+      <section className="painel">
+        <h2>Contatos</h2>
+        {contatos.length === 0 ? (
+          <p className="nota">Nenhum contato registrado.</p>
+        ) : (
+          <ul className="lista-estado">
+            {contatos.map((c) => (
+              <li key={c.id}>
+                <span className="rotulo">
+                  {c.nome}
+                  <span className="dica">
+                    {[c.cargo, c.email, c.telefone].filter(Boolean).join(" · ") || "sem dados de contato"}
+                  </span>
+                </span>
+                {c.principal && <span className="selo selo-ok">Principal</span>}
+                {editavel && (
+                  <form action={excluirContato}>
+                    <input type="hidden" name="conta_id" value={conta.id} />
+                    <input type="hidden" name="id" value={c.id} />
+                    <button className="link-acao" type="submit">
+                      Remover
+                    </button>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {editavel && (
+          <form action={criarContato} className="formulario formulario-linha" style={{ marginTop: 20 }}>
+            <input type="hidden" name="conta_id" value={conta.id} />
+            <label className="campo">
+              <span>Nome</span>
+              <input type="text" name="nome" required maxLength={120} />
+            </label>
+            <label className="campo">
+              <span>Cargo</span>
+              <input type="text" name="cargo" maxLength={80} />
+            </label>
+            <label className="campo">
+              <span>E-mail</span>
+              <input type="email" name="email" maxLength={120} />
+            </label>
+            <label className="campo">
+              <span>Telefone</span>
+              <input type="text" name="telefone" maxLength={40} />
+            </label>
+            <label className="campo campo-marcador">
+              <span>Principal</span>
+              <input type="checkbox" name="principal" />
+            </label>
+            <button className="botao" type="submit">
+              Incluir contato
+            </button>
+          </form>
+        )}
+      </section>
+
+      {editavel && (
+        <section className="painel">
+          <h2>Dados da conta</h2>
+          <form action={atualizarConta} className="formulario">
+            <input type="hidden" name="id" value={conta.id} />
+
+            <div className="formulario-linha">
+              <label className="campo">
+                <span>Nome</span>
+                <input type="text" name="nome" defaultValue={conta.nome} required maxLength={160} />
+              </label>
+              <label className="campo">
+                <span>Razão social</span>
+                <input
+                  type="text"
+                  name="razao_social"
+                  defaultValue={conta.razao_social ?? ""}
+                  maxLength={160}
+                />
+              </label>
+              <label className="campo">
+                <span>CNPJ</span>
+                <input type="text" name="documento" defaultValue={conta.documento ?? ""} maxLength={20} />
+              </label>
+            </div>
+
+            <div className="formulario-linha">
+              <label className="campo">
+                <span>Relação</span>
+                <select name="relacao" defaultValue={conta.relacao}>
+                  {RELACOES.map((r) => (
+                    <option key={r.valor} value={r.valor}>
+                      {r.rotulo}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="campo">
+                <span>Criticidade</span>
+                <select name="criticidade" defaultValue={conta.criticidade}>
+                  {CRITICIDADES.map((c) => (
+                    <option key={c.valor} value={c.valor}>
+                      {c.rotulo}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="campo">
+                <span>Situação</span>
+                <select name="status" defaultValue={conta.status}>
+                  <option value="ativa">Ativa</option>
+                  <option value="encerrada">Encerrada</option>
+                </select>
+              </label>
+              <label className="campo">
+                <span>Responsável</span>
+                <select name="responsavel_id" defaultValue={conta.responsavel_id ?? ""}>
+                  <option value="">Sem responsável</option>
+                  {pessoas.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {nomePessoa(p)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="campo">
+                <span>Segmento</span>
+                <input type="text" name="segmento" defaultValue={conta.segmento ?? ""} maxLength={80} />
+              </label>
+            </div>
+
+            <div className="formulario-linha">
+              <label className="campo">
+                <span>Potencial estimado</span>
+                <input
+                  type="text"
+                  name="potencial_bruto"
+                  inputMode="decimal"
+                  defaultValue={conta.potencial_bruto ?? ""}
+                />
+              </label>
+              <label className="campo">
+                <span>Origem da estimativa</span>
+                <input
+                  type="text"
+                  name="potencial_origem"
+                  defaultValue={conta.potencial_origem ?? ""}
+                  maxLength={160}
+                  placeholder="de onde veio esse número"
+                />
+              </label>
+              <label className="campo">
+                <span>Data da apuração</span>
+                <input type="date" name="potencial_data" defaultValue={conta.potencial_data ?? ""} />
+              </label>
+            </div>
+
+            <div className="formulario-linha">
+              <label className="campo">
+                <span>Capturado</span>
+                <input
+                  type="text"
+                  name="valor_capturado"
+                  inputMode="decimal"
+                  defaultValue={conta.valor_capturado ?? ""}
+                />
+              </label>
+              <label className="campo">
+                <span>Confirmado em</span>
+                <input
+                  type="date"
+                  name="capturado_confirmado_em"
+                  defaultValue={conta.capturado_confirmado_em ?? ""}
+                />
+              </label>
+            </div>
+
+            <label className="campo">
+              <span>Observações</span>
+              <textarea name="observacoes" rows={4} defaultValue={conta.observacoes ?? ""} />
+            </label>
+
+            <button className="botao" type="submit">
+              Salvar alterações
+            </button>
+          </form>
+        </section>
+      )}
+
+      <p className="nota">
+        Contratos, frentes e histórico desta conta entram nas próximas etapas da construção.
+      </p>
+    </>
+  );
+}
