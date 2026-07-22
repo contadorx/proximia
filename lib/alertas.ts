@@ -20,6 +20,8 @@ export type Alerta = {
   titulo: string;
   detalhe: string | null;
   status: "aberto" | "resolvido" | "silenciado";
+  dono_id: string | null;
+  observadores: string[];
   criado_em: string;
 };
 
@@ -42,7 +44,7 @@ export async function listarAlertas(opcoes: {
   const supabase = criarClienteServidor();
   let consulta = supabase
     .from("alertas")
-    .select("id, carteira_id, tipo, severidade, entidade_tipo, entidade_id, titulo, detalhe, status, criado_em")
+    .select("id, carteira_id, tipo, severidade, entidade_tipo, entidade_id, titulo, detalhe, status, criado_em, dono_id, observadores")
     .eq("org_id", opcoes.orgId)
     .eq("status", opcoes.status ?? "aberto");
 

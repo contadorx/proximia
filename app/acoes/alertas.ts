@@ -55,6 +55,10 @@ export async function varrerAgora() {
 
   if (error) comErro(error.message);
 
+  // Alerta sem dono é alerta de ninguém: a atribuição vem logo atrás da
+  // varredura, usando a cadeia de responsabilidade da carteira.
+  await supabase.rpc("atribuir_alertas", { p_org: org.orgId });
+
   const diferenca = Number(data ?? 0);
   revalidatePath("/alertas");
   redirect(

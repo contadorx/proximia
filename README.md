@@ -60,6 +60,7 @@ Aplicadas até aqui:
 | `0015_anexos.sql` | F20 | Bucket privado, registro de anexos e políticas de storage |
 | `0016_auditoria.sql` | F21 | Trilha de alterações escrita só por gatilho |
 | `0017_portal.sql` | F22 | Portal público da carteira, com token revogável |
+| `0018_responsabilidades.sql` | B24 | Papéis operacionais, responsáveis por carteira e dono nos alertas |
 
 Testes de banco ficam em `supabase/testes` e **não são migrations** — são scripts avulsos, para rodar no editor SQL quando quiser conferir. `0001_isolamento.sql` prova que uma organização não enxerga a outra.
 
@@ -137,6 +138,8 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 **O primeiro acesso lê o estado, não a URL.** O passo mostrado vem do que existe no banco — nome preenchido, organização criada, primeira carteira. Quem fecha o navegador no meio volta de onde parou; quem já terminou não vê a tela de novo.
 
 **Redefinição não confirma cadastro.** O pedido de redefinição responde a mesma coisa exista ou não a conta. Dizer "esse e-mail não está cadastrado" entrega a terceiros quem usa o sistema.
+
+**Responder é diferente de enxergar.** `carteira_membros` diz quem vê (alimenta a RLS); `responsabilidades` diz quem responde, e em que papel. Os papéis são catálogo do assinante — o produto só sabe que existem e qual é o primário. Alerta e compromisso derivam o dono por uma cadeia: dono explícito, responsável da entidade, responsável primário da carteira. Os demais responsáveis entram como observadores: um responde, os outros acompanham.
 
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
