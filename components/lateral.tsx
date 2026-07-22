@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Busca } from "@/components/busca";
 
 export type ItemMenu = { href: string; rotulo: string; icone: React.ReactNode };
 export type GrupoMenu = { titulo: string; itens: ItemMenu[] };
@@ -55,6 +56,8 @@ export function Lateral({
           {recolhida ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
         </button>
       </div>
+
+      {!recolhida && <Busca />}
 
       <div className="lateral-rolagem">
         {grupos.map((g) => (

@@ -72,6 +72,7 @@ Aplicadas até aqui:
 | `0027_historico_estado.sql` | B36 | Fotos mensais das carteiras e histórico de etapas |
 | `0028_financeiro.sql` | B37 | VPL, TIR, payback descontado e custo de capital |
 | `0029_series_relatorios.sql` | B35 | Séries de alertas, esforço, vencimentos e conversão |
+| `0030_busca.sql` | B39 | Busca unificada com índices de similaridade |
 
 ## Verificação
 
@@ -198,6 +199,8 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 **A entidade viaja num campo só, como `tipo:id`.** Dois seletores dependentes seriam pior — o segundo teria de recarregar quando o primeiro muda, e a pessoa erraria a combinação.
 
 **Relatório é para entender, não para trabalhar.** O que pede ação fica no painel; a central de relatórios responde "como estamos indo". Nenhum número ali pede digitação nova — todos saem do que já foi registrado.
+
+**A busca não tem privilégio.** A função no banco roda com o privilégio de quem chama — sem `security definer`, de propósito. Assim ela enxerga exatamente o que a pessoa enxergaria navegando: ponto focal não descobre a existência de uma conta de outra carteira por um resultado de busca. Buscar por CNPJ funciona com ou sem pontuação, porque ninguém guarda a máscara.
 
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
