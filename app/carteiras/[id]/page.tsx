@@ -10,6 +10,7 @@ import {
   STATUS_CARTEIRA,
 } from "@/lib/carteiras";
 import { formatarValor, listarContas, rotuloRelacao } from "@/lib/contas";
+import { Historico } from "@/components/historico";
 import { classeStatus, listarFrentes, rotuloStatus } from "@/lib/frentes";
 import {
   atualizarCarteira,
@@ -246,9 +247,13 @@ export default async function PaginaCarteira({
         )
       )}
 
-      <p className="nota">
-        O histórico e o extrato desta carteira entram nas próximas etapas da construção.
-      </p>
+      <Historico
+        entidadeTipo="carteira"
+        entidadeId={carteira.id}
+        carteiraId={carteira.id}
+        pessoas={pessoasOrg}
+        editavel={podeEscrever(org.papel)}
+      />
     </>
   );
 }

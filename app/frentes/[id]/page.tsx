@@ -12,6 +12,7 @@ import {
 } from "@/lib/frentes";
 import { atualizarFrente, incluirLink, removerLink } from "@/app/acoes/frentes";
 import { Vazio } from "@/components/intro-secao";
+import { Historico } from "@/components/historico";
 
 export const dynamic = "force-dynamic";
 
@@ -290,6 +291,13 @@ export default async function PaginaFrente({
           </form>
         </section>
       )}
+      <Historico
+        entidadeTipo="frente"
+        entidadeId={frente.id}
+        carteiraId={frente.carteira_id}
+        pessoas={pessoas}
+        editavel={editavel}
+      />
     </>
   );
 }

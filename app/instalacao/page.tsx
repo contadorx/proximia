@@ -9,7 +9,7 @@ const TRILHA: { fase: string; titulo: string; feito: boolean }[] = [
   { fase: "F3", titulo: "Contas nomeadas", feito: true },
   { fase: "F4", titulo: "Contratos e cláusulas monitoradas", feito: true },
   { fase: "F5", titulo: "Frentes de trabalho", feito: true },
-  { fase: "F6", titulo: "Timeline e memória institucional", feito: false },
+  { fase: "F6", titulo: "Timeline e memória institucional", feito: true },
   { fase: "F7", titulo: "Compromissos e alertas", feito: false },
   { fase: "F8", titulo: "Painel multi-carteira", feito: false },
   { fase: "F9", titulo: "Situação da carteira (imprimível)", feito: false },

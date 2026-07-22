@@ -14,6 +14,7 @@ import {
 import { classeSelo, listarContratos, urgencia } from "@/lib/contratos";
 import { atualizarConta, criarContato, excluirContato } from "@/app/acoes/contas";
 import { Vazio } from "@/components/intro-secao";
+import { Historico } from "@/components/historico";
 
 export const dynamic = "force-dynamic";
 
@@ -306,9 +307,13 @@ export default async function PaginaConta({
         </section>
       )}
 
-      <p className="nota">
-        Contratos, frentes e histórico desta conta entram nas próximas etapas da construção.
-      </p>
+      <Historico
+        entidadeTipo="conta"
+        entidadeId={conta.id}
+        carteiraId={conta.carteira_id}
+        pessoas={pessoas}
+        editavel={editavel}
+      />
     </>
   );
 }

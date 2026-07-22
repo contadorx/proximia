@@ -15,6 +15,8 @@ import {
 } from "@/lib/contratos";
 import { atualizarContrato, criarClausula, excluirClausula } from "@/app/acoes/contratos";
 import { Vazio } from "@/components/intro-secao";
+import { Historico } from "@/components/historico";
+import { pessoasDaOrganizacao } from "@/lib/carteiras";
 
 export const dynamic = "force-dynamic";
 
@@ -30,9 +32,10 @@ export default async function PaginaContrato({
   if (!contrato) notFound();
 
   const org = await exigirOrg();
-  const [conta, clausulas] = await Promise.all([
+  const [conta, clausulas, pessoas] = await Promise.all([
     obterConta(contrato.conta_id),
     clausulasDoContrato(contrato.id),
+    pessoasDaOrganizacao(org.orgId),
   ]);
 
   const editavel = podeEscrever(org.papel);
@@ -331,6 +334,13 @@ export default async function PaginaContrato({
           </form>
         </section>
       )}
+      <Historico
+        entidadeTipo="contrato"
+        entidadeId={contrato.id}
+        carteiraId={contrato.carteira_id}
+        pessoas={pessoas}
+        editavel={editavel}
+      />
     </>
   );
 }
