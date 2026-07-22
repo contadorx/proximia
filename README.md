@@ -63,6 +63,7 @@ Aplicadas até aqui:
 | `0018_responsabilidades.sql` | B24 | Papéis operacionais, responsáveis por carteira e dono nos alertas |
 | `0019_captura_mensal.sql` | B25 | Série mensal de captura e o que ficou sem data |
 | `0020_atribuir_compromissos.sql` | B27 | Distribuição de compromissos sem dono pela cadeia de responsabilidade |
+| `0021_gestao_acesso.sql` | B28 | Travas de acesso e visão consolidada de quem vê, responde e carrega |
 
 Testes de banco ficam em `supabase/testes` e **não são migrations** — são scripts avulsos, para rodar no editor SQL quando quiser conferir. `0001_isolamento.sql` prova que uma organização não enxerga a outra.
 
@@ -149,6 +150,8 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 
 **Varredura não desfaz decisão de gente.** A distribuição automática só toca em compromisso sem dono. Quem foi reatribuído à mão fica como está — se a máquina pudesse reverter uma escolha humana toda noite, ninguém confiaria na atribuição.
 
+**Ninguém se tranca para fora, e a organização não fica sem dono.** As travas de acesso vivem no banco, não na tela: não dá para alterar o próprio papel, se desativar, se remover, rebaixar o único dono ou promover alguém a dono sem ser dono. Suspender preserva o histórico — o que a pessoa registrou continua onde está, com o nome dela.
+
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
 ## Rotas
@@ -168,7 +171,8 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 | `/panorama` | Todas as carteiras em uma tela, ordenadas por atenção |
 | `/carteiras/[id]/situacao` | Extrato de uma página, pronto para imprimir ou salvar em PDF |
 | `/importacao`, `/importacao/[id]` | Envio de CSV, conferência linha a linha e confirmação |
-| `/configuracoes` | Pessoas e alcance, catálogos e dados da organização |
+| `/configuracoes` | Catálogos, dados da organização e atalhos administrativos |
+| `/configuracoes/acesso` | Quem vê, quem edita, quem responde e quanto carrega |
 | `/oportunidades`, `/oportunidades/[id]` | Iniciativas com investimento, retorno e payback |
 | `/maturidade`, `/maturidade/[id]` | Régua, ciclos, matriz maturidade × potencial e questionário |
 | `/alertas` | O que saiu do trilho, com silenciar e varredura sob demanda |

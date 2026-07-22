@@ -106,69 +106,14 @@ export default async function PaginaConfiguracoes({
 
       <section className="painel">
         <div className="linha-titulo">
-          <h2>Pessoas e alcance</h2>
-          {administra && (
-            <span className="cabeca-acoes">
-            <Modal
-              rotulo="Convidar pessoa"
-              titulo="Convidar pessoa"
-              descricao="Ela recebe um link por e-mail, válido por 14 dias e só para o endereço informado."
-              icone={<UserPlus size={15} />}
-            >
-              <form action={convidarPessoa} className="formulario">
-                <label className="campo">
-                  <span>E-mail</span>
-                  <input type="email" name="email" required autoFocus />
-                </label>
-                <label className="campo">
-                  <span>Alcance</span>
-                  <select name="papel" defaultValue="analista">
-                    {PAPEIS.filter((p) => p.valor !== "owner").map((p) => (
-                      <option key={p.valor} value={p.valor}>
-                        {p.rotulo} — {p.explicacao}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button className="botao botao-primario" type="submit">
-                  Enviar convite
-                </button>
-              </form>
-            </Modal>
-
-            <Modal
-              rotulo="Vincular quem já tem acesso"
-              titulo="Vincular pessoa existente"
-              descricao="Para quem já criou o acesso: entra na hora, sem convite."
-              variante="secundario"
-            >
-              <form action={vincularMembro} className="formulario">
-                <input type="hidden" name="org_id" value={org.orgId} />
-                <label className="campo">
-                  <span>E-mail</span>
-                  <input type="email" name="email" required autoFocus />
-                </label>
-                <label className="campo">
-                  <span>Alcance</span>
-                  <select name="papel" defaultValue="analista">
-                    {PAPEIS.filter((p) => p.valor !== "owner").map((p) => (
-                      <option key={p.valor} value={p.valor}>
-                        {p.rotulo} — {p.explicacao}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button className="botao botao-primario" type="submit">
-                  Vincular
-                </button>
-              </form>
-            </Modal>
-            </span>
-          )}
+          <h2>Acesso e permissões</h2>
+          <Link className="botao botao-secundario" href="/configuracoes/acesso">
+            Gerenciar acesso
+          </Link>
         </div>
 
         <ul className="lista-estado">
-          {pessoas.map((p) => (
+          {pessoas.slice(0, 5).map((p) => (
             <li key={p.user_id}>
               <span className="rotulo">
                 {p.nome ?? p.email ?? "Pessoa sem perfil"}
@@ -179,40 +124,20 @@ export default async function PaginaConfiguracoes({
           ))}
         </ul>
 
-        {convites.length > 0 && (
-          <>
-            <h3 style={{ marginTop: 22 }}>Convites pendentes</h3>
-            <ul className="lista-estado">
-              {convites.map((c) => (
-                <li key={c.id}>
-                  <span className="rotulo">
-                    {c.email}
-                    <span className="dica">
-                      {rotuloPapel(c.papel)} · expira em{" "}
-                      {new Date(c.expira_em).toLocaleDateString("pt-BR")}
-                    </span>
-                  </span>
-                  {administra && (
-                    <form action={cancelarConvite}>
-                      <input type="hidden" name="id" value={c.id} />
-                      <button className="link-acao" type="submit">
-                        Cancelar
-                      </button>
-                    </form>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </>
+        {pessoas.length > 5 && (
+          <p className="nota" style={{ marginTop: 12 }}>
+            e mais {pessoas.length - 5} — veja todas na tela de acesso.
+          </p>
         )}
 
-        <p className="nota" style={{ marginTop: 16, marginBottom: 0 }}>
-          Ponto focal enxerga apenas as carteiras em que estiver vinculado — o vínculo é feito na
-          ficha de cada <Link href="/carteiras">carteira</Link>.
-        </p>
+        {convites.length > 0 && (
+          <p className="nota" style={{ marginBottom: 0 }}>
+            <span className="dado">{convites.length}</span> convite(s) pendente(s).
+          </p>
+        )}
       </section>
 
-            <section className="painel">
+      <section className="painel">
         <div className="linha-titulo">
           <h2>Papéis de responsabilidade</h2>
           {gereCatalogo && (
