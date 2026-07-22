@@ -1,0 +1,275 @@
+/*
+  Proximia — base visual.
+  Console de operacao: densidade alta, cor usada como estado e nunca como enfeite.
+  Numeros, datas e valores sempre em fonte monoespacada e tabular, porque a
+  leitura em coluna e a operacao real do produto.
+*/
+
+:root {
+  --tinta: #16212e;
+  --papel: #f6f7f5;
+  --superficie: #ffffff;
+  --linha: #dde1dc;
+  --linha-forte: #c2c8c1;
+  --aco: #5b6670;
+  --sinal: #0b6e5f;
+  --sinal-fraco: #e6efec;
+  --alerta: #b4451f;
+  --alerta-fraco: #f7ebe6;
+
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  --r: 4px;
+  --gap: 24px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--sinal);
+}
+
+/* ---------- estrutura ---------- */
+
+.casca {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topo {
+  border-bottom: 1px solid var(--linha);
+  background: var(--superficie);
+}
+
+.topo-interno {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 14px 28px;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.marca {
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.marca-sub {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--aco);
+  text-transform: uppercase;
+}
+
+.conteudo {
+  flex: 1;
+  max-width: 1140px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 28px 64px;
+}
+
+.rodape {
+  border-top: 1px solid var(--linha);
+  padding: 16px 28px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--aco);
+  max-width: 1140px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ---------- tipografia ---------- */
+
+.olho {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--aco);
+  margin: 0 0 10px;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 620;
+  letter-spacing: -0.015em;
+  margin: 0 0 10px;
+}
+
+h2 {
+  font-size: 15px;
+  font-weight: 620;
+  margin: 0 0 12px;
+}
+
+.chamada {
+  color: var(--aco);
+  max-width: 62ch;
+  margin: 0 0 36px;
+}
+
+.dado {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- blocos ---------- */
+
+.painel {
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+  border-radius: var(--r);
+  padding: 22px 24px;
+  margin-bottom: var(--gap);
+}
+
+.lista-estado {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--linha);
+}
+
+.lista-estado li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--linha);
+}
+
+.lista-estado .rotulo {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  flex: 1 1 auto;
+  min-width: 0;
+  word-break: break-all;
+}
+
+.lista-estado .dica {
+  display: block;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  color: var(--aco);
+  margin-top: 3px;
+  word-break: normal;
+}
+
+.selo {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+}
+
+.selo-ok {
+  color: var(--sinal);
+  background: var(--sinal-fraco);
+  border-color: #c5ded7;
+}
+
+.selo-falta {
+  color: var(--alerta);
+  background: var(--alerta-fraco);
+  border-color: #e8cfc5;
+}
+
+.selo-neutro {
+  color: var(--aco);
+  background: var(--papel);
+  border-color: var(--linha);
+}
+
+.nota {
+  border-left: 2px solid var(--linha-forte);
+  padding: 2px 0 2px 16px;
+  color: var(--aco);
+  font-size: 13.5px;
+  max-width: 68ch;
+}
+
+.trilha {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.trilha li {
+  display: flex;
+  gap: 14px;
+  padding: 9px 0;
+  border-bottom: 1px dashed var(--linha);
+  font-size: 13.5px;
+}
+
+.trilha li:last-child {
+  border-bottom: 0;
+}
+
+.trilha .marca-fase {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--aco);
+  flex: 0 0 34px;
+}
+
+.trilha .feito {
+  color: var(--sinal);
+}
+
+/* ---------- acessibilidade ---------- */
+
+:focus-visible {
+  outline: 2px solid var(--sinal);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .conteudo {
+    padding: 28px 18px 48px;
+  }
+
+  .topo-interno {
+    padding: 12px 18px;
+  }
+
+  h1 {
+    font-size: 23px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
