@@ -62,6 +62,7 @@ Aplicadas até aqui:
 | `0017_portal.sql` | F22 | Portal público da carteira, com token revogável |
 | `0018_responsabilidades.sql` | B24 | Papéis operacionais, responsáveis por carteira e dono nos alertas |
 | `0019_captura_mensal.sql` | B25 | Série mensal de captura e o que ficou sem data |
+| `0020_atribuir_compromissos.sql` | B27 | Distribuição de compromissos sem dono pela cadeia de responsabilidade |
 
 Testes de banco ficam em `supabase/testes` e **não são migrations** — são scripts avulsos, para rodar no editor SQL quando quiser conferir. `0001_isolamento.sql` prova que uma organização não enxerga a outra.
 
@@ -145,6 +146,8 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 **A curva não inventa histórico.** A série de captura sai da data de confirmação que já existe em contas, frentes e oportunidades — não há tabela de fatos nem carimbo automático. A consequência é honesta e fica dita na tela: valor capturado sem data de confirmação não entra na curva, e o painel mostra quanto ficou de fora em vez de somar tudo no mês corrente e criar um pico falso.
 
 **Duas lentes sobre a mesma operação.** O panorama lê por unidade, para comparar carteiras entre si, e por responsável, para ver a carga de cada pessoa. Uma carteira com responsável local e apoio corporativo aparece na linha dos dois — então a soma por pessoa é maior que o total da rede, de propósito: ali se compara carga, não mérito, e valor por pessoa seria dupla contagem disfarçada de desempenho. Carteira sem ninguém definido vira uma linha própria, que é justamente o que a coordenação precisa enxergar.
+
+**Varredura não desfaz decisão de gente.** A distribuição automática só toca em compromisso sem dono. Quem foi reatribuído à mão fica como está — se a máquina pudesse reverter uma escolha humana toda noite, ninguém confiaria na atribuição.
 
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 

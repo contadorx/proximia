@@ -101,3 +101,48 @@ export async function gerarCompromissosPendentes() {
     )}`,
   );
 }
+
+
+/** Troca quem responde por um compromisso. */
+export async function reatribuirCompromisso(formData: FormData) {
+  await exigirOrg();
+
+  const id = String(formData.get("id") ?? "");
+  const dono = String(formData.get("dono_id") ?? "");
+  const volta = String(formData.get("volta") ?? "/compromissos");
+
+  const supabase = criarClienteServidor();
+  const { error, count } = await supabase
+    .from("compromissos")
+    .update({ dono_id: dono || null }, { count: "exact" })
+    .eq("id", id);
+
+  if (error) comErro(volta, traduzir(error.message, error.code));
+  if (count === 0) comErro(volta, "Seu perfil não permite alterar este compromisso.");
+
+  revalidatePath(volta);
+  redirect(`${volta}?ok=${encodeURIComponent("Compromisso reatribuído.")}`);
+}
+
+/**
+ * Distribui os que estão sem dono, pela mesma cadeia dos alertas.
+ * Não mexe em quem já tem: decisão de pessoa não é desfeita por varredura.
+ */
+export async function distribuirCompromissos() {
+  const org = await exigirOrg();
+
+  const supabase = criarClienteServidor();
+  const { data, error } = await supabase.rpc("atribuir_compromissos", { p_org: org.orgId });
+
+  if (error) comErro("/compromissos", traduzir(error.message, error.code));
+
+  const n = Number(data ?? 0);
+  revalidatePath("/compromissos");
+  redirect(
+    `/compromissos?ok=${encodeURIComponent(
+      n > 0
+        ? `${n} compromisso(s) ganharam responsável.`
+        : "Nenhum compromisso sem responsável — ou não há quem responder pelas carteiras deles.",
+    )}`,
+  );
+}
