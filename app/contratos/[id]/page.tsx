@@ -20,6 +20,7 @@ import { BotaoExcluir } from "@/components/botao-excluir";
 import { excluirContrato } from "@/app/acoes/exclusoes";
 import { Pencil } from "lucide-react";
 import { Historico } from "@/components/historico";
+import { Anexos } from "@/components/anexos";
 import { pessoasDaOrganizacao } from "@/lib/carteiras";
 import { classeSituacao, listarCompromissos, situacao } from "@/lib/compromissos";
 import { mudarStatusCompromisso } from "@/app/acoes/compromissos";
@@ -382,6 +383,15 @@ export default async function PaginaContrato({
         carteiraId={contrato.carteira_id}
         pessoas={pessoas}
         editavel={editavel}
+      />
+
+      <Anexos
+        entidadeTipo="contrato"
+        entidadeId={contrato.id}
+        carteiraId={contrato.carteira_id}
+        pessoas={pessoas}
+        editavel={editavel}
+        volta={`/contratos/${contrato.id}`}
       />
 
       {podeExcluir && (

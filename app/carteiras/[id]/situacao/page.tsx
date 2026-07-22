@@ -9,6 +9,7 @@ import { listarCompromissos, situacao } from "@/lib/compromissos";
 import { historico, rotuloTipo } from "@/lib/registros";
 import { acharPeriodo, periodos } from "@/lib/periodo";
 import { BotaoImprimir } from "@/components/botao-imprimir";
+import { registrarAcesso } from "@/lib/auditoria";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +62,17 @@ export default async function PaginaSituacao({
   const faixa = faixaMaturidade(carteira.score_maturidade);
   const geradoEm = new Date().toLocaleDateString("pt-BR");
 
+  // O extrato consolida a carteira inteira numa folha. Quem o abriu, e
+  // quando, é o tipo de pergunta que aparece depois — não antes.
+  await registrarAcesso({
+    orgId: org.orgId,
+    acao: "leu",
+    entidadeTipo: "extrato",
+    entidadeId: carteira.id,
+    resumo: carteira.nome,
+    detalhe: { periodo: periodo.chave },
+  });
+
   return (
     <div className="extrato-pagina">
       <div className="barra-extrato nao-imprimir">
@@ -82,6 +94,9 @@ export default async function PaginaSituacao({
             Atualizar
           </button>
         </form>
+        <Link className="link-acao" href={`/portais?carteira=${carteira.id}`}>
+          Compartilhar por link
+        </Link>
         <BotaoImprimir />
       </div>
 

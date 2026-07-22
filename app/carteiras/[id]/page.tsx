@@ -20,6 +20,7 @@ import {
 } from "@/lib/carteiras";
 import { formatarValor, listarContas, rotuloRelacao } from "@/lib/contas";
 import { Historico } from "@/components/historico";
+import { Anexos } from "@/components/anexos";
 import { classeStatus, listarFrentes, rotuloStatus } from "@/lib/frentes";
 import { classeFase, formatarPayback, listarOportunidades, rotuloFase } from "@/lib/oportunidades";
 import {
@@ -431,6 +432,15 @@ export default async function PaginaCarteira({
         carteiraId={carteira.id}
         pessoas={pessoasOrg}
         editavel={podeEscrever(org.papel)}
+      />
+
+      <Anexos
+        entidadeTipo="carteira"
+        entidadeId={carteira.id}
+        carteiraId={carteira.id}
+        pessoas={pessoasOrg}
+        editavel={podeEscrever(org.papel)}
+        volta={`/carteiras/${carteira.id}`}
       />
 
       {podeExcluir && (

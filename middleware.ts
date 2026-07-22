@@ -12,7 +12,13 @@ import { credenciaisOpcionais } from "@/lib/env";
  * e a pessoa cai na tela que explica o que falta.
  */
 export async function middleware(request: NextRequest) {
-  let resposta = NextResponse.next({ request: { headers: request.headers } });
+  // O layout raiz precisa saber em qual rota está para decidir se mostra a
+  // casca do produto ou a página nua do portal. Server Component não
+  // enxerga o caminho, então ele vem por cabeçalho.
+  const cabecalhos = new Headers(request.headers);
+  cabecalhos.set("x-caminho", request.nextUrl.pathname);
+
+  let resposta = NextResponse.next({ request: { headers: cabecalhos } });
 
   const credenciais = credenciaisOpcionais();
   if (!credenciais) return resposta;
@@ -25,12 +31,12 @@ export async function middleware(request: NextRequest) {
         },
         set(nome: string, valor: string, opcoes: CookieOptions) {
           request.cookies.set({ name: nome, value: valor, ...opcoes });
-          resposta = NextResponse.next({ request: { headers: request.headers } });
+          resposta = NextResponse.next({ request: { headers: cabecalhos } });
           resposta.cookies.set({ name: nome, value: valor, ...opcoes });
         },
         remove(nome: string, opcoes: CookieOptions) {
           request.cookies.set({ name: nome, value: "", ...opcoes });
-          resposta = NextResponse.next({ request: { headers: request.headers } });
+          resposta = NextResponse.next({ request: { headers: cabecalhos } });
           resposta.cookies.set({ name: nome, value: "", ...opcoes });
         },
       },

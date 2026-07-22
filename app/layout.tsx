@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import {
   Building2,
@@ -11,6 +12,8 @@ import {
   Layers,
   LayoutGrid,
   Settings,
+  Share2,
+  ShieldCheck,
   Upload,
   Users,
 } from "lucide-react";
@@ -54,6 +57,8 @@ const GRUPOS = [
     itens: [
       { href: "/historico", rotulo: "Histórico", icone: <ClipboardList size={TAMANHO} /> },
       { href: "/importacao", rotulo: "Importação", icone: <Upload size={TAMANHO} /> },
+      { href: "/portais", rotulo: "Portais", icone: <Share2 size={TAMANHO} /> },
+      { href: "/auditoria", rotulo: "Registro de acesso", icone: <ShieldCheck size={TAMANHO} /> },
       { href: "/configuracoes", rotulo: "Configurações", icone: <Settings size={TAMANHO} /> },
     ],
   },
@@ -74,6 +79,23 @@ function Fontes() {
 
 export default async function LayoutRaiz({ children }: { children: React.ReactNode }) {
   const ano = new Date().getFullYear();
+  const caminho = headers().get("x-caminho") ?? "";
+
+  // O portal é visto por quem não usa o produto. Navegação, marca e
+  // rodapé do sistema não fazem sentido ali: a página é o documento.
+  if (caminho.startsWith("/portal/")) {
+    return (
+      <html lang="pt-BR">
+        <head>
+          <Fontes />
+        </head>
+        <body>
+          <main className="conteudo">{children}</main>
+        </body>
+      </html>
+    );
+  }
+
   const org = await orgAtual();
 
   if (!org) {

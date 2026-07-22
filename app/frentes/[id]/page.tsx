@@ -17,6 +17,7 @@ import { BotaoExcluir } from "@/components/botao-excluir";
 import { excluirFrente } from "@/app/acoes/exclusoes";
 import { Pencil } from "lucide-react";
 import { Historico } from "@/components/historico";
+import { Anexos } from "@/components/anexos";
 
 export const dynamic = "force-dynamic";
 
@@ -302,6 +303,15 @@ export default async function PaginaFrente({
         carteiraId={frente.carteira_id}
         pessoas={pessoas}
         editavel={editavel}
+      />
+
+      <Anexos
+        entidadeTipo="frente"
+        entidadeId={frente.id}
+        carteiraId={frente.carteira_id}
+        pessoas={pessoas}
+        editavel={editavel}
+        volta={`/frentes/${frente.id}`}
       />
 
       {podeExcluir && (

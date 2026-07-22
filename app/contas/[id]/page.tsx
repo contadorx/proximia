@@ -19,6 +19,7 @@ import { BotaoExcluir } from "@/components/botao-excluir";
 import { excluirConta } from "@/app/acoes/exclusoes";
 import { Pencil } from "lucide-react";
 import { Historico } from "@/components/historico";
+import { Anexos } from "@/components/anexos";
 import { classeFase, formatarPayback, listarOportunidades, rotuloFase } from "@/lib/oportunidades";
 
 
@@ -341,6 +342,15 @@ export default async function PaginaConta({
         carteiraId={conta.carteira_id}
         pessoas={pessoas}
         editavel={editavel}
+      />
+
+      <Anexos
+        entidadeTipo="conta"
+        entidadeId={conta.id}
+        carteiraId={conta.carteira_id}
+        pessoas={pessoas}
+        editavel={editavel}
+        volta={`/contas/${conta.id}`}
       />
 
       {podeExcluir && (

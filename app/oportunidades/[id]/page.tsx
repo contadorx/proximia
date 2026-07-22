@@ -25,6 +25,7 @@ import { BotaoExcluir } from "@/components/botao-excluir";
 import { excluirOportunidade } from "@/app/acoes/exclusoes";
 import { CampoValor } from "@/components/campos";
 import { Historico } from "@/components/historico";
+import { Anexos } from "@/components/anexos";
 
 export const dynamic = "force-dynamic";
 
@@ -409,6 +410,15 @@ export default async function PaginaOportunidade({
         carteiraId={oportunidade.carteira_id}
         pessoas={pessoas}
         editavel={editavel}
+      />
+
+      <Anexos
+        entidadeTipo="oportunidade"
+        entidadeId={oportunidade.id}
+        carteiraId={oportunidade.carteira_id}
+        pessoas={pessoas}
+        editavel={editavel}
+        volta={`/oportunidades/${oportunidade.id}`}
       />
 
       {podeExcluir && (
