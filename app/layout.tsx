@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { nomeApp } from "@/lib/env";
+import { orgAtual } from "@/lib/auth";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -8,8 +10,9 @@ export const metadata: Metadata = {
     "Onde ficam registrados os compromissos, os contratos e o valor entregue a cada carteira.",
 };
 
-export default function LayoutRaiz({ children }: { children: React.ReactNode }) {
+export default async function LayoutRaiz({ children }: { children: React.ReactNode }) {
   const ano = new Date().getFullYear();
+  const org = await orgAtual();
 
   return (
     <html lang="pt-BR">
@@ -17,8 +20,18 @@ export default function LayoutRaiz({ children }: { children: React.ReactNode }) 
         <div className="casca">
           <header className="topo">
             <div className="topo-interno">
-              <span className="marca">{nomeApp}</span>
-              <span className="marca-sub">carteiras e grandes contas</span>
+              <Link className="marca" href="/">
+                {nomeApp}
+              </Link>
+              {org ? (
+                <nav className="navegacao">
+                  <Link href="/painel">Painel</Link>
+                  <Link href="/carteiras">Carteiras</Link>
+                  <span className="org-atual">{org.nome}</span>
+                </nav>
+              ) : (
+                <span className="marca-sub">carteiras e grandes contas</span>
+              )}
             </div>
           </header>
 

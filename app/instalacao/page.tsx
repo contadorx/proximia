@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 const TRILHA: { fase: string; titulo: string; feito: boolean }[] = [
   { fase: "F0", titulo: "Esqueleto do aplicativo e conexão com o banco", feito: true },
   { fase: "F1", titulo: "Acesso, organizações e papéis", feito: true },
-  { fase: "F2", titulo: "Carteiras", feito: false },
+  { fase: "F2", titulo: "Carteiras", feito: true },
   { fase: "F3", titulo: "Contas nomeadas", feito: false },
   { fase: "F4", titulo: "Contratos e cláusulas monitoradas", feito: false },
   { fase: "F5", titulo: "Frentes de trabalho", feito: false },
