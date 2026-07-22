@@ -143,3 +143,66 @@ export function Ranking({
     </ul>
   );
 }
+
+/**
+ * Duas séries no mesmo eixo, uma para cima e outra para baixo.
+ *
+ * Serve para pares que se cancelam — alertas abertos contra resolvidos.
+ * Empilhar seria pior: o que interessa é a diferença entre as duas, e
+ * espelhá-las em torno da linha zero deixa isso imediato.
+ */
+export function BarrasEspelhadas({
+  meses,
+  acima,
+  abaixo,
+  rotuloAcima,
+  rotuloAbaixo,
+}: {
+  meses: { rotulo: string }[];
+  acima: number[];
+  abaixo: number[];
+  rotuloAcima: string;
+  rotuloAbaixo: string;
+}) {
+  const maior = Math.max(1, ...acima, ...abaixo);
+  const largura = 720;
+  const altura = 190;
+  const meio = 92;
+  const passo = largura / Math.max(1, meses.length);
+  const larguraBarra = Math.min(30, passo * 0.5);
+
+  return (
+    <svg viewBox={`0 0 ${largura} ${altura}`} className="grafico" role="img"
+      aria-label={`${rotuloAcima} e ${rotuloAbaixo} por mês`}>
+      <line x1="0" y1={meio} x2={largura} y2={meio} stroke="var(--g300)" />
+
+      {meses.map((m, i) => {
+        const x = i * passo + (passo - larguraBarra) / 2;
+        const alturaCima = (acima[i] / maior) * (meio - 16);
+        const alturaBaixo = (abaixo[i] / maior) * (meio - 30);
+        return (
+          <g key={i}>
+            {acima[i] > 0 && (
+              <rect x={x} y={meio - alturaCima} width={larguraBarra} height={alturaCima} rx="2"
+                fill="var(--vermelho-pale)" stroke="#f3d5c6" />
+            )}
+            {abaixo[i] > 0 && (
+              <rect x={x} y={meio} width={larguraBarra} height={alturaBaixo} rx="2"
+                fill="var(--esmeralda-pale)" stroke="#c4e8d7" />
+            )}
+            <text x={i * passo + passo / 2} y={altura - 6} textAnchor="middle" className="rotulo-eixo">
+              {m.rotulo}
+            </text>
+          </g>
+        );
+      })}
+
+      <text x="0" y="12" className="rotulo-eixo" fill="var(--vermelho)">
+        {rotuloAcima}
+      </text>
+      <text x="0" y={altura - 24} className="rotulo-eixo" fill="var(--esmeralda-forte)">
+        {rotuloAbaixo}
+      </text>
+    </svg>
+  );
+}

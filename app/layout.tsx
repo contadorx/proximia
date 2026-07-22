@@ -12,6 +12,7 @@ import {
   FileText,
   Layers,
   LayoutGrid,
+  PieChart,
   ScrollText,
   Settings,
   Upload,
@@ -42,6 +43,7 @@ const GRUPOS: GrupoMenu[] = [
       { href: "/alertas", rotulo: "Alertas", icone: <Bell size={TAMANHO} /> },
       { href: "/compromissos", rotulo: "Compromissos", icone: <CalendarClock size={TAMANHO} /> },
       { href: "/panorama", rotulo: "Panorama", icone: <Building2 size={TAMANHO} /> },
+      { href: "/relatorios", rotulo: "Relatórios", icone: <PieChart size={TAMANHO} /> },
     ],
   },
   {

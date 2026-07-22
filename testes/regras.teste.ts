@@ -190,3 +190,33 @@ describe("maturidade", () => {
     expect(quadrante(null, 1000, 500).nome).toBe("Estruturar");
   });
 });
+
+describe("janela e alinhamento das séries", () => {
+  // Importados aqui para manter o arquivo legível: são utilidades dos
+  // relatórios, não regras de negócio.
+  it("mês sem dado vira zero, e não some da série", async () => {
+    const { alinhar, janela } = await import("@/lib/relatorios");
+    const meses = janela(3);
+    const linhas = [{ mes: meses[0].mes, valor: 5 }];
+    // Buraco no meio da série é informação: dizer "não houve" é diferente
+    // de encurtar o gráfico e fingir que o mês não existiu.
+    expect(alinhar(linhas, meses, (l) => l.valor)).toEqual([5, 0, 0]);
+  });
+
+  it("soma quando o mesmo mês aparece várias vezes", async () => {
+    const { alinhar, janela } = await import("@/lib/relatorios");
+    const meses = janela(2);
+    const linhas = [
+      { mes: meses[1].mes, valor: 3 },
+      { mes: meses[1].mes, valor: 4 },
+    ];
+    expect(alinhar(linhas, meses, (l) => l.valor)).toEqual([0, 7]);
+  });
+
+  it("a janela tem o tamanho pedido e termina no mês corrente", async () => {
+    const { janela } = await import("@/lib/relatorios");
+    const meses = janela(12);
+    expect(meses).toHaveLength(12);
+    expect(meses[11].mes).toBe(new Date().toISOString().slice(0, 7));
+  });
+});

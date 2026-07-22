@@ -71,6 +71,7 @@ Aplicadas até aqui:
 | `0026_exportacoes.sql` | B33 | Trilha de extrações de dados |
 | `0027_historico_estado.sql` | B36 | Fotos mensais das carteiras e histórico de etapas |
 | `0028_financeiro.sql` | B37 | VPL, TIR, payback descontado e custo de capital |
+| `0029_series_relatorios.sql` | B35 | Séries de alertas, esforço, vencimentos e conversão |
 
 ## Verificação
 
@@ -196,6 +197,8 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 
 **A entidade viaja num campo só, como `tipo:id`.** Dois seletores dependentes seriam pior — o segundo teria de recarregar quando o primeiro muda, e a pessoa erraria a combinação.
 
+**Relatório é para entender, não para trabalhar.** O que pede ação fica no painel; a central de relatórios responde "como estamos indo". Nenhum número ali pede digitação nova — todos saem do que já foi registrado.
+
 **Alcance por papel.** Dono, administrador e analista enxergam todas as carteiras; acompanhamento enxerga tudo sem escrever nada; ponto focal enxerga e opera apenas as carteiras em que foi vinculado. A separação é feita nas políticas do banco, nunca só na tela.
 
 ## Rotas
@@ -222,6 +225,7 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 | `/configuracoes/pipeline` | Nome e ritmo de cada etapa, catálogo de motivos de perda |
 | `/configuracoes/playbooks` | Cadência por etapa: o que criar, com que prazo e para quem |
 | `/configuracoes/exportacao` | Dados em CSV por recurso ou pacote completo em JSON |
+| `/relatorios` | Vencimentos, captura, alertas, esforço, conversão e evolução |
 | `/maturidade`, `/maturidade/[id]` | Régua, ciclos, matriz maturidade × potencial e questionário |
 | `/alertas` | O que saiu do trilho, com silenciar e varredura sob demanda |
 | `/convite/[token]` | Aceite de convite de acesso |
