@@ -119,6 +119,6 @@ supabase/
 
 ## Trilha de construção
 
-F0 esqueleto ✓ · F1 acesso, organizações e papéis ✓ · F2 carteiras · F3 contas nomeadas · F4 contratos e cláusulas · F5 frentes · F6 timeline · F7 compromissos e alertas · F8 painel multi-carteira · F9 situação da carteira · F10 importação.
+F0 esqueleto ✓ · F1 acesso, organizações e papéis ✓ · F2 carteiras · F3 contas nomeadas · F4 frentes · F6 timeline · F7 compromissos e alertas · F8 painel multi-carteira · F9 situação da carteira · F10 importação.
 
 Uma feature por vez, com build passando entre cada uma.

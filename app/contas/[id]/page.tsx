@@ -11,7 +11,9 @@ import {
   formatarValor,
   obterConta,
 } from "@/lib/contas";
+import { classeSelo, listarContratos, urgencia } from "@/lib/contratos";
 import { atualizarConta, criarContato, excluirContato } from "@/app/acoes/contas";
+import { Vazio } from "@/components/intro-secao";
 
 export const dynamic = "force-dynamic";
 
@@ -26,10 +28,11 @@ export default async function PaginaConta({
   const conta = await obterConta(params.id);
   if (!conta) notFound();
 
-  const [carteiras, pessoas, contatos] = await Promise.all([
+  const [carteiras, pessoas, contatos, contratos] = await Promise.all([
     listarCarteiras(org.orgId),
     pessoasDaOrganizacao(org.orgId),
     contatosDaConta(conta.id),
+    listarContratos({ orgId: org.orgId, contaId: conta.id }),
   ]);
 
   const editavel = podeEscrever(org.papel);
@@ -82,6 +85,37 @@ export default async function PaginaConta({
           Os dois números têm naturezas diferentes e não se somam. Potencial é teto estimado, com
           origem e data; capturado é o que já se confirmou.
         </p>
+      </section>
+
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>Contratos</h2>
+          <Link className="link-acao" href="/contratos">
+            Registrar contrato
+          </Link>
+        </div>
+        {contratos.length === 0 ? (
+          <Vazio>Nenhum contrato registrado para esta conta.</Vazio>
+        ) : (
+          <ul className="lista-estado">
+            {contratos.map((ct) => {
+              const u = urgencia(ct);
+              return (
+                <li key={ct.id}>
+                  <span className="rotulo">
+                    <Link href={`/contratos/${ct.id}`}>{ct.numero ?? "Contrato sem número"}</Link>
+                    <span className="dica">
+                      {[ct.tipo, ct.fim ? `vence ${formatarData(ct.fim)}` : null, u.detalhe]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                  </span>
+                  <span className={classeSelo(u.tom)}>{u.rotulo}</span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
 
       <section className="painel">

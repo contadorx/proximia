@@ -8,6 +8,7 @@ import {
   STATUS_CARTEIRA,
 } from "@/lib/carteiras";
 import { criarCarteira } from "@/app/acoes/carteiras";
+import { IntroSecao } from "@/components/intro-secao";
 
 export const dynamic = "force-dynamic";
 
@@ -27,11 +28,11 @@ export default async function PaginaCarteiras({
     <>
       <p className="olho">{org.nome}</p>
       <h1>Carteiras</h1>
-      <p className="chamada">
+      <IntroSecao>
         {org.papel === "ponto_focal"
           ? "Aqui estão as carteiras em que você foi vinculado."
-          : "Cada carteira agrupa as contas sob um responsável. É por ela que o trabalho é acompanhado."}
-      </p>
+          : "Cada carteira agrupa as contas sob um responsável — regional, filial, praça, como sua operação chamar. Vincular alguém a uma carteira só muda o alcance de quem tem perfil de ponto focal."}
+      </IntroSecao>
 
       {searchParams.erro && <p className="aviso aviso-erro">{searchParams.erro}</p>}
 

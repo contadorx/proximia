@@ -10,6 +10,7 @@ import {
   rotuloRelacao,
 } from "@/lib/contas";
 import { criarConta } from "@/app/acoes/contas";
+import { IntroSecao, Vazio } from "@/components/intro-secao";
 
 export const dynamic = "force-dynamic";
 
@@ -37,10 +38,11 @@ export default async function PaginaContas({
     <>
       <p className="olho">{org.nome}</p>
       <h1>Contas</h1>
-      <p className="chamada">
-        Aqui ficam as contas que merecem gestão individual. Volume de baixo valor unitário não entra
-        conta a conta — vira frente agregada na carteira, mais adiante na construção.
-      </p>
+      <IntroSecao>
+        Aqui ficam as contas que merecem <strong>gestão individual</strong>: as maiores, as com
+        contrato, as em prospecção e as que precisam ser defendidas. Volume de baixo valor unitário
+        não entra conta a conta — vira frente agregada na carteira, mais adiante na construção.
+      </IntroSecao>
 
       {searchParams.erro && <p className="aviso aviso-erro">{searchParams.erro}</p>}
 
@@ -87,11 +89,11 @@ export default async function PaginaContas({
       </form>
 
       {contas.length === 0 ? (
-        <p className="nota" style={{ marginBottom: 28 }}>
+        <Vazio>
           {filtrando
             ? "Nenhuma conta encontrada com esses filtros."
-            : "Nenhuma conta cadastrada ainda."}
-        </p>
+            : "Nenhuma conta cadastrada ainda. Comece pelas maiores de cada carteira — o formulário abaixo pede só o essencial."}
+        </Vazio>
       ) : (
         <section className="painel">
           <p className="olho" style={{ marginBottom: 4 }}>
