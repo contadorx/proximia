@@ -1,0 +1,59 @@
+<!-- =====================================================================
+     Supabase › Authentication › Emails › Confirm signup
+     Cole o conteúdo abaixo no corpo do modelo.
+     Assunto sugerido: Confirme seu acesso ao Proximia
+     ===================================================================== -->
+<div style="margin:0;padding:24px;background:#f6f8fa;">
+  <table width="100%" cellpadding="0" cellspacing="0"
+         style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;">
+
+    <tr><td style="padding:28px 30px 0;">
+      <div style="font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;">
+        Proximia · acesso
+      </div>
+      <h1 style="font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;">
+        Confirme seu e-mail
+      </h1>
+      <div style="font:400 13px/1.5 Arial,sans-serif;color:#64748b;">
+        {{ .Email }}
+      </div>
+    </td></tr>
+
+    <tr><td style="padding:20px 30px 0;">
+      <p style="font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;">
+        Alguém criou um acesso ao Proximia com este endereço. Clique no botão para confirmar
+        que é você — o link vale por uma hora e serve uma vez só.
+      </p>
+
+      <table cellpadding="0" cellspacing="0" style="margin:8px 0 18px;">
+        <tr><td style="background:#1b2a4a;border-radius:8px;">
+          <a href="{{ .ConfirmationURL }}"
+             style="display:inline-block;padding:12px 22px;font:600 14px/1 Arial,sans-serif;color:#ffffff;text-decoration:none;">
+            Confirmar e entrar
+          </a>
+        </td></tr>
+      </table>
+
+      <p style="font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0 0 6px;">
+        Se o botão não abrir, copie este endereço no navegador:
+      </p>
+      <p style="font:400 12px/1.6 Arial,sans-serif;color:#1b2a4a;word-break:break-all;margin:0 0 18px;">
+        {{ .ConfirmationURL }}
+      </p>
+    </td></tr>
+
+    <tr><td style="padding:0 30px 26px;">
+      <div style="border-top:1px solid #e2e8f0;padding-top:14px;">
+        <p style="font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;">
+          <strong style="color:#1b2a4a;">Não foi você?</strong> Ignore esta mensagem. Sem a
+          confirmação, o acesso não é ativado e ninguém entra com este endereço.
+        </p>
+        <p style="font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:10px 0 0;">
+          Confirmar o e-mail cria o acesso, mas ainda não dá acesso a nenhuma organização —
+          isso depende de convite ou de vínculo feito por quem administra.
+        </p>
+      </div>
+    </td></tr>
+
+  </table>
+</div>

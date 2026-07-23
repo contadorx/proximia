@@ -36,6 +36,10 @@ create table if not exists auth.users (
   email              text unique,
   encrypted_password text,
   raw_user_meta_data jsonb not null default '{}'::jsonb,
+  -- Origem da sessão: 'email' para senha, 'sso:<provider>' para SAML. No
+  -- Supabase real esta coluna já existe e é mantida pelo GoTrue; aqui ela
+  -- entra porque o provisionamento por SSO a consulta.
+  raw_app_meta_data  jsonb not null default '{"provider":"email"}'::jsonb,
   created_at         timestamptz not null default now()
 );
 

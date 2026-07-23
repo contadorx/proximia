@@ -136,6 +136,27 @@ async function rodarChecagens(): Promise<Resultado[]> {
     }
   }
 
+  // 5b. E-mail de ACESSO — outro caminho, outra configuração.
+  //
+  // O cartão acima checa a Brevo, que manda extrato, resumo e convite. A
+  // confirmação de cadastro e a redefinição de senha NÃO passam por ela:
+  // são do Supabase Auth, com SMTP configurado no painel do Supabase.
+  //
+  // Este cartão existe porque a confusão entre os dois já custou uma
+  // instalação: o diagnóstico ficava verde e o e-mail de cadastro não
+  // saía. Não dá para testar o SMTP do Auth daqui — a chave de serviço
+  // não expõe essa configuração —, então o que se faz é dizer onde
+  // olhar, em vez de deixar o silêncio sugerir que está tudo certo.
+  resultados.push({
+    titulo: "E-mail de acesso (Supabase Auth)",
+    estado: "aviso",
+    detalhe:
+      "Confirmação de cadastro e redefinição de senha não passam pela Brevo — são do Supabase Auth. " +
+      "O SMTP embutido do Supabase é limitado e costuma não entregar: configure SMTP próprio em " +
+      "Project Settings › Authentication › SMTP Settings, e confira em Authentication › URL Configuration " +
+      "se as Redirect URLs incluem /auth/callback. Passo a passo e modelos em supabase/emails/README.md.",
+  });
+
   // 6. As migrations foram aplicadas?
   try {
     const supabase = criarClienteServidor();

@@ -16,6 +16,20 @@ import {
   temposPorEtapa,
   vencimentosMensais,
 } from "@/lib/relatorios";
+import {
+  MINIMO_FECHADAS,
+  agregarPorFase,
+  conversaoPorFase,
+  formatarIntervalo,
+  formatarTaxa,
+} from "@/lib/conversao";
+import {
+  MINIMO_PARA_CONCLUIR,
+  defasagemPorCarteira,
+  formatarDias,
+  lerDefasagem,
+  leituraGeral,
+} from "@/lib/defasagem";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { SeletorMultiplo } from "@/components/seletor";
 import { BarrasEspelhadas, BarrasMensais, Ranking } from "@/components/graficos";
@@ -34,13 +48,15 @@ export default async function PaginaRelatorios({
   // O filtro de carteira vale para TODAS as seções. Antes, captura e
   // tempo por etapa ignoravam o recorte em silêncio — quem filtrava uma
   // carteira lia dois números da rede inteira sem aviso.
-  const [carteiras, serie, semData, alertas, esforco, vencimentos, conversao, etapas, fotos, fases] =
+  const [carteiras, serie, semData, alertas, esforco, defasagem, conversaoFases, vencimentos, conversao, etapas, fotos, fases] =
     await Promise.all([
       listarCarteiras(org.orgId),
       capturaMensal(org.orgId, 12, filtro),
       capturaSemData(org.orgId, filtro),
       alertasMensais(org.orgId, filtro),
       esforcoMensal(org.orgId, filtro),
+      defasagemPorCarteira(org.orgId, filtro),
+      conversaoPorFase(org.orgId, filtro),
       vencimentosMensais(org.orgId, filtro),
       conversaoPorCarteira(org.orgId, filtro),
       temposPorEtapa(org.orgId, filtro),
@@ -65,6 +81,8 @@ export default async function PaginaRelatorios({
   })).filter((t) => t.valor > 0);
 
   const esforcoPorMes = alinhar(esforco, doze, (l) => Number(l.quantidade));
+  const geral = leituraGeral(defasagem);
+  const taxasPorFase = agregarPorFase(conversaoFases, fases.map((f) => f.fase));
   const totalEsforco = esforcoPorMes.reduce((a, b) => a + b, 0);
 
   const calendario = proximos.map((m) => {
@@ -283,6 +301,134 @@ export default async function PaginaRelatorios({
           )}
         </section>
       </div>
+
+      {/* ---------- conversão observada por fase ---------- */}
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>Onde as oportunidades fecham</h2>
+          <span className="passos-contagem">conversão observada, não estimada</span>
+        </div>
+
+        {taxasPorFase.length === 0 ? (
+          <Vazio>
+            Nenhuma oportunidade passou por uma fase ainda. A medição começa com o uso — cada
+            avanço e cada encerramento alimenta esta leitura.
+          </Vazio>
+        ) : (
+          <>
+            <ul className="lista-estado">
+              {taxasPorFase.map((t) => (
+                <li key={t.fase}>
+                  <span className="rotulo">
+                    {nomeFase(t.fase)}
+                    <span className="dica">
+                      {[
+                        t.frase,
+                        t.intervalo ? formatarIntervalo(t.intervalo) : null,
+                        t.emJogo > 0 ? `${t.emJogo} ainda em jogo` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                  </span>
+                  <span
+                    className={
+                      t.confianca === "medida"
+                        ? "selo selo-ok"
+                        : t.confianca === "indicio"
+                          ? "selo selo-neutro"
+                          : "selo selo-falta"
+                    }
+                  >
+                    {t.taxa === null ? "sem base" : formatarTaxa(t.taxa)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
+              De quantas oportunidades que passaram por cada fase e <strong>já fecharam</strong>,
+              quantas terminaram ganhas — na história desta organização, não em percentual digitado
+              por alguém. Oportunidade viva não é vitória nem derrota: fica contada à parte. Abaixo
+              de {MINIMO_FECHADAS} encerramentos a leitura não afirma taxa, e entre 10 e 29 ela é
+              indício, não medida — daí o intervalo ao lado, que é o quanto o número pode variar
+              com essa amostra.{" "}
+              <strong>Não multiplicamos isto por valor</strong>: cifra ponderada única é o começo
+              de uma meta com outro nome.
+            </p>
+          </>
+        )}
+      </section>
+
+      {/* ---------- defasagem de registro ---------- */}
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>Do que aconteceu até o que foi digitado</h2>
+          <span className="passos-contagem">
+            {geral.registros} registro(s) em 12 meses
+          </span>
+        </div>
+
+        {geral.medianaPonderada === null ? (
+          <Vazio>
+            Ainda não há registro suficiente para medir. Abaixo de {MINIMO_PARA_CONCLUIR} registros
+            numa carteira, qualquer número aqui seria anedota.
+          </Vazio>
+        ) : (
+          <>
+            <p className="chamada">
+              Na média da operação, o registro chega{" "}
+              <strong>{formatarDias(geral.medianaPonderada)}</strong> depois de a conversa
+              acontecer.
+              {geral.carteirasCriticas > 0
+                ? ` ${geral.carteirasCriticas} carteira(s) passam de cinco dias.`
+                : " Nenhuma carteira passa de cinco dias."}
+            </p>
+
+            <ul className="lista-estado">
+              {defasagem
+                .slice()
+                .sort((a, b) => Number(b.dias_mediana ?? -1) - Number(a.dias_mediana ?? -1))
+                .map((d) => {
+                  const leitura = lerDefasagem(d);
+                  return (
+                    <li key={d.carteira_id}>
+                      <span className="rotulo">
+                        {nomeCarteira(d.carteira_id)}
+                        <span className="dica">
+                          {[
+                            `${d.registros} registro(s)`,
+                            `${d.no_mesmo_dia} no mesmo dia`,
+                            d.acima_de_uma_semana > 0
+                              ? `${d.acima_de_uma_semana} acima de uma semana`
+                              : null,
+                            d.dias_p90 !== null ? `9 em 10 até ${formatarDias(d.dias_p90)}` : null,
+                            d.registros_antecipados > 0
+                              ? `${d.registros_antecipados} anotado(s) antes de acontecer`
+                              : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
+                      </span>
+                      <span className={leitura.classe}>{leitura.rotulo}</span>
+                    </li>
+                  );
+                })}
+            </ul>
+
+            <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
+              A conta é a distância entre <strong>quando aconteceu</strong> e{" "}
+              <strong>quando foi digitado</strong> — duas datas que o produto já guardava e nunca
+              tinha somado. Serve para decidir se registro em campo é problema de verdade antes de
+              construir qualquer coisa para resolvê-lo: até dois dias não há o que fazer; de três a
+              cinco, o caminho curto é concluir o compromisso e registrar no mesmo movimento; acima
+              disso, vale olhar a carteira antes de investir em ferramenta. A medida é por carteira
+              e não por pessoa, de propósito — ela diz onde olhar, não em quem.
+            </p>
+          </>
+        )}
+      </section>
 
       {/* ---------- conversão ---------- */}
       <section className="painel">

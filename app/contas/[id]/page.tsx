@@ -135,8 +135,11 @@ export default async function PaginaConta({
       <div className="cabeca-pagina">
         <h1>{conta.nome}</h1>
         <div className="cabeca-acoes nao-imprimir">
-          {/* A ficha é o one-pager de reunião: mesma capacidade que a
-              situação da carteira já tinha. */}
+          {/* O dossiê é a versão de reunião desta ficha: mesmo dado,
+              recortado por período e sem controle de edição. */}
+          <Link className="botao botao-secundario" href={`/contas/${conta.id}/reuniao`}>
+            Dossiê de reunião
+          </Link>
           <BotaoImprimir />
         </div>
       </div>
