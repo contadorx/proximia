@@ -742,11 +742,25 @@ p {
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
-  align-items: flex-end;
+  /* Alinhamento pelo TOPO, não pelo fim.
+     Com `flex-end`, um campo que tem texto de explicação ficava mais alto
+     e empurrava o próprio input para cima — na mesma linha, um input
+     alinhado com o rótulo do vizinho. Alinhando pelo topo, os rótulos
+     ficam na mesma altura e os inputs também; a explicação desce e fica
+     por baixo, que é onde ela pertence. */
+  align-items: stretch;
 }
 
 .formulario-linha .campo {
   flex: 1 1 200px;
+}
+
+/* Com os campos esticados à altura do mais alto, a explicação vai para o
+   rodapé do campo em vez de colar no input. Assim a linha inteira tem uma
+   faixa de inputs e uma faixa de explicações, e não um degrau por campo. */
+.formulario-linha .campo small {
+  margin-top: auto;
+  padding-top: 2px;
 }
 
 .campo {
@@ -2731,4 +2745,51 @@ input[aria-invalid="true"] {
   white-space: pre;
   margin: 12px 0;
   user-select: all;
+}
+
+/* ---------------- configurações em cartões ---------------- */
+
+.grade-cartoes {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.grupo-cartoes .olho {
+  margin-bottom: 10px;
+}
+
+.cartoes-config {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.cartao-config {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--g200);
+  border-radius: var(--r-p);
+  background: var(--branco);
+  text-decoration: none;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.cartao-config:hover {
+  border-color: var(--navy-claro);
+  box-shadow: var(--sombra);
+}
+
+.cartao-config-titulo {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.cartao-config-dica {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--g500);
 }

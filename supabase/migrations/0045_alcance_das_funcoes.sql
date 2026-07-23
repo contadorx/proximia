@@ -119,27 +119,49 @@ as $$
   ) end;
 $$;
 
--- dono_da_entidade recebe a carteira como terceiro argumento, então a
--- guarda usa o mesmo critério sem precisar reescrever o corpo: entra
--- antes, e o resto segue igual.
-do $$
-declare def text; pos int;
-begin
-  select pg_get_functiondef(p.oid) into def
-    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-   where n.nspname = 'public' and p.proname = 'dono_da_entidade';
+-- dono_da_entidade: corpo escrito por inteiro, com a guarda na entrada.
+--
+-- A primeira versão desta migration injetava a guarda procurando o texto
+-- "begin" no corpo devolvido por pg_get_functiondef. Foi o mesmo erro
+-- que já tinha derrubado a 0035 em produção — basta o corpo estar
+-- gravado com quebra de linha CRLF, ou com um espaço a mais, para a
+-- busca não casar e a migration abortar. Cirurgia de texto em definição
+-- de função não sobrevive a ambiente real. Aqui o corpo está escrito,
+-- é lido por gente e não depende de formatação nenhuma.
 
-  pos := position(E'\nbegin\n' in def);
-  if pos = 0 then
-    raise exception 'Não encontrei o corpo de dono_da_entidade para blindar';
+create or replace function public.dono_da_entidade(
+  p_tipo text, p_entidade uuid, p_carteira uuid)
+returns uuid
+language plpgsql
+stable
+security definer
+set search_path to 'public', 'pg_temp'
+as $$
+declare
+  v_dono uuid;
+begin
+  if auth.uid() is not null and not public.tem_acesso_carteira(p_carteira) then
+    return null;
   end if;
 
-  def := left(def, pos - 1)
-      || E'\nbegin\n  if auth.uid() is not null and not public.tem_acesso_carteira(p_carteira) then\n    return null;\n  end if;\n'
-      || substr(def, pos + length(E'\nbegin\n'));
+  if p_tipo = 'conta' then
+    select responsavel_id into v_dono from public.contas where id = p_entidade;
 
-  execute def;
-end $$;
+  elsif p_tipo = 'contrato' then
+    select ct.responsavel_id into v_dono
+      from public.contratos c join public.contas ct on ct.id = c.conta_id
+     where c.id = p_entidade;
+
+  elsif p_tipo = 'frente' then
+    select dono_id into v_dono from public.frentes where id = p_entidade;
+
+  elsif p_tipo = 'oportunidade' then
+    select responsavel_id into v_dono from public.oportunidades where id = p_entidade;
+  end if;
+
+  return coalesce(v_dono, public.responsavel_primario(p_carteira));
+end;
+$$;
 
 
 -- ---------------------------------------------------------------------

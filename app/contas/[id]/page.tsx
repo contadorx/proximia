@@ -442,39 +442,53 @@ export default async function PaginaConta({
           </>
         )}
 
+        {/* Duas linhas em vez de sete campos numa só: com tudo na mesma
+            linha, o formulário quebrava em qualquer tela menor que a de
+            quem o escreveu, e o botão terminava perdido no meio. Quem está
+            cadastrando contato quase nunca sabe o papel na decisão no
+            mesmo minuto — por isso a identificação vem primeiro e o mapa
+            fica na segunda linha, opcional. */}
         {editavel && (
-          <FormAcao action={criarContato} className="formulario formulario-linha">
+          <FormAcao action={criarContato}>
             <input type="hidden" name="conta_id" value={conta.id} />
-            <label className="campo">
-              <span>Nome</span>
-              <input type="text" name="nome" required maxLength={120} />
-            </label>
-            <label className="campo">
-              <span>Cargo</span>
-              <input type="text" name="cargo" maxLength={80} />
-            </label>
-            <label className="campo">
-              <span>E-mail</span>
-              <input type="email" name="email" maxLength={120} />
-            </label>
-            <label className="campo">
-              <span>Telefone</span>
-              <input type="text" name="telefone" maxLength={40} />
-            </label>
-            <Seletor
-              nome="papel_id"
-              rotulo="Papel na decisão"
-              opcoes={papeisAtivos.map((p) => ({
-                valor: p.id,
-                rotulo: p.rotulo,
-                detalhe: p.decide ? "decide" : undefined,
-              }))}
-              vazio="Definir depois"
-            />
-            <label className="campo campo-marcador">
-              <span>Principal</span>
-              <input type="checkbox" name="principal" />
-            </label>
+
+            <div className="formulario-linha">
+              <label className="campo">
+                <span>Nome</span>
+                <input type="text" name="nome" required maxLength={120} />
+              </label>
+              <label className="campo">
+                <span>Cargo</span>
+                <input type="text" name="cargo" maxLength={80} />
+              </label>
+            </div>
+
+            <div className="formulario-linha">
+              <label className="campo">
+                <span>E-mail</span>
+                <input type="email" name="email" maxLength={120} />
+              </label>
+              <label className="campo">
+                <span>Telefone</span>
+                <input type="text" name="telefone" maxLength={40} />
+              </label>
+              <Seletor
+                nome="papel_id"
+                rotulo="Papel na decisão"
+                opcoes={papeisAtivos.map((p) => ({
+                  valor: p.id,
+                  rotulo: p.rotulo,
+                  detalhe: p.decide ? "decide" : undefined,
+                }))}
+                vazio="Definir depois"
+                ajuda="Dá para deixar em branco e mapear na conversa seguinte."
+              />
+              <label className="campo campo-marcador">
+                <span>Principal</span>
+                <input type="checkbox" name="principal" />
+              </label>
+            </div>
+
             <BotaoEnviar>Incluir contato</BotaoEnviar>
           </FormAcao>
         )}

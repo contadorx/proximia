@@ -605,72 +605,95 @@ export default async function PaginaConfiguracoes({
         </div>
       </section>
 
+      {/* Administração em cartões agrupados.
+          Era uma lista corrida de nove itens sem hierarquia: quem procurava
+          "onde configuro o SSO" lia os nove. Agrupado por assunto, a
+          varredura acontece pelo título do grupo, e cada cartão diz o que
+          faz — que é o que a pessoa precisa antes de clicar. */}
       <section className="painel">
         <h2>Administração</h2>
-        <ul className="lista-estado">
-          <li>
-            <span className="rotulo">
-              <Link href="/importacao">Importação de dados</Link>
-              <span className="dica">Carga de carteiras, contas, contratos e frentes por planilha</span>
-            </span>
-          </li>
-          <li>
-            <span className="rotulo">
-              <Link href="/configuracoes/classificacoes">Classificações de conta</Link>
-              <span className="dica">Ramo, natureza, porte — as dimensões que a sua operação usa</span>
-            </span>
-          </li>
-          <li>
-            <span className="rotulo">
-              <Link href="/configuracoes/acesso-corporativo">Acesso corporativo (SSO)</Link>
-              <span className="dica">
-                Entrada pelo provedor de identidade da empresa, por domínio de e-mail
-              </span>
-            </span>
-          </li>
-          <li>
-            <span className="rotulo">
-              <Link href="/configuracoes/api">Entrada de dados por API</Link>
-              <span className="dica">
-                Chaves para o seu sistema empurrar dados, com a mesma conferência da planilha
-              </span>
-            </span>
-          </li>
-          <li>
-            <span className="rotulo">
-              <Link href="/configuracoes/decisao">Papéis na decisão</Link>
-              <span className="dica">
-                Quem decide, quem influencia e como cada um se posiciona — o vocabulário é seu
-              </span>
-            </span>
-          </li>
-          <li>
-            <span className="rotulo">
-              <Link href="/configuracoes/playbooks">Playbooks de cadência</Link>
-              <span className="dica">Compromissos que nascem quando a oportunidade muda de etapa</span>
-            </span>
-          </li>
-          <li>
-            <span className="rotulo">
-              <Link href="/configuracoes/pipeline">Pipeline de conversão</Link>
-              <span className="dica">Etapas, prazo esperado de cada uma e motivos de perda</span>
-            </span>
-          </li>
-          <li>
-            <span className="rotulo">
-              <Link href="/relatorios/exportacao">Exportação de dados</Link>
-              <span className="dica">
-                Seus dados em CSV ou JSON, a qualquer momento — mora em Relatórios
-              </span>
-            </span>
-          </li>
-          <li>
-            <span className="rotulo">
-              <Link href="/auditoria">Registro de alterações</Link>
-              <span className="dica">Quem alterou o quê, e quando</span>
-            </span>
-          </li>
-        </ul>
+
+        <div className="grade-cartoes">
+          {[
+            {
+              grupo: "Dados",
+              itens: [
+                {
+                  href: "/importacao",
+                  titulo: "Importação por planilha",
+                  dica: "Carga de carteiras, contas, contratos e frentes por CSV",
+                },
+                {
+                  href: "/configuracoes/api",
+                  titulo: "Entrada por API",
+                  dica: "Chaves para o seu sistema empurrar dados, com a mesma conferência da planilha",
+                },
+                {
+                  href: "/relatorios/exportacao",
+                  titulo: "Exportação",
+                  dica: "Seus dados em CSV ou JSON, a qualquer momento — mora em Relatórios",
+                },
+              ],
+            },
+            {
+              grupo: "Acesso",
+              itens: [
+                {
+                  href: "/configuracoes/acesso",
+                  titulo: "Pessoas e alcance",
+                  dica: "Quem entra, com qual papel e em quais carteiras",
+                },
+                {
+                  href: "/configuracoes/acesso-corporativo",
+                  titulo: "Acesso corporativo (SSO)",
+                  dica: "Entrada pelo provedor de identidade da empresa, por domínio de e-mail",
+                },
+                {
+                  href: "/auditoria",
+                  titulo: "Registro de alterações",
+                  dica: "Quem alterou o quê, e quando",
+                },
+              ],
+            },
+            {
+              grupo: "Catálogos da operação",
+              itens: [
+                {
+                  href: "/configuracoes/classificacoes",
+                  titulo: "Classificações de conta",
+                  dica: "Ramo, natureza, porte — as dimensões que a sua operação usa",
+                },
+                {
+                  href: "/configuracoes/decisao",
+                  titulo: "Papéis na decisão",
+                  dica: "Quem decide, quem influencia e como cada um se posiciona",
+                },
+                {
+                  href: "/configuracoes/pipeline",
+                  titulo: "Pipeline de conversão",
+                  dica: "Etapas, prazo esperado de cada uma e motivos de perda",
+                },
+                {
+                  href: "/configuracoes/playbooks",
+                  titulo: "Playbooks de cadência",
+                  dica: "Compromissos que nascem quando a oportunidade muda de etapa",
+                },
+              ],
+            },
+          ].map((bloco) => (
+            <div className="grupo-cartoes" key={bloco.grupo}>
+              <p className="olho">{bloco.grupo}</p>
+              <div className="cartoes-config">
+                {bloco.itens.map((item) => (
+                  <Link className="cartao-config" href={item.href} key={item.href}>
+                    <span className="cartao-config-titulo">{item.titulo}</span>
+                    <span className="cartao-config-dica">{item.dica}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="painel">
