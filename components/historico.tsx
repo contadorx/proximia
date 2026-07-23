@@ -1,4 +1,4 @@
-import { nomePessoa, type Pessoa } from "@/lib/carteiras";
+import { acharPessoa, nomePessoa, type Pessoa } from "@/lib/carteiras";
 import { formatarData } from "@/lib/contas";
 import {
   TIPOS_REGISTRO,
@@ -32,7 +32,7 @@ export async function Historico({
 }) {
   const registros = await registrosDaEntidade(entidadeTipo, entidadeId);
   const hoje = new Date().toISOString().slice(0, 10);
-  const autor = (id: string) => nomePessoa(pessoas.find((p) => p.id === id));
+  const autor = (id: string) => nomePessoa(acharPessoa(pessoas, id));
 
   return (
     <section className="painel">

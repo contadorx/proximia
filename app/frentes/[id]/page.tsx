@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { exigirOrg, exigirUsuario, podeEscrever } from "@/lib/auth";
+import { minhaEquipeId } from "@/lib/equipe";
 import { listarCarteiras, nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
 import { formatarData, formatarValor } from "@/lib/contas";
 import {
@@ -35,6 +36,7 @@ export default async function PaginaFrente({
 }) {
   const org = await exigirOrg();
   const usuario = await exigirUsuario();
+  const equipeId = (await minhaEquipeId(org.orgId, usuario.id)) ?? usuario.id;
   const frente = await obterFrente(params.id);
   if (!frente) notFound();
 
@@ -333,7 +335,7 @@ export default async function PaginaFrente({
         carteiraId={frente.carteira_id}
         pessoas={pessoas}
         editavel={editavel}
-        usuarioId={usuario.id}
+        usuarioId={equipeId}
         volta={`/frentes/${frente.id}`}
       />
 

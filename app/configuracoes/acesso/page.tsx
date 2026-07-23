@@ -6,6 +6,7 @@ import { formatarData } from "@/lib/contas";
 import { MATRIZ, pessoasComAcesso } from "@/lib/acesso";
 import { PAPEIS, rotuloPapel, type Papel } from "@/lib/tipos";
 import { papeisOperacionais, responsabilidades } from "@/lib/responsabilidades";
+import { listarEquipe } from "@/lib/equipe";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import {
   alterarPapel,
@@ -31,16 +32,22 @@ export default async function PaginaAcesso({
   const usuario = await exigirUsuario();
 
   const supabase = criarClienteServidor();
-  const [pessoas, carteiras, papeis, vinculos, { data: vinculosCarteira }] = await Promise.all([
-    pessoasComAcesso(org.orgId),
-    listarCarteiras(org.orgId),
-    papeisOperacionais(org.orgId),
-    responsabilidades({ orgId: org.orgId }),
-    supabase
-      .from("carteira_membros")
-      .select("carteira_id, user_id")
-      .eq("org_id", org.orgId),
-  ]);
+  const [pessoas, carteiras, papeis, vinculos, equipe, { data: vinculosCarteira }] =
+    await Promise.all([
+      pessoasComAcesso(org.orgId),
+      listarCarteiras(org.orgId),
+      papeisOperacionais(org.orgId),
+      responsabilidades({ orgId: org.orgId }),
+      listarEquipe(org.orgId, { incluirInativos: true }),
+      supabase
+        .from("carteira_membros")
+        .select("carteira_id, user_id")
+        .eq("org_id", org.orgId),
+    ]);
+
+  // Responsabilidade aponta para a pessoa da equipe; o acesso, para o
+  // usuário. O elo entre os dois é o vínculo da equipe.
+  const equipeIdDe = (userId: string) => equipe.find((e) => e.user_id === userId)?.id ?? userId;
 
   const administra = podeAdministrar(org.papel);
   const daPessoa = (userId: string) =>
@@ -155,7 +162,7 @@ export default async function PaginaAcesso({
               {pessoas.map((p) => {
                 const meus = daPessoa(p.user_id);
                 const papeisDela = vinculos
-                  .filter((v) => v.user_id === p.user_id)
+                  .filter((v) => v.user_id === equipeIdDe(p.user_id))
                   .map((v) => papeis.find((x) => x.id === v.papel_id)?.nome)
                   .filter((v, i, lista) => v && lista.indexOf(v) === i);
                 const euMesmo = p.user_id === usuario.id;

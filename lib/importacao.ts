@@ -25,6 +25,11 @@ export const MODELOS: Record<
       { chave: "status", rotulo: "status", ajuda: "ativa, pausada ou encerrada" },
       { chave: "score_maturidade", rotulo: "score_maturidade", ajuda: "0 a 100" },
       { chave: "score_ciclo", rotulo: "score_ciclo", ajuda: "ex.: 2026-1" },
+      {
+        chave: "responsavel",
+        rotulo: "responsavel",
+        ajuda: "nome ou e-mail de alguém da equipe — cria a pessoa se ainda não existir",
+      },
       { chave: "observacoes", rotulo: "observacoes" },
     ],
   },
@@ -43,6 +48,11 @@ export const MODELOS: Record<
       { chave: "potencial_origem", rotulo: "potencial_origem", ajuda: "obrigatório se houver potencial" },
       { chave: "potencial_data", rotulo: "potencial_data" },
       { chave: "valor_capturado", rotulo: "valor_capturado" },
+      {
+        chave: "responsavel",
+        rotulo: "responsavel",
+        ajuda: "nome ou e-mail de alguém da equipe — cria a pessoa se ainda não existir",
+      },
       { chave: "observacoes", rotulo: "observacoes" },
     ],
   },
@@ -80,6 +90,11 @@ export const MODELOS: Record<
       { chave: "valor_capturado", rotulo: "valor_capturado" },
       { chave: "proxima_etapa", rotulo: "proxima_etapa" },
       { chave: "prazo", rotulo: "prazo" },
+      {
+        chave: "dono",
+        rotulo: "dono",
+        ajuda: "nome ou e-mail de alguém da equipe — cria a pessoa se ainda não existir",
+      },
       { chave: "observacoes", rotulo: "observacoes" },
     ],
   },
@@ -108,6 +123,11 @@ export const MODELOS: Record<
       { chave: "estimativa_data", rotulo: "estimativa_data" },
       { chave: "proxima_etapa", rotulo: "proxima_etapa" },
       { chave: "prazo", rotulo: "prazo" },
+      {
+        chave: "responsavel",
+        rotulo: "responsavel",
+        ajuda: "nome ou e-mail de alguém da equipe — cria a pessoa se ainda não existir",
+      },
       { chave: "observacoes", rotulo: "observacoes" },
     ],
   },
@@ -130,6 +150,7 @@ export type Referencias = {
   contas: { id: string; nome: string; carteira_id: string }[];
   perguntas?: { id: string; texto: string; dimensao: string }[];
   ciclos?: { id: string; nome: string }[];
+  equipe?: { id: string; nome: string; email: string | null }[];
 };
 
 export type Resultado = {
@@ -148,6 +169,25 @@ function acharConta(valor: string, refs: Referencias) {
   const alvo = valor.trim().toLowerCase();
   const achadas = refs.contas.filter((c) => c.nome.toLowerCase() === alvo);
   return achadas.length === 1 ? achadas[0] : achadas.length > 1 ? "ambigua" : undefined;
+}
+
+/**
+ * Resolve o responsável por nome ou e-mail na equipe. Quem não existe
+ * ainda não recusa a linha: a pessoa é criada na confirmação — a planilha
+ * chega antes dos convites, e é exatamente para isso que a equipe existe.
+ * Só a ambiguidade (duas pessoas com o mesmo nome) recusa.
+ */
+function acharPessoaEquipe(
+  valor: string,
+  refs: Referencias,
+): { id: string } | { criar: string } | "ambigua" {
+  const alvo = valor.trim().toLowerCase();
+  const achadas = (refs.equipe ?? []).filter(
+    (p) => p.nome.trim().toLowerCase() === alvo || (p.email ?? "").toLowerCase() === alvo,
+  );
+  if (achadas.length > 1) return "ambigua";
+  if (achadas.length === 1) return { id: achadas[0].id };
+  return { criar: valor.trim() };
 }
 
 const DENTRO = (valor: string | null, opcoes: string[]) =>
@@ -187,6 +227,19 @@ export function validar(
       return v;
     };
 
+    const responsavelDe = (
+      campo: string,
+    ): { id: string | null; nome: string | null } | undefined => {
+      const bruto = texto(linha[campo]);
+      if (!bruto) return { id: null, nome: null };
+      const pessoa = acharPessoaEquipe(bruto, refs);
+      if (pessoa === "ambigua") {
+        falhar(`${campo} "${bruto}" corresponde a mais de uma pessoa da equipe. Use o e-mail.`);
+        return undefined;
+      }
+      return "id" in pessoa ? { id: pessoa.id, nome: null } : { id: null, nome: pessoa.criar };
+    };
+
     if (tipo === "carteiras") {
       const nome = texto(linha.nome);
       if (!nome) return falhar("nome está vazio.");
@@ -202,6 +255,9 @@ export function validar(
         return falhar(`status "${status}": use ativa, pausada ou encerrada.`);
       }
 
+      const resp = responsavelDe("responsavel");
+      if (resp === undefined) return;
+
       validas.push({
         nome,
         codigo: texto(linha.codigo),
@@ -209,6 +265,8 @@ export function validar(
         status: status?.toLowerCase() ?? "ativa",
         score_maturidade: score,
         score_ciclo: texto(linha.score_ciclo),
+        responsavel_id: resp.id,
+        responsavel_nome: resp.nome,
         observacoes: texto(linha.observacoes),
       });
       return;
@@ -248,6 +306,9 @@ export function validar(
       const capturado = num("valor_capturado");
       if (capturado === undefined) return;
 
+      const resp = responsavelDe("responsavel");
+      if (resp === undefined) return;
+
       validas.push({
         nome,
         carteira_id: carteira.id,
@@ -261,6 +322,8 @@ export function validar(
         potencial_data:
           potencial === null ? null : (potencialData ?? new Date().toISOString().slice(0, 10)),
         valor_capturado: capturado,
+        responsavel_id: resp.id,
+        responsavel_nome: resp.nome,
         observacoes: texto(linha.observacoes),
       });
       return;
@@ -374,10 +437,15 @@ export function validar(
       const horizonte = inteiro(linha.horizonte_meses);
       if (horizonte === "invalido") return falhar("horizonte_meses não é um número.");
 
+      const resp = responsavelDe("responsavel");
+      if (resp === undefined) return;
+
       validas.push({
         carteira_id: carteira.id,
         conta_id: contaId,
         titulo,
+        responsavel_id: resp.id,
+        responsavel_nome: resp.nome,
         fase: fase?.toLowerCase() ?? "identificacao",
         investimento,
         retorno_mensal: retorno,
@@ -466,9 +534,14 @@ export function validar(
     const prazo = dt("prazo");
     if (prazo === undefined) return;
 
+    const dono = responsavelDe("dono");
+    if (dono === undefined) return;
+
     validas.push({
       titulo,
       carteira_id: carteira.id,
+      dono_id: dono.id,
+      dono_nome: dono.nome,
       status: status?.toLowerCase() ?? "identificada",
       qtd_casos: casos,
       potencial_bruto: potencial,

@@ -12,6 +12,7 @@ import {
   type Compromisso,
 } from "@/lib/compromissos";
 import { carteirasDaPessoa } from "@/lib/responsabilidades";
+import { minhaEquipeId } from "@/lib/equipe";
 import { alvosDisponiveis, mapaDeNomes, rotuloTipo } from "@/lib/alvos";
 import { caminhoEntidade } from "@/lib/registros";
 import {
@@ -49,13 +50,15 @@ export default async function PaginaCompromissos({
   // Abertos e concluídos em consultas separadas. Uma consulta só, ordenada
   // pelo vencimento e com teto de linhas, dava a vaga aos mais antigos —
   // concluídos de anos atrás empurravam compromissos futuros para fora.
+  const equipeId = (await minhaEquipeId(org.orgId, usuario.id)) ?? usuario.id;
+
   const [abertosTodos, concluidosTodos, carteiras, pessoas, minhasCarteiras, alvos] =
     await Promise.all([
       listarCompromissos({ orgId: org.orgId, status: "aberto" }),
       listarCompromissos({ orgId: org.orgId, status: "concluido", ordem: "recentes" }),
       listarCarteiras(org.orgId),
       pessoasDaOrganizacao(org.orgId),
-      carteirasDaPessoa(org.orgId, usuario.id),
+      carteirasDaPessoa(org.orgId, equipeId),
       alvosDisponiveis(org.orgId),
     ]);
   const todos = [...abertosTodos, ...concluidosTodos];
@@ -78,7 +81,7 @@ export default async function PaginaCompromissos({
   ]);
 
   const filtrados = todos.filter((c) => {
-    if (lente === "meus" && c.dono_id !== usuario.id) return false;
+    if (lente === "meus" && c.dono_id !== equipeId) return false;
     if (lente === "unidade" && !minhas.has(c.carteira_id)) return false;
     if (filtroCarteiras.length && !filtroCarteiras.includes(c.carteira_id)) return false;
     if (filtroDonos.length && !filtroDonos.includes(c.dono_id ?? "")) return false;
@@ -256,7 +259,7 @@ export default async function PaginaCompromissos({
                     nome="dono_id"
                     rotulo="Dono"
                     opcoes={pessoas.map((p) => ({ valor: p.id, rotulo: nomePessoa(p) }))}
-                    inicial={usuario.id}
+                    inicial={equipeId}
                     vazio={null}
                     obrigatorio
                   />
@@ -326,7 +329,7 @@ export default async function PaginaCompromissos({
         <div className="cartao">
           <p className="olho">Meus, em aberto</p>
           <p className="cartao-valor">
-            {todos.filter((c) => c.status === "aberto" && c.dono_id === usuario.id).length}
+            {todos.filter((c) => c.status === "aberto" && c.dono_id === equipeId).length}
           </p>
         </div>
         <div className="cartao">

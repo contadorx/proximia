@@ -1,7 +1,7 @@
 import { Plus, RotateCcw } from "lucide-react";
 import { capturasDa, saldo } from "@/lib/capturas";
 import { formatarData, formatarValor } from "@/lib/contas";
-import { nomePessoa, type Pessoa } from "@/lib/carteiras";
+import { acharPessoa, nomePessoa, type Pessoa } from "@/lib/carteiras";
 import { registrarCaptura, excluirCaptura } from "@/app/acoes/capturas";
 import { Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
@@ -143,7 +143,7 @@ export async function Capturas({
                 <span className="dica">
                   {[
                     c.confirmado_em ? formatarData(c.confirmado_em) : "sem data de confirmação",
-                    c.autor_id ? nomePessoa(pessoas.find((p) => p.id === c.autor_id)) : null,
+                    c.autor_id ? nomePessoa(acharPessoa(pessoas, c.autor_id)) : null,
                     c.comprovacao,
                     c.origem === "legado" ? "registrado antes do controle por lançamentos" : null,
                   ]

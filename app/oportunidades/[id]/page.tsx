@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Pencil } from "lucide-react";
 import { exigirOrg, exigirUsuario, podeEscrever } from "@/lib/auth";
+import { minhaEquipeId } from "@/lib/equipe";
 import { listarCarteiras, nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
 import { formatarData, formatarValor, listarContas } from "@/lib/contas";
 import {
@@ -42,6 +43,7 @@ export default async function PaginaOportunidade({
 }) {
   const org = await exigirOrg();
   const usuario = await exigirUsuario();
+  const equipeId = (await minhaEquipeId(org.orgId, usuario.id)) ?? usuario.id;
   const oportunidade = await obterOportunidade(params.id);
   if (!oportunidade) notFound();
 
@@ -444,7 +446,7 @@ export default async function PaginaOportunidade({
         carteiraId={oportunidade.carteira_id}
         pessoas={pessoas}
         editavel={editavel}
-        usuarioId={usuario.id}
+        usuarioId={equipeId}
         volta={`/oportunidades/${oportunidade.id}`}
       />
 

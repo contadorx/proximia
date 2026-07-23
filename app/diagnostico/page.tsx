@@ -97,7 +97,46 @@ async function rodarChecagens(): Promise<Resultado[]> {
     });
   }
 
-  // 5. As migrations foram aplicadas?
+  // 5. E-mail transacional: sem chave é modo simulado; com chave, a
+  //    Brevo é consultada de verdade — chave revogada aparece aqui.
+  if (!process.env.BREVO_API_KEY || !process.env.EMAIL_REMETENTE) {
+    resultados.push({
+      titulo: "E-mail transacional (Brevo)",
+      estado: "aviso",
+      detalhe:
+        "Em modo simulado: nada sai. Defina BREVO_API_KEY e EMAIL_REMETENTE no deploy para ligar convites, extratos e resumo diário.",
+    });
+  } else {
+    try {
+      const r = await fetch("https://api.brevo.com/v3/account", {
+        headers: { "api-key": process.env.BREVO_API_KEY, accept: "application/json" },
+        cache: "no-store",
+        signal: AbortSignal.timeout(6000),
+      });
+      if (r.ok) {
+        const conta = (await r.json()) as { email?: string };
+        resultados.push({
+          titulo: "E-mail transacional (Brevo)",
+          estado: "ok",
+          detalhe: `Chave aceita pela Brevo (conta ${conta.email ?? "—"}). Remetente: ${process.env.EMAIL_REMETENTE}. Teste o envio em Configurações.`,
+        });
+      } else {
+        resultados.push({
+          titulo: "E-mail transacional (Brevo)",
+          estado: "falha",
+          detalhe: `A Brevo respondeu ${r.status} para a chave configurada. Gere uma chave nova em SMTP & API e atualize BREVO_API_KEY.`,
+        });
+      }
+    } catch (e) {
+      resultados.push({
+        titulo: "E-mail transacional (Brevo)",
+        estado: "falha",
+        detalhe: `Sem resposta da Brevo: ${e instanceof Error ? e.message : "erro desconhecido"}`,
+      });
+    }
+  }
+
+  // 6. As migrations foram aplicadas?
   try {
     const supabase = criarClienteServidor();
     const { error } = await supabase.from("orgs").select("id").limit(1);

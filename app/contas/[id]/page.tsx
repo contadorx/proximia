@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { exigirOrg, exigirUsuario, podeEscrever } from "@/lib/auth";
+import { minhaEquipeId } from "@/lib/equipe";
 import { listarCarteiras, nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
 import {
   CRITICIDADES,
@@ -43,6 +44,7 @@ export default async function PaginaConta({
 }) {
   const org = await exigirOrg();
   const usuario = await exigirUsuario();
+  const equipeId = (await minhaEquipeId(org.orgId, usuario.id)) ?? usuario.id;
   const conta = await obterConta(params.id);
   if (!conta) notFound();
 
@@ -414,7 +416,7 @@ export default async function PaginaConta({
         carteiraId={conta.carteira_id}
         pessoas={pessoas}
         editavel={editavel}
-        usuarioId={usuario.id}
+        usuarioId={equipeId}
         volta={`/contas/${conta.id}`}
       />
 

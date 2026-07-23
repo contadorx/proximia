@@ -13,7 +13,7 @@ function comErro(rota: string, mensagem: string): never {
 
 async function referencias(orgId: string): Promise<Referencias> {
   const supabase = criarClienteServidor();
-  const [{ data: carteiras }, { data: contas }, { data: perguntas }, { data: ciclos }] =
+  const [{ data: carteiras }, { data: contas }, { data: perguntas }, { data: ciclos }, { data: equipe }] =
     await Promise.all([
       supabase.from("carteiras").select("id, nome, codigo").eq("org_id", orgId),
       supabase.from("contas").select("id, nome, carteira_id").eq("org_id", orgId),
@@ -23,6 +23,7 @@ async function referencias(orgId: string): Promise<Referencias> {
         .eq("org_id", orgId)
         .eq("ativo", true),
       supabase.from("maturidade_ciclos").select("id, nome").eq("org_id", orgId),
+      supabase.from("equipe").select("id, nome, email").eq("org_id", orgId),
     ]);
 
   return {
@@ -32,6 +33,7 @@ async function referencias(orgId: string): Promise<Referencias> {
       (p) => ({ id: p.id, texto: p.texto, dimensao: p.dimensao_id }),
     ),
     ciclos: (ciclos ?? []) as Referencias["ciclos"],
+    equipe: (equipe ?? []) as Referencias["equipe"],
   };
 }
 
@@ -186,11 +188,63 @@ export async function confirmarImportacao(formData: FormData) {
     );
   }
 
-  const linhas = imp.payload.map((l) => ({
-    ...l,
-    org_id: org.orgId,
-    criado_por: usuario.id,
-  }));
+  // Responsáveis que ainda não existem na equipe são criados agora — a
+  // planilha chega antes dos convites, e o dado precisa nascer com dono.
+  // A pessoa entra só com o nome; e-mail e convite vêm depois.
+  const pendentes = new Map<string, string>(); // nome em minúsculas → nome como veio
+  for (const l of imp.payload) {
+    for (const campo of ["responsavel_nome", "dono_nome"]) {
+      const nome = l[campo];
+      if (typeof nome === "string" && nome.trim() !== "") {
+        pendentes.set(nome.trim().toLowerCase(), nome.trim());
+      }
+    }
+  }
+
+  const idPorNome = new Map<string, string>();
+  if (pendentes.size > 0) {
+    const { data: existentes } = await supabase
+      .from("equipe")
+      .select("id, nome")
+      .eq("org_id", org.orgId);
+    for (const e of (existentes ?? []) as { id: string; nome: string }[]) {
+      idPorNome.set(e.nome.trim().toLowerCase(), e.id);
+    }
+
+    const criar = [...pendentes.entries()].filter(([chave]) => !idPorNome.has(chave));
+    if (criar.length > 0) {
+      const { data: criadas, error: erroEquipe } = await supabase
+        .from("equipe")
+        .insert(
+          criar.map(([, nome]) => ({ org_id: org.orgId, nome, criado_por: usuario.id })),
+        )
+        .select("id, nome");
+      if (erroEquipe) {
+        comErro(rota, `Não foi possível criar as pessoas da equipe: ${erroEquipe.message}`);
+      }
+      for (const e of (criadas ?? []) as { id: string; nome: string }[]) {
+        idPorNome.set(e.nome.trim().toLowerCase(), e.id);
+      }
+    }
+  }
+
+  const linhas = imp.payload.map((l) => {
+    const { responsavel_nome, dono_nome, ...campos } = l as Record<string, unknown> & {
+      responsavel_nome?: string | null;
+      dono_nome?: string | null;
+    };
+    if (typeof responsavel_nome === "string" && responsavel_nome.trim() !== "") {
+      campos.responsavel_id = idPorNome.get(responsavel_nome.trim().toLowerCase()) ?? null;
+    }
+    if (typeof dono_nome === "string" && dono_nome.trim() !== "") {
+      campos.dono_id = idPorNome.get(dono_nome.trim().toLowerCase()) ?? null;
+    }
+    return {
+      ...campos,
+      org_id: org.orgId,
+      criado_por: usuario.id,
+    };
+  });
 
   // Grava em blocos: um erro no meio não deixa metade da carga sem
   // registro do que entrou.

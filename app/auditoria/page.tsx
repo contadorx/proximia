@@ -1,6 +1,6 @@
 import { exigirOrg } from "@/lib/auth";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { pessoasDaOrganizacao, nomePessoa } from "@/lib/carteiras";
+import { acharPessoa, pessoasDaOrganizacao, nomePessoa } from "@/lib/carteiras";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { SeletorMultiplo } from "@/components/seletor";
 import { paraLista, paraTexto } from "@/lib/consulta";
@@ -145,7 +145,7 @@ export default async function PaginaAuditoria({
                         <span className="dica">
                           {new Date(l.criado_em).toLocaleString("pt-BR")} ·{" "}
                           {l.autor_id
-                            ? nomePessoa(pessoas.find((p) => p.id === l.autor_id))
+                            ? nomePessoa(acharPessoa(pessoas, l.autor_id))
                             : "rotina automática"}
                         </span>
 

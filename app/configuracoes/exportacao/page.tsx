@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Download, FileJson } from "lucide-react";
 import { exigirOrg } from "@/lib/auth";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
+import { acharPessoa, nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
 import { RECURSOS } from "@/lib/exportacao";
 import { IntroSecao } from "@/components/intro-secao";
 
@@ -106,7 +106,7 @@ export default async function PaginaExportacao() {
                   {e.recurso === "tudo" ? "Pacote completo" : e.recurso}
                   <span className="dica">
                     {new Date(e.criado_em).toLocaleString("pt-BR")} ·{" "}
-                    {e.autor_id ? nomePessoa(pessoas.find((p) => p.id === e.autor_id)) : "—"}
+                    {e.autor_id ? nomePessoa(acharPessoa(pessoas, e.autor_id)) : "—"}
                     {e.linhas !== null ? ` · ${e.linhas.toLocaleString("pt-BR")} linhas` : ""}
                   </span>
                 </span>

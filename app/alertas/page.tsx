@@ -4,6 +4,7 @@ import { exigirOrg, exigirUsuario, podeEscrever } from "@/lib/auth";
 import { listarCarteiras, nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
 import { formatarData } from "@/lib/contas";
 import { LIMITE_ALERTAS, ROTULO_TIPO, classeSeveridade, listarAlertas } from "@/lib/alertas";
+import { minhaEquipeId } from "@/lib/equipe";
 import { caminhoEntidade } from "@/lib/registros";
 import { reabrirAlerta, silenciarAlerta, varrerAgora } from "@/app/acoes/alertas";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
@@ -51,15 +52,16 @@ export default async function PaginaAlertas({
 
   // Três lentes sobre a mesma lista: o que é meu para resolver, o que eu
   // acompanho, e tudo. Sem isso, alerta vira mural que ninguém sente como
-  // obrigação.
+  // obrigação. "Meu" é a pessoa da equipe ligada a esta sessão.
+  const meuId = (await minhaEquipeId(org.orgId, usuario.id)) ?? usuario.id;
   const de = paraTexto(searchParams.de) ?? "todos";
   const alertas = todos.filter((a) => {
-    if (de === "meus") return a.dono_id === usuario.id;
-    if (de === "acompanho") return (a.observadores ?? []).includes(usuario.id);
+    if (de === "meus") return a.dono_id === meuId;
+    if (de === "acompanho") return (a.observadores ?? []).includes(meuId);
     return true;
   });
-  const meus = todos.filter((a) => a.dono_id === usuario.id).length;
-  const acompanho = todos.filter((a) => (a.observadores ?? []).includes(usuario.id)).length;
+  const meus = todos.filter((a) => a.dono_id === meuId).length;
+  const acompanho = todos.filter((a) => (a.observadores ?? []).includes(meuId)).length;
   const semDono = todos.filter((a) => !a.dono_id).length;
 
   const editavel = podeEscrever(org.papel);
@@ -186,7 +188,7 @@ export default async function PaginaAlertas({
                       a.dono_id
                         ? `responde: ${nomePessoa(pessoas.find((p) => p.id === a.dono_id))}`
                         : "sem responsável",
-                      (a.observadores ?? []).includes(usuario.id) && a.dono_id !== usuario.id
+                      (a.observadores ?? []).includes(meuId) && a.dono_id !== meuId
                         ? "você acompanha"
                         : null,
                       a.detalhe,

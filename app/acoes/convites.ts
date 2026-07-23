@@ -47,6 +47,25 @@ export async function convidarPessoa(formData: FormData) {
 
   if (error) comErro("/configuracoes", error.message);
 
+  // A pessoa convidada já entra na equipe pelo e-mail: dá para atribuir
+  // carteira e compromisso a ela antes mesmo do aceite. Quando aceitar,
+  // o gatilho do banco casa o cadastro e nada se perde.
+  const { data: jaExiste } = await supabase
+    .from("equipe")
+    .select("id")
+    .eq("org_id", org.orgId)
+    .ilike("email", email)
+    .maybeSingle();
+  if (!jaExiste) {
+    const { error: erroEquipe } = await supabase.from("equipe").insert({
+      org_id: org.orgId,
+      nome: email.split("@")[0],
+      email,
+      criado_por: usuario.id,
+    });
+    if (erroEquipe) console.error("[convites] pessoa não entrou na equipe:", erroEquipe.message);
+  }
+
   const link = `${enderecoBase()}/convite/${(data as { token: string }).token}`;
 
   const envio = await enviarEmail({

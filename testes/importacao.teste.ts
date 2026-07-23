@@ -127,3 +127,42 @@ describe("modelos de importação", () => {
     }
   });
 });
+
+describe("responsável na importação (equipe)", () => {
+  const comEquipe: Referencias = {
+    ...refs,
+    equipe: [
+      { id: "e1", nome: "Marina Souza", email: "marina@exemplo.com" },
+      { id: "e2", nome: "Marina", email: null },
+      { id: "e3", nome: "Marina", email: "outra@exemplo.com" },
+    ],
+  };
+
+  it("resolve pelo nome ou pelo e-mail de quem já está na equipe", () => {
+    const r = validar(
+      "carteiras",
+      [
+        { nome: "Nova A", responsavel: "Marina Souza" },
+        { nome: "Nova B", responsavel: "marina@exemplo.com" },
+      ],
+      comEquipe,
+    );
+    expect(r.erros).toHaveLength(0);
+    expect(r.validas[0]).toMatchObject({ responsavel_id: "e1", responsavel_nome: null });
+    expect(r.validas[1]).toMatchObject({ responsavel_id: "e1" });
+  });
+
+  it("quem não existe não recusa a linha: fica marcado para criar", () => {
+    // A planilha chega antes dos convites — o dado precisa nascer com
+    // dono, e a pessoa é criada na confirmação.
+    const r = validar("frentes", [{ titulo: "Frente X", carteira: "RN", dono: "Paulo" }], comEquipe);
+    expect(r.erros).toHaveLength(0);
+    expect(r.validas[0]).toMatchObject({ dono_id: null, dono_nome: "Paulo" });
+  });
+
+  it("nome ambíguo recusa a linha e pede o e-mail", () => {
+    const r = validar("carteiras", [{ nome: "Nova C", responsavel: "Marina" }], comEquipe);
+    expect(r.validas).toHaveLength(0);
+    expect(r.erros[0].motivo).toContain("mais de uma pessoa");
+  });
+});

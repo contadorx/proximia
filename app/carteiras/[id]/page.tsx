@@ -17,6 +17,7 @@ import { UserCog } from "lucide-react";
 import { formatarData } from "@/lib/contas";
 import { notFound } from "next/navigation";
 import { exigirOrg, exigirUsuario, podeEscrever } from "@/lib/auth";
+import { minhaEquipeId } from "@/lib/equipe";
 import {
   faixaMaturidade,
   nomePessoa,
@@ -50,6 +51,7 @@ export default async function PaginaCarteira({
 }) {
   const org = await exigirOrg();
   const usuario = await exigirUsuario();
+  const equipeId = (await minhaEquipeId(org.orgId, usuario.id)) ?? usuario.id;
   const carteira = await obterCarteira(params.id);
 
   // A RLS já esconde carteira de outra organização ou fora do alcance:
@@ -96,7 +98,12 @@ export default async function PaginaCarteira({
   const podeExcluir = org.papel === "owner" || org.papel === "admin";
   const id = carteira.id;
   const faixa = faixaMaturidade(carteira.score_maturidade);
-  const disponiveis = pessoasOrg.filter((p) => !pessoasCart.some((v) => v.id === p.id));
+  // Vincular ao alcance é coisa de LOGIN (carteira_membros aponta para o
+  // usuário): só entra quem já tem acesso. Quem está na equipe sem login
+  // pode responder pela carteira, mas não tem o que "enxergar" ainda.
+  const disponiveis = pessoasOrg.filter(
+    (p) => p.user_id && !pessoasCart.some((v) => v.id === p.user_id),
+  );
 
   return (
     <>
@@ -331,7 +338,7 @@ export default async function PaginaCarteira({
                   Escolha na lista
                 </option>
                 {disponiveis.map((p) => (
-                  <option key={p.id} value={p.id}>
+                  <option key={p.id} value={p.user_id as string}>
                     {nomePessoa(p)}
                   </option>
                 ))}
@@ -646,7 +653,7 @@ export default async function PaginaCarteira({
         carteiraId={carteira.id}
         pessoas={pessoasOrg}
         editavel={podeEscrever(org.papel)}
-        usuarioId={usuario.id}
+        usuarioId={equipeId}
         volta={`/carteiras/${carteira.id}`}
       />
 

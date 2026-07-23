@@ -34,11 +34,22 @@ export async function itensDaPessoa(
 ): Promise<{ alertas: ItemResumo[]; compromissos: ItemResumo[] }> {
   const hoje = new Date().toISOString().slice(0, 10);
 
+  // O dono de alerta e compromisso é pessoa da equipe (que pode ter sido
+  // cadastrada antes do login). O e-mail vai para o usuário; a fila dele
+  // é a da pessoa da equipe vinculada a ele.
+  const { data: pessoa } = await supabase
+    .from("equipe")
+    .select("id")
+    .eq("org_id", orgId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  const donoId = ((pessoa as { id: string } | null)?.id) ?? userId;
+
   const consultaAlertas = supabase
     .from("alertas")
     .select("titulo, detalhe, severidade")
     .eq("org_id", orgId)
-    .eq("dono_id", userId)
+    .eq("dono_id", donoId)
     .eq("status", "aberto")
     .order("severidade")
     .limit(12);
@@ -51,7 +62,7 @@ export async function itensDaPessoa(
           .from("compromissos")
           .select("titulo, vence_em")
           .eq("org_id", orgId)
-          .eq("dono_id", userId)
+          .eq("dono_id", donoId)
           .eq("status", "aberto")
           .lte("vence_em", hoje)
           .order("vence_em")

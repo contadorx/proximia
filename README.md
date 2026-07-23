@@ -76,6 +76,7 @@ Aplicadas até aqui:
 | `0031_classificacao_governanca.sql` | B41 | Classificações livres, natureza, prioridade, marcos e anexo zero |
 | `0032_negocio.sql` | B42 | Planos, assinaturas, operador da plataforma e painel do negócio |
 | `0033_correcoes_auditoria.sql` | B43 | Proteção separada nas contas do panorama, captura_sem_data sob RLS e tempo por etapa filtrável |
+| `0034_equipe.sql` | B44 | Equipe: responsável não precisa ser usuário; vínculo automático no aceite do convite |
 
 ## Verificação
 
@@ -166,6 +167,8 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 **Redefinição não confirma cadastro.** O pedido de redefinição responde a mesma coisa exista ou não a conta. Dizer "esse e-mail não está cadastrado" entrega a terceiros quem usa o sistema.
 
 **Responder é diferente de enxergar.** `carteira_membros` diz quem vê (alimenta a RLS); `responsabilidades` diz quem responde, e em que papel. Os papéis são catálogo do assinante — o produto só sabe que existem e qual é o primário. Alerta e compromisso derivam o dono por uma cadeia: dono explícito, responsável da entidade, responsável primário da carteira. Os demais responsáveis entram como observadores: um responde, os outros acompanham.
+
+**Responder também é diferente de entrar.** A operação começa a registrar antes de todo mundo ter login: `equipe` é o catálogo de pessoas, com ou sem acesso, e é para ela que apontam responsável e dono em todas as fichas. Quando a pessoa aceita o convite, um gatilho casa o cadastro pelo e-mail — tudo o que ela respondia continua dela, sem redigitação. O que permanece de usuário é a autoria: `autor_id` e `criado_por` registram quem fez, e ação só existe com sessão.
 
 **A curva não inventa histórico.** A série de captura sai da data de confirmação que já existe em contas, frentes e oportunidades — não há tabela de fatos nem carimbo automático. A consequência é honesta e fica dita na tela: valor capturado sem data de confirmação não entra na curva, e o painel mostra quanto ficou de fora em vez de somar tudo no mês corrente e criar um pico falso.
 
@@ -302,6 +305,8 @@ supabase/
 F0 esqueleto ✓ · F1 acesso, organizações e papéis ✓ · F2 carteiras ✓ · F3 contas nomeadas ✓ · F4 contratos e cláusulas ✓ · F5 frentes ✓ · F6 timeline e memória institucional ✓ · F7 compromissos e alertas ✓ · F8 painel multi-carteira ✓ · F9 situação da carteira ✓ · F10 importação ✓ · F11 camada de interface ✓ — **fatia 1 completa**.
 
 Fase 2 completa: F12 oportunidades ✓ · F13 extrato automático ✓ · F14 maturidade ✓ · F16 seletor com busca ✓ · F17 panorama com oportunidades ✓ · F18 convite por e-mail ✓ · F19 alertas ✓ · F20 anexos ✓ · F21 registro de alterações ✓ · F22 portal da unidade ✓.
+
+B44 — equipe e e-mail transacional ✓: catálogo de pessoas com ou sem login (Configurações › Equipe), responsável/dono em toda ficha apontando para a equipe, vínculo automático no aceite do convite, `responsavel`/`dono` na importação por CSV (cria a pessoa se não existir), envio de teste da Brevo em Configurações e checagem da chave no diagnóstico.
 
 B43 — correções da auditoria ✓: parser único de valores (o defeito do ×100), erro de formulário sem perder preenchimento, natureza gravada e respeitada em todas as somas, botão de envio com trava, contagem verificada nas ações, foco gerenciado no modal, busca viva com o menu recolhido, exportação sem teto silencioso, filtro de relatórios valendo em todas as seções e avisos de corte em toda lista limitada. Dados gravados pela interface antes do B43 podem estar com valores ×100 — `supabase/testes/conferencia_escala_valores.sql` lista os suspeitos para correção por estorno/captura ou pela administração.
 

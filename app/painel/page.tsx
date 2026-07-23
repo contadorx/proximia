@@ -11,6 +11,7 @@ import { classeSituacao, listarCompromissos, precisaAtencao, situacao } from "@/
 import { ROTULO_TIPO, classeSeveridade, listarAlertas } from "@/lib/alertas";
 import { capturaMensal, capturaSemData, variacao } from "@/lib/captura";
 import { panorama, totaisGerais } from "@/lib/panorama";
+import { minhaEquipeId } from "@/lib/equipe";
 import { faixa } from "@/lib/maturidade";
 import { caminhoEntidade } from "@/lib/registros";
 import { mudarStatusCompromisso } from "@/app/acoes/compromissos";
@@ -40,6 +41,7 @@ export default async function PaginaPainel({
     serie,
     semData,
     resumo,
+    equipeId,
     { data: contaOrg },
   ] = await Promise.all([
     listarCarteiras(org.orgId),
@@ -52,6 +54,7 @@ export default async function PaginaPainel({
     capturaMensal(org.orgId),
     capturaSemData(org.orgId),
     panorama(org.orgId, "nome"),
+    minhaEquipeId(org.orgId, usuario.id),
     criarClienteServidor()
       .from("orgs")
       .select("assinatura_status")
@@ -78,7 +81,10 @@ export default async function PaginaPainel({
   const protecaoTotal = tg.protecao;
 
   const alta = alertas.filter((a) => a.severidade === "alta").length;
-  const meus = alertas.filter((a) => a.dono_id === usuario.id).length;
+  // "Meus" compara com a pessoa da equipe, não com o login: o dono das
+  // fichas é gente da operação, que pode ter sido cadastrada antes do acesso.
+  const meuId = equipeId ?? usuario.id;
+  const meus = alertas.filter((a) => a.dono_id === meuId).length;
   const atrasados = compromissos.filter((c) => situacao(c).chave === "vencido");
   const proximos = compromissos.filter((c) => precisaAtencao(c) && situacao(c).chave !== "vencido");
 

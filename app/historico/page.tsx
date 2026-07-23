@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { exigirOrg } from "@/lib/auth";
-import { listarCarteiras, nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
+import { acharPessoa, listarCarteiras, nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
 import { formatarData } from "@/lib/contas";
 import {
   LIMITE_HISTORICO,
@@ -52,7 +52,7 @@ export default async function PaginaHistorico({
   ]);
 
   const nomeCarteira = (id: string) => carteiras.find((c) => c.id === id)?.nome ?? "—";
-  const autor = (id: string) => nomePessoa(pessoas.find((p) => p.id === id));
+  const autor = (id: string) => nomePessoa(acharPessoa(pessoas, id));
 
   // Agrupa por dia para a leitura ficar próxima de um diário de bordo.
   const porDia = registros.reduce<Record<string, typeof registros>>((mapa, r) => {

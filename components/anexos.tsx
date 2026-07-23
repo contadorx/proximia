@@ -2,7 +2,7 @@ import { Download, Paperclip, Upload } from "lucide-react";
 import { anexosDa, formatarTamanho } from "@/lib/anexos";
 import { anexosPermitidos } from "@/lib/classificacoes";
 import { formatarData } from "@/lib/contas";
-import { nomePessoa, type Pessoa } from "@/lib/carteiras";
+import { acharPessoa, nomePessoa, type Pessoa } from "@/lib/carteiras";
 import type { EntidadeTipo } from "@/lib/registros";
 import { baixarAnexo, enviarAnexo, excluirAnexo } from "@/app/acoes/anexos";
 import { Vazio } from "@/components/intro-secao";
@@ -96,7 +96,7 @@ export async function Anexos({
                   {[
                     formatarTamanho(a.tamanho),
                     formatarData(a.criado_em.slice(0, 10)),
-                    a.criado_por ? nomePessoa(pessoas.find((p) => p.id === a.criado_por)) : null,
+                    a.criado_por ? nomePessoa(acharPessoa(pessoas, a.criado_por)) : null,
                     a.descricao,
                   ]
                     .filter(Boolean)

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { exigirOrg } from "@/lib/auth";
-import { nomePessoa, obterCarteira, pessoasDaOrganizacao, faixaMaturidade } from "@/lib/carteiras";
+import { acharPessoa, nomePessoa, obterCarteira, pessoasDaOrganizacao, faixaMaturidade } from "@/lib/carteiras";
 import { formatarData, formatarValor, listarContas } from "@/lib/contas";
 import { listarContratos, urgencia } from "@/lib/contratos";
 import { listarFrentes, rotuloStatus } from "@/lib/frentes";
@@ -69,7 +69,7 @@ export default async function PaginaSituacao({
     contas.reduce((t, c) => t + Number(c.valor_capturado ?? 0), 0);
 
   const responsavel = pessoas.find((p) => p.id === carteira.responsavel_id);
-  const autor = (id: string) => nomePessoa(pessoas.find((p) => p.id === id));
+  const autor = (id: string) => nomePessoa(acharPessoa(pessoas, id));
   const nomeConta = (id: string) => contas.find((c) => c.id === id)?.nome ?? "conta";
   const faixa = faixaMaturidade(carteira.score_maturidade);
   const geradoEm = new Date().toLocaleDateString("pt-BR");

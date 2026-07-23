@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { KeyRound, Plus, UserPlus } from "lucide-react";
+import { KeyRound, Mail, Plus, UserPlus, Users } from "lucide-react";
 import { exigirOrg, podeAdministrar, podeEscrever } from "@/lib/auth";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { PAPEIS, rotuloPapel, type Papel } from "@/lib/tipos";
@@ -20,7 +20,17 @@ import { listarOportunidades, tiposDeOportunidade } from "@/lib/oportunidades";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
 import { BotaoEnviar } from "@/components/botao-enviar";
+import { FormAcao } from "@/components/form-acao";
 import { excluirTipoFrente, excluirTipoOportunidade } from "@/app/acoes/exclusoes";
+import { listarEquipe } from "@/lib/equipe";
+import {
+  alternarPessoaEquipe,
+  criarPessoaEquipe,
+  editarPessoaEquipe,
+  excluirPessoaEquipe,
+} from "@/app/acoes/equipe";
+import { enviarEmailTeste } from "@/app/acoes/email";
+import { provedorConfigurado } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -88,14 +98,16 @@ export default async function PaginaConfiguracoes({
     .maybeSingle();
 
 
-  const [pessoas, tipos, frentes, tiposOportunidade, oportunidades, papeis] = await Promise.all([
-    pessoasDaOrg(org.orgId),
-    tiposDeFrente(org.orgId),
-    listarFrentes({ orgId: org.orgId }),
-    tiposDeOportunidade(org.orgId),
-    listarOportunidades({ orgId: org.orgId }),
-    papeisOperacionais(org.orgId),
-  ]);
+  const [pessoas, tipos, frentes, tiposOportunidade, oportunidades, papeis, equipe] =
+    await Promise.all([
+      pessoasDaOrg(org.orgId),
+      tiposDeFrente(org.orgId),
+      listarFrentes({ orgId: org.orgId }),
+      tiposDeOportunidade(org.orgId),
+      listarOportunidades({ orgId: org.orgId }),
+      papeisOperacionais(org.orgId),
+      listarEquipe(org.orgId, { incluirInativos: true }),
+    ]);
 
   const administra = podeAdministrar(org.papel);
   const gereCatalogo = podeEscrever(org.papel) && org.papel !== "ponto_focal";
@@ -148,6 +160,117 @@ export default async function PaginaConfiguracoes({
           <p className="nota" style={{ marginBottom: 0 }}>
             <span className="dado">{convites.length}</span> convite(s) pendente(s).
           </p>
+        )}
+      </section>
+
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>
+            <Users size={15} style={{ verticalAlign: "-2px", marginRight: 8, color: "var(--g400)" }} />
+            Equipe
+          </h2>
+          {gereCatalogo && (
+            <Modal
+              rotulo="Nova pessoa"
+              titulo="Nova pessoa na equipe"
+              descricao="Ela já pode responder por carteiras e compromissos — o acesso ao sistema é outro passo, por convite."
+              icone={<Plus size={15} />}
+            >
+              <FormAcao action={criarPessoaEquipe}>
+                <label className="campo">
+                  <span>Nome</span>
+                  <input type="text" name="nome" required maxLength={120} autoFocus />
+                </label>
+                <label className="campo">
+                  <span>E-mail</span>
+                  <input type="email" name="email" maxLength={160} placeholder="opcional — é o que liga a pessoa ao convite depois" />
+                  <small>
+                    Se ela aceitar um convite com este e-mail, o cadastro vira um só: tudo o que
+                    ela respondia continua dela.
+                  </small>
+                </label>
+                <label className="campo">
+                  <span>Observação</span>
+                  <input type="text" name="observacao" maxLength={160} placeholder="opcional" />
+                </label>
+                <BotaoEnviar>Incluir na equipe</BotaoEnviar>
+              </FormAcao>
+            </Modal>
+          )}
+        </div>
+
+        <p className="nota" style={{ marginBottom: equipe.length ? 14 : 0 }}>
+          Responder é diferente de entrar: aqui ficam as pessoas da operação, <strong>com ou sem
+          login</strong>. É esta lista que aparece nos seletores de responsável e dono — dá para
+          começar a registrar antes de qualquer convite.
+        </p>
+
+        {equipe.length === 0 ? (
+          <Vazio>
+            Ninguém cadastrado ainda. Inclua as pessoas da operação para as carteiras, contas e
+            compromissos nascerem com dono — o convite de acesso pode vir depois.
+          </Vazio>
+        ) : (
+          <ul className="lista-estado">
+            {equipe.map((p) => (
+              <li key={p.id}>
+                <span className="rotulo">
+                  {p.nome}
+                  <span className="dica">
+                    {[p.email, p.observacao].filter(Boolean).join(" · ") || "sem e-mail"}
+                  </span>
+                </span>
+                {p.user_id ? (
+                  <span className="selo selo-ok">com acesso</span>
+                ) : (
+                  <span className="selo selo-neutro">sem acesso — convide quando quiser</span>
+                )}
+                {!p.ativo && <span className="selo selo-atencao">desativada</span>}
+                {gereCatalogo && (
+                  <Modal rotulo="Editar" titulo={`Editar ${p.nome}`} variante="link">
+                    <FormAcao action={editarPessoaEquipe}>
+                      <input type="hidden" name="id" value={p.id} />
+                      <label className="campo">
+                        <span>Nome</span>
+                        <input type="text" name="nome" defaultValue={p.nome} required maxLength={120} />
+                      </label>
+                      <label className="campo">
+                        <span>E-mail</span>
+                        <input
+                          type="email"
+                          name="email"
+                          defaultValue={p.email ?? ""}
+                          maxLength={160}
+                          disabled={Boolean(p.user_id)}
+                        />
+                        {p.user_id && (
+                          <small>Pessoa com acesso: o e-mail é o do login e não muda por aqui.</small>
+                        )}
+                      </label>
+                      <label className="campo">
+                        <span>Observação</span>
+                        <input type="text" name="observacao" defaultValue={p.observacao ?? ""} maxLength={160} />
+                      </label>
+                      <BotaoEnviar>Salvar</BotaoEnviar>
+                    </FormAcao>
+                  </Modal>
+                )}
+                {gereCatalogo && (
+                  <form action={alternarPessoaEquipe}>
+                    <input type="hidden" name="id" value={p.id} />
+                    <input type="hidden" name="ativar" value={p.ativo ? "0" : "1"} />
+                    <BotaoEnviar variante="link">{p.ativo ? "Desativar" : "Reativar"}</BotaoEnviar>
+                  </form>
+                )}
+                {administra && !p.user_id && (
+                  <form action={excluirPessoaEquipe}>
+                    <input type="hidden" name="id" value={p.id} />
+                    <BotaoExcluir compacto rotulo="Excluir" aviso="Se ela responde por algo, prefira desativar." />
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 
@@ -386,6 +509,44 @@ export default async function PaginaConfiguracoes({
           <strong>só quando há algo para agir</strong>. Dia sem pendência não gera mensagem: resumo
           que chega dizendo &ldquo;está tudo bem&rdquo; ensina a ignorar o que chega.
         </p>
+      </section>
+
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>
+            <Mail size={15} style={{ verticalAlign: "-2px", marginRight: 8, color: "var(--g400)" }} />
+            E-mail transacional (Brevo)
+          </h2>
+          {administra && provedorConfigurado() && (
+            <form action={enviarEmailTeste}>
+              <BotaoEnviar variante="secundario" rotuloEnviando="Enviando…">
+                Enviar e-mail de teste para mim
+              </BotaoEnviar>
+            </form>
+          )}
+        </div>
+
+        {provedorConfigurado() ? (
+          <p className="nota">
+            <span className="selo selo-ok">configurado</span>{" "}
+            Convites, extratos e o resumo diário saem pela Brevo, como{" "}
+            <span className="dado">{process.env.EMAIL_REMETENTE}</span>. Use o teste acima para
+            provar a entrega — se cair no spam, verifique o remetente (SPF/DKIM) no painel da
+            Brevo.
+          </p>
+        ) : (
+          <p className="nota">
+            <span className="selo selo-atencao">em modo simulado</span>{" "}
+            Nada sai de verdade: os envios ficam registrados como &ldquo;simulado&rdquo; e são
+            tentados de novo quando o provedor entrar. Para ligar: no painel da Brevo, gere uma
+            chave em <span className="dado">SMTP &amp; API › API keys</span> e verifique o
+            remetente; no deploy (Vercel), cadastre <span className="dado">BREVO_API_KEY</span> e{" "}
+            <span className="dado">EMAIL_REMETENTE</span> (e, se quiser,{" "}
+            <span className="dado">EMAIL_REMETENTE_NOME</span>); <strong>refaça o deploy</strong> e
+            volte aqui para o teste. A situação também aparece no{" "}
+            <Link href="/diagnostico">diagnóstico</Link>.
+          </p>
+        )}
       </section>
 
       <section className="painel">
