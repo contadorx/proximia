@@ -622,6 +622,14 @@ export default async function PaginaConfiguracoes({
           </li>
           <li>
             <span className="rotulo">
+              <Link href="/configuracoes/api">Entrada de dados por API</Link>
+              <span className="dica">
+                Chaves para o seu sistema empurrar dados, com a mesma conferência da planilha
+              </span>
+            </span>
+          </li>
+          <li>
+            <span className="rotulo">
               <Link href="/configuracoes/decisao">Papéis na decisão</Link>
               <span className="dica">
                 Quem decide, quem influencia e como cada um se posiciona — o vocabulário é seu

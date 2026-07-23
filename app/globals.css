@@ -2715,3 +2715,20 @@ input[aria-invalid="true"] {
     display: none;
   }
 }
+
+/* Bloco de código: exemplo de chamada e chave recém-criada. Monoespaçado,
+   com quebra preservada e rolagem própria — colar um curl de três linhas
+   não pode esticar a largura da página. */
+.bloco-codigo {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  background: var(--navy-fundo);
+  color: var(--off);
+  border-radius: var(--r-p);
+  padding: 14px 16px;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 12px 0;
+  user-select: all;
+}
