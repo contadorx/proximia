@@ -13,6 +13,10 @@ import {
   obterConta,
 } from "@/lib/contas";
 import { classeSelo, listarContratos, urgencia } from "@/lib/contratos";
+import { listarAlertas } from "@/lib/alertas";
+import { listarCompromissos } from "@/lib/compromissos";
+import { registrosDaEntidade } from "@/lib/registros";
+import { sinaisDaConta } from "@/lib/sinais";
 import { atualizarConta, criarContato, excluirContato } from "@/app/acoes/contas";
 import { Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
@@ -20,6 +24,7 @@ import { BotaoExcluir } from "@/components/botao-excluir";
 import { excluirConta } from "@/app/acoes/exclusoes";
 import { Pencil } from "lucide-react";
 import { Historico } from "@/components/historico";
+import { BotaoImprimir } from "@/components/botao-imprimir";
 import { Anexos } from "@/components/anexos";
 import { Compromissos } from "@/components/compromissos";
 import { classificacoes, classificacoesDaConta, porGrupo } from "@/lib/classificacoes";
@@ -48,13 +53,38 @@ export default async function PaginaConta({
   const conta = await obterConta(params.id);
   if (!conta) notFound();
 
-  const [carteiras, pessoas, contatos, contratos, oportunidades] = await Promise.all([
-    listarCarteiras(org.orgId),
-    pessoasDaOrganizacao(org.orgId),
-    contatosDaConta(conta.id),
-    listarContratos({ orgId: org.orgId, contaId: conta.id }),
-    listarOportunidades({ orgId: org.orgId, contaId: conta.id }),
-  ]);
+  const [carteiras, pessoas, contatos, contratos, oportunidades, avisosAbertos, compromissosAbertos, registrosConta] =
+    await Promise.all([
+      listarCarteiras(org.orgId),
+      pessoasDaOrganizacao(org.orgId),
+      contatosDaConta(conta.id),
+      listarContratos({ orgId: org.orgId, contaId: conta.id }),
+      listarOportunidades({ orgId: org.orgId, contaId: conta.id }),
+      listarAlertas({ orgId: org.orgId, status: "aberto" }),
+      listarCompromissos({ orgId: org.orgId, status: "aberto" }),
+      registrosDaEntidade("conta", conta.id),
+    ]);
+
+  // Sinais: fatos nomeados, não nota composta.
+  //
+  // A alternativa seria um "health score" por conta. Uma nota composta
+  // exigiria pesos, e peso é opinião disfarçada de número — quebraria a
+  // regra da casa de que todo valor diz de onde veio, e competiria com a
+  // maturidade, que já é o score do produto, por carteira e com régua do
+  // assinante. Dois scores com métodos diferentes geram a pior pergunta
+  // possível numa reunião: "qual dos dois vale?".
+  //
+  // Aqui não há fórmula: cada sinal é um fato que o produto já calcula,
+  // nomeado e com origem clicável.
+  const sinais = sinaisDaConta({
+    contaId: conta.id,
+    potencialBruto: conta.potencial_bruto,
+    valorCapturado: conta.valor_capturado,
+    contratos,
+    avisosAbertos,
+    compromissosAbertos,
+    ultimoRegistroEm: registrosConta[0]?.ocorrido_em ?? null,
+  });
 
   const [catalogo, marcadas] = await Promise.all([
     classificacoes(org.orgId),
@@ -78,7 +108,14 @@ export default async function PaginaConta({
           </>
         )}
       </p>
-      <h1>{conta.nome}</h1>
+      <div className="cabeca-pagina">
+        <h1>{conta.nome}</h1>
+        <div className="cabeca-acoes nao-imprimir">
+          {/* A ficha é o one-pager de reunião: mesma capacidade que a
+              situação da carteira já tinha. */}
+          <BotaoImprimir />
+        </div>
+      </div>
       <p className="chamada">
         {[conta.razao_social, formatarDocumento(conta.documento), conta.segmento]
           .filter((v) => v && v !== "—")
@@ -87,6 +124,26 @@ export default async function PaginaConta({
 
       {searchParams.erro && <p className="aviso aviso-erro">{searchParams.erro}</p>}
       {searchParams.ok && <p className="aviso aviso-ok">{searchParams.ok}</p>}
+
+      {sinais.length > 0 && (
+        <section className="painel painel-alerta">
+          <h2>Sinais</h2>
+          <ul className="lista-estado">
+            {sinais.map((sinal) => (
+              <li key={sinal.chave}>
+                <span className="rotulo">
+                  {sinal.href ? <Link href={sinal.href}>{sinal.rotulo}</Link> : sinal.rotulo}
+                  {sinal.detalhe && <span className="dica">{sinal.detalhe}</span>}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
+            Cada linha é um fato registrado, com a origem a um clique. Não há nota nem fórmula —
+            a maturidade da carteira continua sendo o único score do produto.
+          </p>
+        </section>
+      )}
 
       <section className="painel">
         <h2>Potencial e realizado</h2>

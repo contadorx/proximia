@@ -6,7 +6,7 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { exigirOrg, exigirUsuario } from "@/lib/auth";
 
 function comErro(mensagem: string): never {
-  redirect(`/alertas?erro=${encodeURIComponent(mensagem)}`);
+  redirect(`/pendencias?erro=${encodeURIComponent(mensagem)}`);
 }
 
 export async function silenciarAlerta(formData: FormData) {
@@ -14,7 +14,7 @@ export async function silenciarAlerta(formData: FormData) {
   await exigirOrg();
 
   const id = String(formData.get("id") ?? "");
-  const volta = String(formData.get("volta") ?? "/alertas");
+  const volta = String(formData.get("volta") ?? "/pendencias");
 
   const supabase = criarClienteServidor();
   const { error, count } = await supabase
@@ -32,7 +32,7 @@ export async function silenciarAlerta(formData: FormData) {
 export async function reabrirAlerta(formData: FormData) {
   await exigirOrg();
   const id = String(formData.get("id") ?? "");
-  const volta = String(formData.get("volta") ?? "/alertas");
+  const volta = String(formData.get("volta") ?? "/pendencias");
 
   const supabase = criarClienteServidor();
   const { error, count } = await supabase
@@ -66,9 +66,9 @@ export async function varrerAgora() {
   if (erroAtribuir) comErro(`Alertas gerados, mas a atribuição falhou: ${erroAtribuir.message}`);
 
   const diferenca = Number(data ?? 0);
-  revalidatePath("/alertas");
+  revalidatePath("/pendencias");
   redirect(
-    `/alertas?ok=${encodeURIComponent(
+    `/pendencias?ok=${encodeURIComponent(
       diferenca > 0
         ? `${diferenca} alerta(s) novo(s).`
         : diferenca < 0

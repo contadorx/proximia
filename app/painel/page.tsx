@@ -3,19 +3,16 @@ import { ArrowRight } from "lucide-react";
 import { exigirOrg, exigirUsuario } from "@/lib/auth";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { listarCarteiras } from "@/lib/carteiras";
-import { formatarData, formatarValor, listarContas } from "@/lib/contas";
-import { classeSelo, listarContratos, urgencia } from "@/lib/contratos";
+import { formatarValor, listarContas } from "@/lib/contas";
+import { listarContratos, urgencia } from "@/lib/contratos";
 import { listarFrentes } from "@/lib/frentes";
 import { FASES, listarOportunidades, rotuloFase } from "@/lib/oportunidades";
-import { classeSituacao, listarCompromissos, precisaAtencao, situacao } from "@/lib/compromissos";
-import { ROTULO_TIPO, classeSeveridade, listarAlertas } from "@/lib/alertas";
+import { listarCompromissos, precisaAtencao, situacao } from "@/lib/compromissos";
+import { listarAlertas } from "@/lib/alertas";
 import { capturaMensal, capturaSemData, variacao } from "@/lib/captura";
 import { panorama, totaisGerais } from "@/lib/panorama";
 import { minhaEquipeId } from "@/lib/equipe";
 import { faixa } from "@/lib/maturidade";
-import { caminhoEntidade } from "@/lib/registros";
-import { mudarStatusCompromisso } from "@/app/acoes/compromissos";
-import { silenciarAlerta } from "@/app/acoes/alertas";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { PrimeirosPassos, type Passo } from "@/components/primeiros-passos";
 import { BarrasMensais, Distribuicao, Funil } from "@/components/graficos";
@@ -64,7 +61,6 @@ export default async function PaginaPainel({
   const situacaoConta = (contaOrg as { assinatura_status: string } | null)?.assinatura_status;
 
   const nomeCarteira = (id: string) => carteiras.find((c) => c.id === id)?.nome ?? "—";
-  const nomeConta = (id: string) => contas.find((c) => c.id === id)?.nome ?? "conta removida";
 
   /* ---------- números do topo ---------- */
 
@@ -121,57 +117,34 @@ export default async function PaginaPainel({
     return chave === "vencido" || chave === "janela";
   });
 
-  const porTipoAlerta = alertas.reduce<Record<string, typeof alertas>>((mapa, a) => {
-    (mapa[a.tipo] ??= []).push(a);
-    return mapa;
-  }, {});
 
+  // Resumo, não fila de trabalho.
+  //
+  // Este bloco listava os itens um a um, com ação inline de concluir e
+  // silenciar — virando a terceira porta para "o que eu preciso
+  // resolver", ao lado de Alertas e Compromissos. Agora que Pendências é
+  // a porta única, o Painel volta a ser retrato do dia: diz quanto tem e
+  // de que tipo, e manda resolver no lugar certo. Nada some — cada linha
+  // leva para a seção correspondente.
   const grupos = [
-    {
-      chave: "alertas",
-      titulo: "Alertas em aberto",
-      quantidade: alertas.length,
-      grave: alta > 0,
-      link: "/alertas",
-      subgrupos: Object.entries(porTipoAlerta).map(([tipo, lista]) => ({
-        titulo: ROTULO_TIPO[tipo as keyof typeof ROTULO_TIPO] ?? tipo,
-        itens: lista.map((a) => ({
-          id: a.id,
-          texto: a.titulo,
-          detalhe: `${nomeCarteira(a.carteira_id)}${a.detalhe ? ` · ${a.detalhe}` : ""}`,
-          href: a.entidade_tipo && a.entidade_id ? caminhoEntidade(a.entidade_tipo, a.entidade_id) : null,
-          selo: a.severidade === "alta" ? "Alta" : a.severidade === "atencao" ? "Atenção" : "Info",
-          classe: classeSeveridade(a.severidade),
-          acao: { tipo: "silenciar" as const, id: a.id },
-        })),
-      })),
-    },
     {
       chave: "compromissos",
       titulo: "Compromissos que pedem ação",
       quantidade: atrasados.length + proximos.length,
       grave: atrasados.length > 0,
-      link: "/compromissos",
-      subgrupos: [
-        { titulo: "Atrasados", lista: atrasados },
-        { titulo: "Nos próximos dias", lista: proximos },
-      ]
-        .filter((s) => s.lista.length > 0)
-        .map((s) => ({
-          titulo: s.titulo,
-          itens: s.lista.map((c) => {
-            const sit = situacao(c);
-            return {
-              id: c.id,
-              texto: c.titulo,
-              detalhe: `${formatarData(c.vence_em)} · ${sit.detalhe} · ${nomeCarteira(c.carteira_id)}`,
-              href: caminhoEntidade(c.entidade_tipo, c.entidade_id),
-              selo: sit.rotulo,
-              classe: classeSituacao(sit.tom),
-              acao: { tipo: "concluir" as const, id: c.id },
-            };
-          }),
-        })),
+      link: "/pendencias#compromissos",
+      nota:
+        atrasados.length > 0
+          ? `${atrasados.length} atrasado(s) · ${proximos.length} nos próximos dias`
+          : `${proximos.length} nos próximos dias`,
+    },
+    {
+      chave: "alertas",
+      titulo: "Avisos do sistema em aberto",
+      quantidade: alertas.length,
+      grave: alta > 0,
+      link: "/pendencias#avisos",
+      nota: alta > 0 ? `${alta} de severidade alta · ${meus} seu(s)` : `${meus} seu(s)`,
     },
     {
       chave: "contratos",
@@ -179,23 +152,7 @@ export default async function PaginaPainel({
       quantidade: contratosAtencao.length,
       grave: contratosAtencao.some((c) => urgencia(c).chave === "vencido"),
       link: "/contratos",
-      subgrupos: [
-        {
-          titulo: "Vencidos e em janela",
-          itens: contratosAtencao.map((c) => {
-            const u = urgencia(c);
-            return {
-              id: c.id,
-              texto: `${c.numero ? `${c.numero} · ` : ""}${nomeConta(c.conta_id)}`,
-              detalhe: `${c.fim ? `vence ${formatarData(c.fim)} · ` : ""}${u.detalhe}`,
-              href: `/contratos/${c.id}`,
-              selo: u.rotulo,
-              classe: classeSelo(u.tom),
-              acao: null,
-            };
-          }),
-        },
-      ],
+      nota: "vencidos e em janela de renegociação",
     },
   ].filter((g) => g.quantidade > 0);
 
@@ -254,7 +211,7 @@ export default async function PaginaPainel({
         </div>
         <div className="cabeca-acoes">
           <Link className="botao botao-secundario" href="/panorama">
-            Ver panorama
+            Ver comparativo
           </Link>
         </div>
       </div>
@@ -376,9 +333,9 @@ export default async function PaginaPainel({
       <section className="painel">
         <div className="linha-titulo">
           <h2>Precisa de ação</h2>
-          <span className="passos-contagem">
-            {grupos.reduce((soma, g) => soma + g.quantidade, 0)} itens
-          </span>
+          <Link className="link-acao" href="/pendencias">
+            Ver pendências <ArrowRight size={12} />
+          </Link>
         </div>
 
         {grupos.length === 0 ? (
@@ -386,60 +343,19 @@ export default async function PaginaPainel({
             Nada fora do trilho. Contratos, compromissos e frentes estão dentro do prazo.
           </Vazio>
         ) : (
-          grupos.map((g) => (
-            <details className="grupo-pendencia" key={g.chave}>
-              <summary>
-                <span className="grupo-titulo">{g.titulo}</span>
+          <ul className="lista-estado">
+            {grupos.map((g) => (
+              <li key={g.chave}>
+                <span className="rotulo">
+                  <Link href={g.link}>{g.titulo}</Link>
+                  <span className="dica">{g.nota}</span>
+                </span>
                 <span className={g.grave ? "selo selo-falta" : "selo selo-neutro"}>
                   {g.quantidade}
                 </span>
-                <Link className="link-acao grupo-link" href={g.link}>
-                  abrir tela <ArrowRight size={12} />
-                </Link>
-              </summary>
-
-              {g.subgrupos.map((s) => (
-                <div className="subgrupo" key={s.titulo}>
-                  <p className="olho">{s.titulo}</p>
-                  <ul className="lista-estado">
-                    {s.itens.slice(0, 8).map((i) => (
-                      <li key={i.id}>
-                        <span className="rotulo">
-                          {i.href ? <Link href={i.href}>{i.texto}</Link> : i.texto}
-                          <span className="dica">{i.detalhe}</span>
-                        </span>
-                        <span className={i.classe}>{i.selo}</span>
-                        {i.acao?.tipo === "concluir" && (
-                          <form action={mudarStatusCompromisso}>
-                            <input type="hidden" name="id" value={i.acao.id} />
-                            <input type="hidden" name="status" value="concluido" />
-                            <input type="hidden" name="volta" value="/painel" />
-                            <button className="link-acao" type="submit">
-                              Concluir
-                            </button>
-                          </form>
-                        )}
-                        {i.acao?.tipo === "silenciar" && (
-                          <form action={silenciarAlerta}>
-                            <input type="hidden" name="id" value={i.acao.id} />
-                            <input type="hidden" name="volta" value="/painel" />
-                            <button className="link-acao" type="submit">
-                              Silenciar
-                            </button>
-                          </form>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                  {s.itens.length > 8 && (
-                    <p className="nota" style={{ marginBottom: 0 }}>
-                      e mais {s.itens.length - 8} — veja na tela cheia.
-                    </p>
-                  )}
-                </div>
-              ))}
-            </details>
-          ))
+              </li>
+            ))}
+          </ul>
         )}
       </section>
     </>

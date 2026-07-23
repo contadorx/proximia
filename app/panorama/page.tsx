@@ -116,7 +116,7 @@ export default async function PaginaPanorama({
       <div className="cabeca-pagina">
         <div>
           <p className="olho">{org.nome}</p>
-          <h1>Panorama</h1>
+          <h1>Comparativo</h1>
         </div>
         <div className="cabeca-acoes">
           <Link
@@ -205,7 +205,7 @@ export default async function PaginaPanorama({
                 </Link>
               )}
               {t.atrasados > 0 && (
-                <Link href="/compromissos">
+                <Link href="/pendencias">
                   <span className="dado">{t.atrasados}</span> compromissos atrasados
                 </Link>
               )}

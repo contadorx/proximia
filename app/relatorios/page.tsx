@@ -99,13 +99,19 @@ export default async function PaginaRelatorios({
         </div>
         <div className="cabeca-acoes nao-imprimir">
           <Link className="botao botao-secundario" href="/panorama">
-            Ver panorama
+            Ver comparativo
+          </Link>
+          <Link className="botao botao-secundario" href="/relatorios/exportacao">
+            Exportar dados
+          </Link>
+          <Link className="botao botao-secundario" href="/historico">
+            Histórico completo
           </Link>
         </div>
       </div>
 
       <IntroSecao>
-        Aqui é para <strong>entender</strong>, não para trabalhar — o que pede ação está no painel.
+        Aqui é para <strong>entender</strong>, não para trabalhar — o que pede ação está em Pendências.
         Os números saem do que já foi registrado; nenhum deles pede digitação nova.
       </IntroSecao>
 

@@ -211,7 +211,7 @@ export async function Compromissos({
 
       {abertos.length > 0 && (
         <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
-          <Link href={`/compromissos?alvo=${entidadeTipo}:${entidadeId}`}>
+          <Link href={`/pendencias?alvo=${entidadeTipo}:${entidadeId}`}>
             Ver na tela de compromissos
           </Link>
         </p>

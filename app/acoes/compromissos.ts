@@ -30,7 +30,7 @@ export async function criarCompromisso(
 ): Promise<EstadoAcao> {
   const org = await exigirOrg();
   const usuario = await exigirUsuario();
-  const rota = String(formData.get("volta") ?? "/compromissos");
+  const rota = String(formData.get("volta") ?? "/pendencias");
 
   const titulo = textoDe(formData, "titulo");
   const venceEm = textoDe(formData, "vence_em");
@@ -92,7 +92,7 @@ export async function mudarStatusCompromisso(formData: FormData) {
 
   const id = String(formData.get("id") ?? "");
   const status = String(formData.get("status") ?? "concluido");
-  const rota = String(formData.get("volta") ?? "/compromissos");
+  const rota = String(formData.get("volta") ?? "/pendencias");
 
   const supabase = criarClienteServidor();
   const { error, count } = await supabase
@@ -120,12 +120,12 @@ export async function gerarCompromissosPendentes() {
   const supabase = criarClienteServidor();
   const { data, error } = await supabase.rpc("gerar_compromissos_pendentes", { p_org: org.orgId });
 
-  if (error) comErro("/compromissos", traduzir(error.message, error.code));
+  if (error) comErro("/pendencias", traduzir(error.message, error.code));
 
   const criados = Number(data ?? 0);
-  revalidatePath("/compromissos");
+  revalidatePath("/pendencias");
   redirect(
-    `/compromissos?ok=${encodeURIComponent(
+    `/pendencias?ok=${encodeURIComponent(
       criados === 0
         ? "Nada a gerar: todos os contratos e cláusulas já têm compromisso."
         : `${criados} compromisso(s) criado(s) a partir dos contratos e cláusulas.`,
@@ -140,7 +140,7 @@ export async function reatribuirCompromisso(formData: FormData) {
 
   const id = String(formData.get("id") ?? "");
   const dono = String(formData.get("dono_id") ?? "");
-  const volta = String(formData.get("volta") ?? "/compromissos");
+  const volta = String(formData.get("volta") ?? "/pendencias");
 
   const supabase = criarClienteServidor();
   const { error, count } = await supabase
@@ -165,12 +165,12 @@ export async function distribuirCompromissos() {
   const supabase = criarClienteServidor();
   const { data, error } = await supabase.rpc("atribuir_compromissos", { p_org: org.orgId });
 
-  if (error) comErro("/compromissos", traduzir(error.message, error.code));
+  if (error) comErro("/pendencias", traduzir(error.message, error.code));
 
   const n = Number(data ?? 0);
-  revalidatePath("/compromissos");
+  revalidatePath("/pendencias");
   redirect(
-    `/compromissos?ok=${encodeURIComponent(
+    `/pendencias?ok=${encodeURIComponent(
       n > 0
         ? `${n} compromisso(s) ganharam responsável.`
         : "Nenhum compromisso sem responsável — ou não há quem responder pelas carteiras deles.",

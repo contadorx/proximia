@@ -7,7 +7,6 @@ import {
   Building2,
   Bell,
   Briefcase,
-  CalendarClock,
   Gauge,
   ClipboardList,
   Coins,
@@ -15,7 +14,6 @@ import {
   Layers,
   LayoutGrid,
   PieChart,
-  ScrollText,
   Settings,
   Upload,
   Users,
@@ -37,14 +35,28 @@ const TAMANHO = 16;
 // Onze destinos num nível só não cabiam na tela. Agora são três grupos
 // curtos, e o que é administração — importação, trilha de alterações,
 // pessoas, catálogos — vive dentro de Configurações.
+//
+// Três movimentos desta versão:
+//
+//   · Alertas + Compromissos viram PENDÊNCIAS. Eram duas telas para o
+//     mesmo estado mental ("o que eu preciso resolver"), separadas por
+//     como o item nasce e não por como a pessoa trabalha. As entidades
+//     seguem distintas dentro da tela; o que se fundiu foi a entrada.
+//   · Panorama vira COMPARATIVO. "Painel" e "Panorama" competiam como
+//     palavras e ninguém novo sabia qual abria o quê; o conteúdo da tela
+//     é comparação entre unidades e responsáveis, então o nome diz isso.
+//     A rota /panorama continua a mesma.
+//   · HISTÓRICO sai do primeiro nível. Cada ficha já carrega o seu, que é
+//     onde ele é consultado de fato; a vista global vira link nomeado em
+//     Relatórios. Não é esconder: a rota /historico continua, a busca
+//     continua achando, e a tela de Relatórios diz para onde foi.
 const GRUPOS: GrupoMenu[] = [
   {
     titulo: "Acompanhar",
     itens: [
       { href: "/painel", rotulo: "Painel", icone: <LayoutGrid size={TAMANHO} /> },
-      { href: "/alertas", rotulo: "Alertas", icone: <Bell size={TAMANHO} /> },
-      { href: "/compromissos", rotulo: "Compromissos", icone: <CalendarClock size={TAMANHO} /> },
-      { href: "/panorama", rotulo: "Panorama", icone: <Building2 size={TAMANHO} /> },
+      { href: "/pendencias", rotulo: "Pendências", icone: <Bell size={TAMANHO} /> },
+      { href: "/panorama", rotulo: "Comparativo", icone: <Building2 size={TAMANHO} /> },
       { href: "/relatorios", rotulo: "Relatórios", icone: <PieChart size={TAMANHO} /> },
     ],
   },
@@ -61,7 +73,6 @@ const GRUPOS: GrupoMenu[] = [
   {
     titulo: "Registrar",
     itens: [
-      { href: "/historico", rotulo: "Histórico", icone: <ScrollText size={TAMANHO} /> },
       { href: "/maturidade", rotulo: "Maturidade", icone: <Gauge size={TAMANHO} /> },
       { href: "/configuracoes", rotulo: "Configurações", icone: <Settings size={TAMANHO} /> },
     ],

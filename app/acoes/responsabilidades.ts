@@ -117,7 +117,7 @@ export async function reatribuirAlerta(formData: FormData) {
   await exigirOrg();
   const id = String(formData.get("id") ?? "");
   const dono = String(formData.get("dono_id") ?? "");
-  const volta = String(formData.get("volta") ?? "/alertas");
+  const volta = String(formData.get("volta") ?? "/pendencias");
 
   const supabase = criarClienteServidor();
   const { error } = await supabase.rpc("reatribuir_alerta", {

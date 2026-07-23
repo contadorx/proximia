@@ -634,8 +634,10 @@ export default async function PaginaConfiguracoes({
           </li>
           <li>
             <span className="rotulo">
-              <Link href="/configuracoes/exportacao">Exportação de dados</Link>
-              <span className="dica">Seus dados em CSV ou JSON, a qualquer momento</span>
+              <Link href="/relatorios/exportacao">Exportação de dados</Link>
+              <span className="dica">
+                Seus dados em CSV ou JSON, a qualquer momento — mora em Relatórios
+              </span>
             </span>
           </li>
           <li>

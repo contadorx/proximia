@@ -101,7 +101,7 @@ export function Busca({ compacta = false }: { compacta?: boolean }) {
     setAberto(false);
     router.push(
       r.tipo === "compromisso"
-        ? `/compromissos?alvo=${r.tipo}:${r.id}`
+        ? `/pendencias?alvo=${r.tipo}:${r.id}`
         : `${CAMINHOS[r.tipo] ?? "/painel"}/${r.id}`,
     );
   }

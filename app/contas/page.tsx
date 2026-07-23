@@ -18,6 +18,10 @@ import { Seletor, SeletorMultiplo } from "@/components/seletor";
 import { BotaoEnviar } from "@/components/botao-enviar";
 import { FormAcao } from "@/components/form-acao";
 import { paraLista, temFiltro } from "@/lib/consulta";
+import { listarAlertas } from "@/lib/alertas";
+import { listarCompromissos } from "@/lib/compromissos";
+import { listarContratos } from "@/lib/contratos";
+import { sinaisDaConta } from "@/lib/sinais";
 import { CampoCnpj } from "@/components/campos";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +37,7 @@ export default async function PaginaContas({
   };
 }) {
   const org = await exigirOrg();
-  const [carteiras, contas] = await Promise.all([
+  const [carteiras, contas, contratos, avisosAbertos, compromissosAbertos] = await Promise.all([
     listarCarteiras(org.orgId),
     listarContas({
       orgId: org.orgId,
@@ -41,7 +45,25 @@ export default async function PaginaContas({
       carteiras: paraLista(searchParams.carteira),
       relacoes: paraLista(searchParams.relacao),
     }),
+    listarContratos({ orgId: org.orgId }),
+    listarAlertas({ orgId: org.orgId, status: "aberto" }),
+    listarCompromissos({ orgId: org.orgId, status: "aberto" }),
   ]);
+
+  // Sinais na triagem: o que faz abrir a ficha aparece antes de abrir.
+  // Aqui não entra "dias sem registro" — exigiria uma consulta de
+  // histórico por conta da lista inteira, e o ganho não paga o custo.
+  // A ficha mostra o conjunto completo.
+  const sinaisDe = (contaId: string, potencial: number | null, capturado: number | null) =>
+    sinaisDaConta({
+      contaId,
+      potencialBruto: potencial,
+      valorCapturado: capturado,
+      contratos,
+      avisosAbertos,
+      compromissosAbertos,
+      ultimoRegistroEm: null,
+    });
 
   const podeCriar = podeEscrever(org.papel) && carteiras.length > 0;
   const nomeCarteira = (id: string) => carteiras.find((c) => c.id === id)?.nome ?? "—";
@@ -194,6 +216,14 @@ export default async function PaginaContas({
                   <span className="valor-teto">teto {formatarValor(c.potencial_bruto)}</span>
                   <span className="valor-capturado">capt. {formatarValor(c.valor_capturado)}</span>
                 </span>
+                {(() => {
+                  const sinais = sinaisDe(c.id, c.potencial_bruto, c.valor_capturado);
+                  return sinais.length > 0 ? (
+                    <span className="selo selo-falta" title={sinais.map((s) => s.rotulo).join(" · ")}>
+                      {sinais.length} {sinais.length === 1 ? "sinal" : "sinais"}
+                    </span>
+                  ) : null;
+                })()}
                 <span
                   className={
                     c.relacao === "protecao"
