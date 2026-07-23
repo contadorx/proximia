@@ -120,6 +120,9 @@ export async function criarContato(_estado: EstadoAcao, formData: FormData): Pro
   const nome = textoDe(formData, "nome");
   if (!nome) return { erro: "Informe o nome do contato." };
 
+  const influenciaBruta = textoDe(formData, "influencia");
+  const influencia = influenciaBruta ? Number(influenciaBruta) : null;
+
   const supabase = criarClienteServidor();
   const { error } = await supabase.from("contatos").insert({
     org_id: org.orgId,
@@ -129,12 +132,59 @@ export async function criarContato(_estado: EstadoAcao, formData: FormData): Pro
     email: textoDe(formData, "email"),
     telefone: textoDe(formData, "telefone"),
     principal: formData.get("principal") === "on",
+    // Mapa de decisores: papel, postura e hierarquia. Vazio é vazio —
+    // contato sem papel aparece na ficha como "falta mapear", que é
+    // informação melhor que um papel chutado.
+    papel_id: textoDe(formData, "papel_id"),
+    postura_id: textoDe(formData, "postura_id"),
+    area: textoDe(formData, "area"),
+    influencia: influencia && influencia >= 1 && influencia <= 5 ? influencia : null,
+    reporta_a: textoDe(formData, "reporta_a"),
   });
 
   if (error) return { erro: traduzir(error.message, error.code) };
 
   revalidatePath(rota);
   redirect(`${rota}?ok=${encodeURIComponent("Contato incluído.")}`);
+}
+
+/**
+ * Atualiza o mapa de um contato já cadastrado. Separado de criarContato
+ * de propósito: quem cadastra o contato quase nunca sabe o papel na
+ * decisão no mesmo minuto — o mapa se preenche depois, conversa a
+ * conversa.
+ */
+export async function atualizarMapaContato(
+  _estado: EstadoAcao,
+  formData: FormData,
+): Promise<EstadoAcao> {
+  await exigirOrg();
+  const contaId = String(formData.get("conta_id") ?? "");
+  const id = String(formData.get("id") ?? "");
+  const rota = `/contas/${contaId}`;
+
+  const influenciaBruta = textoDe(formData, "influencia");
+  const influencia = influenciaBruta ? Number(influenciaBruta) : null;
+  const reportaA = textoDe(formData, "reporta_a");
+
+  if (reportaA === id) return { erro: "Um contato não reporta a si mesmo." };
+
+  const supabase = criarClienteServidor();
+  const { error } = await supabase
+    .from("contatos")
+    .update({
+      papel_id: textoDe(formData, "papel_id"),
+      postura_id: textoDe(formData, "postura_id"),
+      area: textoDe(formData, "area"),
+      influencia: influencia && influencia >= 1 && influencia <= 5 ? influencia : null,
+      reporta_a: reportaA,
+    })
+    .eq("id", id);
+
+  if (error) return { erro: traduzir(error.message, error.code) };
+
+  revalidatePath(rota);
+  redirect(`${rota}?ok=${encodeURIComponent("Mapa atualizado.")}`);
 }
 
 export async function excluirContato(formData: FormData) {

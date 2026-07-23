@@ -622,6 +622,14 @@ export default async function PaginaConfiguracoes({
           </li>
           <li>
             <span className="rotulo">
+              <Link href="/configuracoes/decisao">Papéis na decisão</Link>
+              <span className="dica">
+                Quem decide, quem influencia e como cada um se posiciona — o vocabulário é seu
+              </span>
+            </span>
+          </li>
+          <li>
+            <span className="rotulo">
               <Link href="/configuracoes/playbooks">Playbooks de cadência</Link>
               <span className="dica">Compromissos que nascem quando a oportunidade muda de etapa</span>
             </span>

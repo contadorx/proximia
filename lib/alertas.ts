@@ -8,7 +8,10 @@ export type TipoAlerta =
   | "carteira_parada"
   | "frente_parada"
   | "oportunidade_parada"
-  | "potencial_sem_captura";
+  | "potencial_sem_captura"
+  // Mapa de decisores (0037): derivados do mapa, não do calendário.
+  | "conta_sem_decisor"
+  | "conta_ponto_unico";
 
 export type Alerta = {
   id: string;
@@ -33,6 +36,8 @@ export const ROTULO_TIPO: Record<TipoAlerta, string> = {
   frente_parada: "Frente parada",
   oportunidade_parada: "Oportunidade parada",
   potencial_sem_captura: "Potencial sem captura",
+  conta_sem_decisor: "Conta sem decisor mapeado",
+  conta_ponto_unico: "Ponto único de relacionamento",
 };
 
 /** Teto de linhas por consulta. Quando a lista bate nele, a tela avisa. */

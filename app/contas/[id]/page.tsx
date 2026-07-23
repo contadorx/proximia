@@ -17,6 +17,18 @@ import { listarAlertas } from "@/lib/alertas";
 import { listarCompromissos } from "@/lib/compromissos";
 import { registrosDaEntidade } from "@/lib/registros";
 import { sinaisDaConta } from "@/lib/sinais";
+import {
+  contatosDoMapa,
+  lerMapa,
+  montarHierarquia,
+  papeisDecisao,
+  posturasContato,
+  rotuloInfluencia,
+  classeTom,
+} from "@/lib/decisores";
+import { Organograma } from "@/components/organograma";
+import { atualizarMapaContato } from "@/app/acoes/contas";
+import { Network } from "lucide-react";
 import { atualizarConta, criarContato, excluirContato } from "@/app/acoes/contas";
 import { Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
@@ -29,7 +41,7 @@ import { Anexos } from "@/components/anexos";
 import { Compromissos } from "@/components/compromissos";
 import { classificacoes, classificacoesDaConta, porGrupo } from "@/lib/classificacoes";
 import { salvarClassificacoesDaConta } from "@/app/acoes/classificacoes";
-import { SeletorMultiplo } from "@/components/seletor";
+import { Seletor, SeletorMultiplo } from "@/components/seletor";
 import { Tags } from "lucide-react";
 import { Capturas } from "@/components/capturas";
 import { classeFase, formatarPayback, listarOportunidades, rotuloFase } from "@/lib/oportunidades";
@@ -57,7 +69,7 @@ export default async function PaginaConta({
     await Promise.all([
       listarCarteiras(org.orgId),
       pessoasDaOrganizacao(org.orgId),
-      contatosDaConta(conta.id),
+      contatosDoMapa(conta.id),
       listarContratos({ orgId: org.orgId, contaId: conta.id }),
       listarOportunidades({ orgId: org.orgId, contaId: conta.id }),
       listarAlertas({ orgId: org.orgId, status: "aberto" }),
@@ -86,10 +98,22 @@ export default async function PaginaConta({
     ultimoRegistroEm: registrosConta[0]?.ocorrido_em ?? null,
   });
 
-  const [catalogo, marcadas] = await Promise.all([
+  const [catalogo, marcadas, papeis, posturas] = await Promise.all([
     classificacoes(org.orgId),
     classificacoesDaConta(conta.id),
+    papeisDecisao(org.orgId),
+    posturasContato(org.orgId),
   ]);
+
+  // Mapa de decisores: quem decide, quem influencia, quem é contra, e por
+  // onde a informação entra. O produto nunca lê o rótulo do papel — lê a
+  // propriedade `decide`, marcada pelo assinante no catálogo dele.
+  const mapa = lerMapa(contatos, papeis, posturas);
+  const hierarquia = montarHierarquia(contatos);
+  const papelDe = new Map(papeis.map((p) => [p.id, p]));
+  const posturaDe = new Map(posturas.map((p) => [p.id, p]));
+  const papeisAtivos = papeis.filter((p) => p.ativo);
+  const posturasAtivas = posturas.filter((p) => p.ativo);
   const grupos = porGrupo(catalogo.filter((c) => c.ativo));
 
   const editavel = podeEscrever(org.papel);
@@ -225,32 +249,194 @@ export default async function PaginaConta({
       )}
 
       <section className="painel">
-        <h2>Contatos</h2>
-        {contatos.length === 0 ? (
-          <p className="nota">Nenhum contato registrado.</p>
+        <div className="linha-titulo">
+          <h2>
+            <Network size={16} style={{ verticalAlign: "-3px", marginRight: 6 }} />
+            Mapa de decisores
+          </h2>
+          <span className="passos-contagem">
+            {mapa.total} contato(s)
+            {mapa.semPapel > 0 ? ` · ${mapa.semPapel} sem papel definido` : ""}
+          </span>
+        </div>
+
+        {mapa.total === 0 ? (
+          <Vazio>
+            Nenhum contato registrado. O mapa começa com uma pessoa: quem atende o telefone.
+          </Vazio>
         ) : (
-          <ul className="lista-estado">
-            {contatos.map((c) => (
-              <li key={c.id}>
-                <span className="rotulo">
-                  {c.nome}
-                  <span className="dica">
-                    {[c.cargo, c.email, c.telefone].filter(Boolean).join(" · ") || "sem dados de contato"}
-                  </span>
-                </span>
-                {c.principal && <span className="selo selo-ok">Principal</span>}
-                {editavel && (
-                  <form action={excluirContato}>
-                    <input type="hidden" name="conta_id" value={conta.id} />
-                    <input type="hidden" name="id" value={c.id} />
-                    <button className="link-acao" type="submit">
-                      Remover
-                    </button>
-                  </form>
-                )}
-              </li>
-            ))}
-          </ul>
+          <>
+            {/* As quatro perguntas que a ficha passa a responder. */}
+            <div className="cartoes">
+              <div className="cartao">
+                <p className="olho">Quem decide</p>
+                <p className={mapa.decidem.length === 0 ? "cartao-valor alerta" : "cartao-valor"}>
+                  {mapa.decidem.length}
+                </p>
+                <p className="cartao-nota">
+                  {mapa.decidem.length > 0
+                    ? mapa.decidem.map((c) => c.nome).join(", ")
+                    : "ninguém com papel que decide"}
+                </p>
+              </div>
+              <div className="cartao">
+                <p className="olho">Quem influencia</p>
+                <p className="cartao-valor">{mapa.influenciam.length}</p>
+                <p className="cartao-nota">
+                  {mapa.influenciam.length > 0
+                    ? mapa.influenciam.map((c) => c.nome).join(", ")
+                    : "ninguém mapeado"}
+                </p>
+              </div>
+              <div className="cartao">
+                <p className="olho">Quem é contra</p>
+                <p className={mapa.contra.length > 0 ? "cartao-valor alerta" : "cartao-valor"}>
+                  {mapa.contra.length}
+                </p>
+                <p className="cartao-nota">
+                  {mapa.contra.length > 0
+                    ? mapa.contra.map((c) => c.nome).join(", ")
+                    : "nenhuma resistência declarada"}
+                </p>
+              </div>
+              <div className="cartao">
+                <p className="olho">Por onde entra</p>
+                <p className="cartao-valor">{mapa.portaDeEntrada.length}</p>
+                <p className="cartao-nota">
+                  {mapa.portaDeEntrada.length > 0
+                    ? mapa.portaDeEntrada.map((c) => c.nome).join(", ")
+                    : "sem porta de entrada definida"}
+                </p>
+              </div>
+            </div>
+
+            {hierarquia.length > 0 && (
+              <div className="subgrupo">
+                <p className="olho">Quem reporta a quem</p>
+                <Organograma arvore={hierarquia} papeis={papeis} posturas={posturas} />
+                <p className="nota" style={{ marginBottom: 0 }}>
+                  Círculo maior é quem decide; a cor vem da postura declarada. A hierarquia é
+                  montada a partir do campo &ldquo;reporta a&rdquo; de cada contato — o produto não
+                  adivinha nada.
+                </p>
+              </div>
+            )}
+
+            <div className="subgrupo">
+              <p className="olho">Contatos</p>
+              <ul className="lista-estado">
+                {contatos.map((c) => {
+                  const papel = c.papel_id ? papelDe.get(c.papel_id) : undefined;
+                  const postura = c.postura_id ? posturaDe.get(c.postura_id) : undefined;
+                  const chefe = c.reporta_a ? contatos.find((k) => k.id === c.reporta_a) : undefined;
+                  return (
+                    <li key={c.id}>
+                      <span className="rotulo">
+                        {c.nome}
+                        <span className="dica">
+                          {[
+                            papel?.rotulo ?? "papel não definido",
+                            c.cargo,
+                            c.area,
+                            chefe ? `reporta a ${chefe.nome}` : null,
+                            rotuloInfluencia(c.influencia),
+                            c.email,
+                            c.telefone,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
+                      </span>
+                      {papel?.decide && <span className="selo selo-ok">Decide</span>}
+                      {postura && <span className={classeTom(postura.tom)}>{postura.rotulo}</span>}
+                      {c.principal && <span className="selo selo-neutro">Principal</span>}
+
+                      {editavel && (
+                        <Modal
+                          rotulo="Mapear"
+                          titulo={`Papel de ${c.nome} na decisão`}
+                          descricao="Papel e postura vêm do catálogo da sua organização."
+                          variante="link"
+                          icone={<Network size={13} />}
+                        >
+                          <FormAcao action={atualizarMapaContato}>
+                            <input type="hidden" name="conta_id" value={conta.id} />
+                            <input type="hidden" name="id" value={c.id} />
+                            <div className="formulario-linha">
+                              <Seletor
+                                nome="papel_id"
+                                rotulo="Papel na decisão"
+                                opcoes={papeisAtivos.map((p) => ({
+                                  valor: p.id,
+                                  rotulo: p.rotulo,
+                                  detalhe: p.decide ? "decide" : undefined,
+                                }))}
+                                inicial={c.papel_id ?? ""}
+                                vazio="Não definido"
+                              />
+                              <Seletor
+                                nome="postura_id"
+                                rotulo="Postura"
+                                opcoes={posturasAtivas.map((p) => ({
+                                  valor: p.id,
+                                  rotulo: p.rotulo,
+                                }))}
+                                inicial={c.postura_id ?? ""}
+                                vazio="Não definida"
+                              />
+                            </div>
+                            <div className="formulario-linha">
+                              <label className="campo">
+                                <span>Área</span>
+                                <input
+                                  type="text"
+                                  name="area"
+                                  defaultValue={c.area ?? ""}
+                                  maxLength={80}
+                                  placeholder="Operações, Suprimentos…"
+                                />
+                              </label>
+                              <label className="campo campo-numerico">
+                                <span>Influência (1 a 5)</span>
+                                <input
+                                  type="number"
+                                  name="influencia"
+                                  min={1}
+                                  max={5}
+                                  defaultValue={c.influencia ?? ""}
+                                />
+                              </label>
+                              <Seletor
+                                nome="reporta_a"
+                                rotulo="Reporta a"
+                                opcoes={contatos
+                                  .filter((k) => k.id !== c.id)
+                                  .map((k) => ({ valor: k.id, rotulo: k.nome }))}
+                                inicial={c.reporta_a ?? ""}
+                                vazio="Ninguém nesta conta"
+                                ajuda="Só gente da mesma conta. O banco recusa ciclo."
+                              />
+                            </div>
+                            <BotaoEnviar>Salvar mapa</BotaoEnviar>
+                          </FormAcao>
+                        </Modal>
+                      )}
+
+                      {editavel && (
+                        <form action={excluirContato}>
+                          <input type="hidden" name="conta_id" value={conta.id} />
+                          <input type="hidden" name="id" value={c.id} />
+                          <button className="link-acao" type="submit">
+                            Remover
+                          </button>
+                        </form>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </>
         )}
 
         {editavel && (
@@ -272,12 +458,30 @@ export default async function PaginaConta({
               <span>Telefone</span>
               <input type="text" name="telefone" maxLength={40} />
             </label>
+            <Seletor
+              nome="papel_id"
+              rotulo="Papel na decisão"
+              opcoes={papeisAtivos.map((p) => ({
+                valor: p.id,
+                rotulo: p.rotulo,
+                detalhe: p.decide ? "decide" : undefined,
+              }))}
+              vazio="Definir depois"
+            />
             <label className="campo campo-marcador">
               <span>Principal</span>
               <input type="checkbox" name="principal" />
             </label>
             <BotaoEnviar>Incluir contato</BotaoEnviar>
           </FormAcao>
+        )}
+
+        {papeis.length === 0 && (
+          <p className="nota">
+            O catálogo de papéis de decisão ainda não foi criado.{" "}
+            <Link href="/configuracoes">Crie em Configurações</Link> — os valores iniciais são
+            sugestões, e você renomeia o que quiser.
+          </p>
         )}
       </section>
 
