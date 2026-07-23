@@ -27,7 +27,7 @@ import {
   classeTom,
 } from "@/lib/decisores";
 import { Organograma } from "@/components/organograma";
-import { atualizarMapaContato } from "@/app/acoes/contas";
+import { atualizarMapaContato, enriquecerPorCnpj } from "@/app/acoes/contas";
 import { Network } from "lucide-react";
 import { atualizarConta, criarContato, excluirContato } from "@/app/acoes/contas";
 import { Vazio } from "@/components/intro-secao";
@@ -46,6 +46,7 @@ import { Tags } from "lucide-react";
 import { Capturas } from "@/components/capturas";
 import { classeFase, formatarPayback, listarOportunidades, rotuloFase } from "@/lib/oportunidades";
 import { BotaoEnviar } from "@/components/botao-enviar";
+import { criarClienteServidor } from "@/lib/supabase/server";
 import { FormAcao } from "@/components/form-acao";
 import { CampoCnpj, CampoValor } from "@/components/campos";
 
@@ -98,6 +99,15 @@ export default async function PaginaConta({
     ultimoRegistroEm: registrosConta[0]?.ocorrido_em ?? null,
   });
 
+  const supabaseOrg = criarClienteServidor();
+  const { data: orgConfig } = await supabaseOrg
+    .from("orgs")
+    .select("enriquecimento_cnpj")
+    .eq("id", org.orgId)
+    .maybeSingle();
+  const enriquecimentoLigado =
+    (orgConfig as { enriquecimento_cnpj: boolean } | null)?.enriquecimento_cnpj === true;
+
   const [catalogo, marcadas, papeis, posturas] = await Promise.all([
     classificacoes(org.orgId),
     classificacoesDaConta(conta.id),
@@ -137,6 +147,14 @@ export default async function PaginaConta({
         <div className="cabeca-acoes nao-imprimir">
           {/* O dossiê é a versão de reunião desta ficha: mesmo dado,
               recortado por período e sem controle de edição. */}
+          {editavel && enriquecimentoLigado && conta.documento && (
+            <form action={enriquecerPorCnpj}>
+              <input type="hidden" name="conta_id" value={conta.id} />
+              <BotaoEnviar variante="secundario" rotuloEnviando="Consultando…">
+                Preencher pelo CNPJ
+              </BotaoEnviar>
+            </form>
+          )}
           <Link className="botao botao-secundario" href={`/contas/${conta.id}/reuniao`}>
             Dossiê de reunião
           </Link>
@@ -148,6 +166,14 @@ export default async function PaginaConta({
           .filter((v) => v && v !== "—")
           .join(" · ") || "Sem razão social, CNPJ ou segmento registrados."}
       </p>
+
+      {conta.dados_receita_em && (
+        <p className="nota">
+          Parte dos dados cadastrais veio de {conta.dados_receita_origem ?? "consulta pública"} em{" "}
+          {formatarData(conta.dados_receita_em.slice(0, 10))}. O que você escreveu não foi
+          substituído.
+        </p>
+      )}
 
       {searchParams.erro && <p className="aviso aviso-erro">{searchParams.erro}</p>}
       {searchParams.ok && <p className="aviso aviso-ok">{searchParams.ok}</p>}

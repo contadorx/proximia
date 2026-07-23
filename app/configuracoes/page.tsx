@@ -8,7 +8,7 @@ import { vincularMembro } from "@/app/acoes/organizacoes";
 import { cancelarConvite, convidarPessoa } from "@/app/acoes/convites";
 import { trocarSenha } from "@/app/acoes/senha";
 import { salvarPreferenciaAviso } from "@/app/acoes/avisos";
-import { alternarAnexos } from "@/app/acoes/classificacoes";
+import { alternarAnexos, alternarEnriquecimento } from "@/app/acoes/classificacoes";
 import { anexosPermitidos } from "@/lib/classificacoes";
 import { exigirUsuario } from "@/lib/auth";
 import { criarPapel, excluirPapel } from "@/app/acoes/responsabilidades";
@@ -90,6 +90,14 @@ export default async function PaginaConfiguracoes({
   }[];
 
   const permiteAnexos = await anexosPermitidos(org.orgId);
+
+  const { data: configOrg } = await criarClienteServidor()
+    .from("orgs")
+    .select("enriquecimento_cnpj")
+    .eq("id", org.orgId)
+    .maybeSingle();
+  const enriquecimentoLigado =
+    (configOrg as { enriquecimento_cnpj: boolean } | null)?.enriquecimento_cnpj === true;
   const { data: preferencia } = await supabase
     .from("preferencias_aviso")
     .select("resumo_diario, apenas_alta")
@@ -446,6 +454,39 @@ export default async function PaginaConfiguracoes({
             ))}
           </ul>
         )}
+      </section>
+
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>Consulta pública de CNPJ</h2>
+          {administra && (
+            <form action={alternarEnriquecimento}>
+              <input type="hidden" name="ligar" value={enriquecimentoLigado ? "0" : "1"} />
+              <BotaoEnviar variante="secundario">
+                {enriquecimentoLigado ? "Desligar consulta" : "Ligar consulta"}
+              </BotaoEnviar>
+            </form>
+          )}
+        </div>
+        <p className="nota" style={{ marginBottom: 0 }}>
+          {enriquecimentoLigado ? (
+            <>
+              Ligada. Na ficha de uma conta com CNPJ, o botão{" "}
+              <strong>Preencher pelo CNPJ</strong> consulta o registro público e completa razão
+              social e segmento. <strong>O que sai daqui é só o CNPJ</strong> — número público, que
+              qualquer pessoa consulta na Receita. Nada da operação atravessa: nem potencial, nem
+              captura, nem contrato, nem histórico. E o preenchimento nunca sobrescreve o que
+              alguém escreveu: completa só campo vazio. Cada consulta fica registrada.
+            </>
+          ) : (
+            <>
+              Desligada — nenhum dado sai do produto. Ligando, o CNPJ de uma conta pode ser enviado
+              a um serviço público de consulta para completar razão social e segmento. É o único
+              caminho pelo qual algum dado de cliente atravessa a fronteira do Proximia, e por isso
+              a decisão é sua e nasce desligada.
+            </>
+          )}
+        </p>
       </section>
 
       <section className="painel">

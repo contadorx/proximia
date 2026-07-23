@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { criarClienteServidor } from "@/lib/supabase/server";
+import { consultarCnpj } from "@/lib/receita";
 import { exigirOrg } from "@/lib/auth";
 import { cnpjValido, somenteDigitos } from "@/lib/contas";
 import { numeroDe, textoDe, type EstadoAcao } from "@/lib/formulario";
@@ -203,4 +204,82 @@ export async function excluirContato(formData: FormData) {
 
   revalidatePath(rota);
   redirect(`${rota}?ok=${encodeURIComponent("Contato removido.")}`);
+}
+
+/**
+ * Preenche os dados cadastrais a partir do CNPJ.
+ *
+ * O que sai daqui para fora é só o CNPJ — número público, que qualquer
+ * pessoa consulta na Receita. Nada da operação atravessa: nem potencial,
+ * nem captura, nem contrato, nem histórico.
+ *
+ * A regra de não sobrescrever vive no banco (aplicar_dados_receita), não
+ * aqui: assim vale para qualquer caminho que venha a existir depois,
+ * inclusive a entrada por API.
+ */
+export async function enriquecerPorCnpj(formData: FormData) {
+  const org = await exigirOrg();
+  const contaId = String(formData.get("conta_id") ?? "");
+  const rota = `/contas/${contaId}`;
+
+  const supabase = criarClienteServidor();
+
+  const { data: conta } = await supabase
+    .from("contas")
+    .select("id, documento")
+    .eq("id", contaId)
+    .maybeSingle();
+
+  const documento = (conta as { documento: string | null } | null)?.documento ?? "";
+
+  if (!documento) {
+    redirect(
+      `${rota}?erro=${encodeURIComponent(
+        "Esta conta não tem CNPJ registrado. Informe o CNPJ e tente de novo.",
+      )}`,
+    );
+  }
+
+  const resultado = await consultarCnpj(documento);
+
+  // Toda consulta fica registrada, inclusive a que não deu certo: quem
+  // auditar precisa poder responder o que saiu daqui.
+  const registrar = (situacao: string, detalhe: string | null, campos = 0) =>
+    supabase.rpc("registrar_consulta_cnpj", {
+      p_org: org.orgId,
+      p_conta: contaId,
+      p_documento: documento,
+      p_situacao: situacao,
+      p_detalhe: detalhe,
+      p_campos: campos,
+    });
+
+  if (resultado.situacao !== "ok") {
+    await registrar(resultado.situacao, resultado.detalhe);
+    redirect(`${rota}?erro=${encodeURIComponent(resultado.detalhe)}`);
+  }
+
+  const { data: preenchidos, error } = await supabase.rpc("aplicar_dados_receita", {
+    p_conta: contaId,
+    p_razao_social: resultado.dados.razaoSocial,
+    p_segmento: resultado.dados.segmento,
+    p_origem: "Receita Federal (consulta pública)",
+  });
+
+  if (error) {
+    await registrar("erro", error.message);
+    redirect(`${rota}?erro=${encodeURIComponent(traduzir(error.message, error.code))}`);
+  }
+
+  const quantos = Number(preenchidos ?? 0);
+  await registrar("ok", null, quantos);
+
+  revalidatePath(rota);
+  redirect(
+    `${rota}?ok=${encodeURIComponent(
+      quantos === 0
+        ? "Consulta feita. Nada foi alterado: os campos já estavam preenchidos, e o que você escreveu não é sobrescrito."
+        : `${quantos} campo(s) preenchido(s) a partir do registro público.`,
+    )}`,
+  );
 }

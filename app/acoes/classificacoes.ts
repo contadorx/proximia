@@ -108,3 +108,33 @@ export async function alternarAnexos(formData: FormData) {
     )}`,
   );
 }
+
+/**
+ * Liga ou desliga a consulta pública de CNPJ.
+ *
+ * Fica aqui, junto dos outros interruptores da organização, e não numa
+ * tela própria: é uma decisão de uma linha, não um assunto.
+ */
+export async function alternarEnriquecimento(formData: FormData) {
+  const org = await exigirOrg();
+  const ligar = formData.get("ligar") === "1";
+
+  const supabase = criarClienteServidor();
+  const { error } = await supabase
+    .from("orgs")
+    .update({ enriquecimento_cnpj: ligar })
+    .eq("id", org.orgId);
+
+  if (error) {
+    redirect(`/configuracoes?erro=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/configuracoes");
+  redirect(
+    `/configuracoes?ok=${encodeURIComponent(
+      ligar
+        ? "Consulta de CNPJ ligada. A partir de agora, o CNPJ da conta pode ser enviado ao serviço público quando alguém pedir o preenchimento."
+        : "Consulta de CNPJ desligada. Nenhum dado sai do produto.",
+    )}`,
+  );
+}

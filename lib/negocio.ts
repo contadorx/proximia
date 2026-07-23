@@ -17,7 +17,48 @@ export type Assinante = {
   carteiras: number;
   pessoas: number;
   ultimo_registro: string | null;
+
+  /** Quem é o dono e se o convite virou acesso. */
+  dono_email: string | null;
+  convite_email: string | null;
+  convite_aceito_em: string | null;
 };
+
+/**
+ * O que dizer sobre o dono de um assinante.
+ *
+ * A informação útil não é o e-mail sozinho: é se ele já entrou.
+ * Organização criada há duas semanas com convite pendente não é
+ * assinante devagar — é assinante que nunca entrou, e isso muda o que se
+ * faz a respeito.
+ */
+export function situacaoDoDono(a: Assinante): {
+  email: string | null;
+  estado: "ativo" | "pendente" | "sem_dono";
+  frase: string;
+} {
+  if (a.dono_email) {
+    return {
+      email: a.dono_email,
+      estado: "ativo",
+      frase: a.dono_email,
+    };
+  }
+
+  if (a.convite_email) {
+    return {
+      email: a.convite_email,
+      estado: "pendente",
+      frase: `${a.convite_email} — convite ainda não aceito`,
+    };
+  }
+
+  return {
+    email: null,
+    estado: "sem_dono",
+    frase: "sem dono definido",
+  };
+}
 
 export type PainelNegocio = {
   receita_recorrente: number;

@@ -10,6 +10,7 @@ import {
   lerDisponibilidade,
   operadoresDaPlataforma,
   saudeDaRotina,
+  situacaoDoDono,
   painelNegocio,
   planos,
   seloStatus,
@@ -420,6 +421,7 @@ export default async function PaginaNegocio({
               {painel.lista.map((a) => {
                 const selo = seloStatus(a.status);
                 const parado = diasSemUso(a);
+                const dono = situacaoDoDono(a);
                 return (
                   <tr key={a.id} className={a.conta_teste ? "linha-suspensa" : undefined}>
                     <td>
@@ -432,6 +434,16 @@ export default async function PaginaNegocio({
                         ]
                           .filter(Boolean)
                           .join(" · ")}
+                      </span>
+                      {/* Quem é o dono, e sobretudo se ele já entrou:
+                          convite pendente há semanas é assinante que nunca
+                          começou, não assinante devagar. */}
+                      <span
+                        className={
+                          dono.estado === "ativo" ? "celula-sub" : "celula-sub texto-alerta"
+                        }
+                      >
+                        {dono.frase}
                       </span>
                     </td>
                     <td>
