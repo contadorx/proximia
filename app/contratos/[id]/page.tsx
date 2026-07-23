@@ -23,6 +23,9 @@ import { Historico } from "@/components/historico";
 import { Anexos } from "@/components/anexos";
 import { Compromissos } from "@/components/compromissos";
 import { pessoasDaOrganizacao } from "@/lib/carteiras";
+import { BotaoEnviar } from "@/components/botao-enviar";
+import { FormAcao } from "@/components/form-acao";
+import { CampoValor } from "@/components/campos";
 
 export const dynamic = "force-dynamic";
 
@@ -33,12 +36,12 @@ export default async function PaginaContrato({
   params: { id: string };
   searchParams: { erro?: string; ok?: string };
 }) {
-  await exigirOrg();
-  const contrato = await obterContrato(params.id);
-  if (!contrato) notFound();
-
+  // Uma chamada só: cada exigirOrg custa sessão + vínculos no banco, e
+  // esta página chegou a fazer duas.
   const org = await exigirOrg();
   const usuario = await exigirUsuario();
+  const contrato = await obterContrato(params.id);
+  if (!contrato) notFound();
   const [conta, clausulas, pessoas] = await Promise.all([
     obterConta(contrato.conta_id),
     clausulasDoContrato(contrato.id),
@@ -195,7 +198,7 @@ export default async function PaginaContrato({
         )}
 
         {editavel && (
-          <form action={criarClausula} className="formulario" style={{ marginTop: 22 }}>
+          <FormAcao action={criarClausula} className="formulario">
             <input type="hidden" name="contrato_id" value={contrato.id} />
             <div className="formulario-linha">
               <label className="campo">
@@ -226,17 +229,15 @@ export default async function PaginaContrato({
                 <span>Avisar quantos dias antes</span>
                 <input type="number" name="antecedencia_dias" min={0} max={730} defaultValue={30} />
               </label>
-              <button className="botao botao-primario" type="submit">
-                Incluir cláusula
-              </button>
+              <BotaoEnviar>Incluir cláusula</BotaoEnviar>
             </div>
-          </form>
+          </FormAcao>
         )}
       </section>
 
       {editavel && (
         <Modal rotulo="Editar contrato" titulo="Editar contrato" descricao="A janela de renegociação é recalculada sozinha." largo icone={<Pencil size={15} />} variante="secundario">
-          <form action={atualizarContrato} className="formulario">
+          <FormAcao action={atualizarContrato}>
             <input type="hidden" name="id" value={contrato.id} />
 
             <div className="formulario-linha">
@@ -299,15 +300,7 @@ export default async function PaginaContrato({
             </div>
 
             <div className="formulario-linha">
-              <label className="campo">
-                <span>Valor base</span>
-                <input
-                  type="text"
-                  name="valor_base"
-                  inputMode="decimal"
-                  defaultValue={contrato.valor_base ?? ""}
-                />
-              </label>
+              <CampoValor nome="valor_base" rotulo="Valor base" inicial={contrato.valor_base} />
               <label className="campo">
                 <span>Periodicidade</span>
                 <select name="periodicidade" defaultValue={contrato.periodicidade ?? ""}>
@@ -346,10 +339,8 @@ export default async function PaginaContrato({
               <textarea name="observacoes" rows={4} defaultValue={contrato.observacoes ?? ""} />
             </label>
 
-            <button className="botao botao-primario" type="submit">
-              Salvar alterações
-            </button>
-          </form>
+            <BotaoEnviar>Salvar alterações</BotaoEnviar>
+          </FormAcao>
         </Modal>
       )}
       <Anexos

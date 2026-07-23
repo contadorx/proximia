@@ -4,6 +4,7 @@ import { exigirOrg, exigirUsuario, podeEscrever } from "@/lib/auth";
 import { listarCarteiras, nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
 import { formatarData } from "@/lib/contas";
 import {
+  LIMITE_COMPROMISSOS,
   classeSituacao,
   listarCompromissos,
   rotuloOrigem,
@@ -23,6 +24,8 @@ import {
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
 import { Seletor, SeletorMultiplo } from "@/components/seletor";
+import { BotaoEnviar } from "@/components/botao-enviar";
+import { FormAcao } from "@/components/form-acao";
 import { paraLista, paraTexto, temFiltro } from "@/lib/consulta";
 
 export const dynamic = "force-dynamic";
@@ -43,13 +46,19 @@ export default async function PaginaCompromissos({
   const org = await exigirOrg();
   const usuario = await exigirUsuario();
 
-  const [todos, carteiras, pessoas, minhasCarteiras, alvos] = await Promise.all([
-    listarCompromissos({ orgId: org.orgId }),
-    listarCarteiras(org.orgId),
-    pessoasDaOrganizacao(org.orgId),
-    carteirasDaPessoa(org.orgId, usuario.id),
-    alvosDisponiveis(org.orgId),
-  ]);
+  // Abertos e concluídos em consultas separadas. Uma consulta só, ordenada
+  // pelo vencimento e com teto de linhas, dava a vaga aos mais antigos —
+  // concluídos de anos atrás empurravam compromissos futuros para fora.
+  const [abertosTodos, concluidosTodos, carteiras, pessoas, minhasCarteiras, alvos] =
+    await Promise.all([
+      listarCompromissos({ orgId: org.orgId, status: "aberto" }),
+      listarCompromissos({ orgId: org.orgId, status: "concluido", ordem: "recentes" }),
+      listarCarteiras(org.orgId),
+      pessoasDaOrganizacao(org.orgId),
+      carteirasDaPessoa(org.orgId, usuario.id),
+      alvosDisponiveis(org.orgId),
+    ]);
+  const todos = [...abertosTodos, ...concluidosTodos];
 
   const nomes = mapaDeNomes(alvos);
   const nomeAlvo = (tipo: string, id: string) => nomes.get(`${tipo}:${id}`);
@@ -157,9 +166,7 @@ export default async function PaginaCompromissos({
                       inicial={c.dono_id ?? ""}
                       vazio="Sem responsável"
                     />
-                    <button className="botao botao-primario" type="submit">
-                      Salvar
-                    </button>
+                    <BotaoEnviar>Salvar</BotaoEnviar>
                   </form>
                 </Modal>
               )}
@@ -208,7 +215,7 @@ export default async function PaginaCompromissos({
               icone={<Plus size={15} />}
               largo
             >
-              <form action={criarCompromisso} className="formulario">
+              <FormAcao action={criarCompromisso}>
                 <input type="hidden" name="volta" value="/compromissos" />
                 <div className="formulario-linha">
                   <label className="campo">
@@ -237,7 +244,7 @@ export default async function PaginaCompromissos({
                       detalhe: a.rotuloTipo,
                     }))}
                     vazio="A carteira inteira"
-                    ajuda="Uma conta, um contrato, uma frente — ou a carteira, se for geral."
+                    ajuda="Uma conta, um contrato, uma frente — ou a carteira, se for geral. Com um registro escolhido, o compromisso nasce na carteira dele."
                   />
                 </div>
                 <div className="formulario-linha">
@@ -262,19 +269,17 @@ export default async function PaginaCompromissos({
                   <span>Detalhe</span>
                   <input type="text" name="descricao" maxLength={200} placeholder="opcional" />
                 </label>
-                <button className="botao botao-primario" type="submit">
-                  Registrar compromisso
-                </button>
-              </form>
+                <BotaoEnviar>Registrar compromisso</BotaoEnviar>
+              </FormAcao>
             </Modal>
           )}
 
           {editavel && semDono > 0 && (
             <form action={distribuirCompromissos}>
-              <button className="botao botao-secundario" type="submit">
+              <BotaoEnviar variante="secundario" rotuloEnviando="Distribuindo…">
                 <Users size={15} />
                 Distribuir {semDono} sem dono
-              </button>
+              </BotaoEnviar>
             </form>
           )}
 
@@ -291,9 +296,7 @@ export default async function PaginaCompromissos({
                 cada cláusula tem no máximo um compromisso automático.
               </p>
               <form action={gerarCompromissosPendentes}>
-                <button className="botao botao-primario" type="submit">
-                  Gerar os que faltam
-                </button>
+                <BotaoEnviar rotuloEnviando="Gerando…">Gerar os que faltam</BotaoEnviar>
               </form>
             </Modal>
           )}
@@ -457,6 +460,13 @@ export default async function PaginaCompromissos({
           <h2>Concluídos recentemente</h2>
           <Lista itens={concluidos} />
         </section>
+      )}
+
+      {abertosTodos.length >= LIMITE_COMPROMISSOS && (
+        <p className="nota">
+          Mostrando os primeiros {LIMITE_COMPROMISSOS} compromissos em aberto, por vencimento.
+          Filtre por carteira ou responsável para ver o restante.
+        </p>
       )}
     </>
   );

@@ -4,6 +4,7 @@ import { exigirOrg, podeEscrever } from "@/lib/auth";
 import { listarCarteiras } from "@/lib/carteiras";
 import {
   CRITICIDADES,
+  LIMITE_CONTAS,
   RELACOES,
   formatarDocumento,
   formatarValor,
@@ -14,6 +15,8 @@ import { criarConta } from "@/app/acoes/contas";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
 import { Seletor, SeletorMultiplo } from "@/components/seletor";
+import { BotaoEnviar } from "@/components/botao-enviar";
+import { FormAcao } from "@/components/form-acao";
 import { paraLista, temFiltro } from "@/lib/consulta";
 import { CampoCnpj } from "@/components/campos";
 
@@ -64,7 +67,7 @@ export default async function PaginaContas({
               descricao="Potencial, capturado e contatos você registra depois, na ficha."
               icone={<Plus size={15} />}
             >
-              <form action={criarConta} className="formulario">
+              <FormAcao action={criarConta}>
                 <div className="formulario-linha">
                   <label className="campo">
                     <span>Nome</span>
@@ -107,10 +110,8 @@ export default async function PaginaContas({
                     </select>
                   </label>
                 </div>
-                <button className="botao botao-primario" type="submit">
-                  Criar conta
-                </button>
-              </form>
+                <BotaoEnviar>Criar conta</BotaoEnviar>
+              </FormAcao>
             </Modal>
           </div>
         )}
@@ -167,9 +168,17 @@ export default async function PaginaContas({
         <section className="painel">
           <div className="linha-titulo">
             <h2>
-              {contas.length} {contas.length === 1 ? "conta" : "contas"}
+              {contas.length >= LIMITE_CONTAS
+                ? `Primeiras ${LIMITE_CONTAS} contas`
+                : `${contas.length} ${contas.length === 1 ? "conta" : "contas"}`}
             </h2>
           </div>
+          {contas.length >= LIMITE_CONTAS && (
+            <p className="nota">
+              Há mais contas do que a lista mostra. Use a busca ou o filtro de carteira para
+              chegar ao restante.
+            </p>
+          )}
           <ul className="lista-estado">
             {contas.map((c) => (
               <li key={c.id}>

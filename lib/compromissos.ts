@@ -24,6 +24,9 @@ export type Compromisso = {
 const CAMPOS =
   "id, carteira_id, entidade_tipo, entidade_id, titulo, descricao, vence_em, dono_id, alerta_dias, status, concluido_em, origem, origem_id";
 
+/** Teto de linhas por consulta. Quando a lista bate nele, a tela avisa. */
+export const LIMITE_COMPROMISSOS = 300;
+
 export async function listarCompromissos(opcoes: {
   orgId: string;
   carteiraId?: string;
@@ -32,6 +35,8 @@ export async function listarCompromissos(opcoes: {
   status?: string;
   entidadeTipo?: EntidadeTipo;
   entidadeId?: string;
+  /** "recentes" ordena do mais novo para o mais velho — para concluídos. */
+  ordem?: "vencimento" | "recentes";
 }): Promise<Compromisso[]> {
   const supabase = criarClienteServidor();
   let consulta = supabase.from("compromissos").select(CAMPOS);
@@ -47,7 +52,15 @@ export async function listarCompromissos(opcoes: {
   if (opcoes.entidadeTipo) consulta = consulta.eq("entidade_tipo", opcoes.entidadeTipo);
   if (opcoes.entidadeId) consulta = consulta.eq("entidade_id", opcoes.entidadeId);
 
-  const { data, error } = await consulta.order("vence_em").limit(300);
+  // Concluídos interessam do mais recente para trás; abertos, pelo prazo.
+  // Antes era tudo por vencimento crescente com um teto de linhas: os 300
+  // mais antigos ganhavam a vaga e compromissos futuros sumiam primeiro.
+  const ordenada =
+    opcoes.ordem === "recentes"
+      ? consulta.order("vence_em", { ascending: false })
+      : consulta.order("vence_em");
+
+  const { data, error } = await ordenada.limit(LIMITE_COMPROMISSOS);
   if (error) {
     console.error("[compromissos] falha ao listar:", error.message);
     return [];
@@ -103,6 +116,7 @@ export function situacao(c: Compromisso): Situacao {
 
 export function classeSituacao(tom: Situacao["tom"]): string {
   if (tom === "alerta") return "selo selo-falta";
+  if (tom === "atencao") return "selo selo-atencao";
   if (tom === "ok") return "selo selo-ok";
   return "selo selo-neutro";
 }

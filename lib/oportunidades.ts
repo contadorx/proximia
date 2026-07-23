@@ -75,7 +75,7 @@ export type Oportunidade = {
 export type TipoOportunidade = { id: string; nome: string; descricao: string | null; ativo: boolean };
 
 const CAMPOS =
-  "id, carteira_id, conta_id, catalogo_id, titulo, descricao, fase, fase_desde, motivo_descarte, responsavel_id, proxima_etapa, prazo, investimento, retorno_mensal, custo_mensal, horizonte_meses, estimativa_origem, estimativa_data, investimento_realizado, retorno_confirmado, confirmado_em, links, observacoes, resultado_mensal, payback_meses, retorno_percentual";
+  "id, carteira_id, conta_id, catalogo_id, titulo, descricao, natureza, prioridade, fase, fase_desde, motivo_descarte, responsavel_id, proxima_etapa, prazo, investimento, retorno_mensal, custo_mensal, horizonte_meses, estimativa_origem, estimativa_data, investimento_realizado, retorno_confirmado, confirmado_em, links, observacoes, resultado_mensal, payback_meses, retorno_percentual";
 
 const ORDEM: Record<Fase, number> = {
   negociacao: 0,
@@ -87,6 +87,9 @@ const ORDEM: Record<Fase, number> = {
   concluida: 6,
   descartada: 7,
 };
+
+/** Teto de linhas por consulta. Quando a lista bate nele, a tela avisa. */
+export const LIMITE_OPORTUNIDADES = 300;
 
 export async function listarOportunidades(opcoes: {
   orgId: string;
@@ -103,7 +106,7 @@ export async function listarOportunidades(opcoes: {
   if (opcoes.contaId) consulta = consulta.eq("conta_id", opcoes.contaId);
   if (opcoes.fases?.length) consulta = consulta.in("fase", opcoes.fases);
 
-  const { data, error } = await consulta.limit(300);
+  const { data, error } = await consulta.limit(LIMITE_OPORTUNIDADES);
   if (error) {
     console.error("[oportunidades] falha ao listar:", error.message);
     return [];

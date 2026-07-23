@@ -3,6 +3,7 @@ import { exigirOrg } from "@/lib/auth";
 import { listarCarteiras, nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
 import { formatarData } from "@/lib/contas";
 import {
+  LIMITE_HISTORICO,
   TIPOS_REGISTRO,
   caminhoEntidade,
   historico,
@@ -106,6 +107,12 @@ export default async function PaginaHistorico({
         </Vazio>
       ) : (
         <section className="painel">
+          {registros.length >= LIMITE_HISTORICO && (
+            <p className="nota">
+              Mostrando os {LIMITE_HISTORICO} registros mais recentes do período. Encurte o
+              período ou filtre por carteira para ver o restante.
+            </p>
+          )}
           {Object.entries(porDia).map(([dia, doDia]) => (
             <div key={dia} className="grupo-dia">
               <p className="olho">{formatarData(dia)}</p>

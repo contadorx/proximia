@@ -12,6 +12,7 @@ export type ResumoCarteira = {
   contas_total: number;
   contas_protecao: number;
   contas_potencial: number;
+  contas_potencial_protecao: number;
   contas_capturado: number;
   frentes_abertas: number;
   frentes_casos: number;
@@ -100,7 +101,10 @@ export function totaisGerais(linhas: ResumoCarteira[]) {
       frentes: t.frentes + Number(r.frentes_abertas),
       casos: t.casos + Number(r.frentes_casos),
       potencial: t.potencial + Number(r.frentes_potencial) + Number(r.contas_potencial),
-      protecao: t.protecao + Number(r.frentes_potencial_protecao),
+      protecao:
+        t.protecao +
+        Number(r.frentes_potencial_protecao) +
+        Number(r.contas_potencial_protecao ?? 0),
       capturado: t.capturado + Number(r.frentes_capturado) + Number(r.contas_capturado),
       oportunidades: t.oportunidades + Number(r.oportunidades_abertas),
       investimento: t.investimento + Number(r.oportunidades_investimento),

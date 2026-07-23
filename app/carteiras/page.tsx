@@ -11,6 +11,8 @@ import {
 import { criarCarteira } from "@/app/acoes/carteiras";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
+import { BotaoEnviar } from "@/components/botao-enviar";
+import { FormAcao } from "@/components/form-acao";
 import { CampoScore } from "@/components/campos";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +30,7 @@ export default async function PaginaCarteiras({
   const podeCriar = podeEscrever(org.papel) && org.papel !== "ponto_focal";
 
   const formulario = (
-    <form action={criarCarteira} className="formulario">
+    <FormAcao action={criarCarteira}>
       <div className="formulario-linha">
         <label className="campo">
           <span>Nome</span>
@@ -63,10 +65,8 @@ export default async function PaginaCarteiras({
           <input type="text" name="score_ciclo" maxLength={20} placeholder="2026-1" />
         </label>
       </div>
-      <button className="botao botao-primario" type="submit">
-        Criar carteira
-      </button>
-    </form>
+      <BotaoEnviar>Criar carteira</BotaoEnviar>
+    </FormAcao>
   );
 
   return (

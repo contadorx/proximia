@@ -17,6 +17,8 @@ import {
 import { Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
 import { Seletor } from "@/components/seletor";
+import { BotaoEnviar } from "@/components/botao-enviar";
+import { FormAcao } from "@/components/form-acao";
 
 /**
  * Compromissos de uma entidade, no mesmo tratamento que histórico e
@@ -71,7 +73,7 @@ export async function Compromissos({
             descricao="Já vinculado a este registro."
             icone={<CalendarPlus size={15} />}
           >
-            <form action={criarCompromisso} className="formulario">
+            <FormAcao action={criarCompromisso}>
               <input type="hidden" name="volta" value={volta} />
               <input type="hidden" name="carteira_id" value={carteiraId} />
               <input type="hidden" name="alvo" value={`${entidadeTipo}:${entidadeId}`} />
@@ -105,10 +107,8 @@ export async function Compromissos({
                 <input type="text" name="descricao" maxLength={200} placeholder="opcional" />
               </label>
 
-              <button className="botao botao-primario" type="submit">
-                Registrar compromisso
-              </button>
-            </form>
+              <BotaoEnviar>Registrar compromisso</BotaoEnviar>
+            </FormAcao>
           </Modal>
         )}
       </div>
@@ -158,9 +158,7 @@ export async function Compromissos({
                         inicial={c.dono_id ?? ""}
                         vazio="Sem responsável"
                       />
-                      <button className="botao botao-primario" type="submit">
-                        Salvar
-                      </button>
+                      <BotaoEnviar>Salvar</BotaoEnviar>
                     </form>
                   </Modal>
                 )}

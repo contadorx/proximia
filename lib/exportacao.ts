@@ -123,7 +123,16 @@ function celula(valor: unknown): string {
 
   if (typeof valor === "object") return JSON.stringify(valor).replace(/"/g, '""');
 
-  const texto = String(valor);
+  let texto = String(valor);
+
+  // Texto que começa com = + - @ vira fórmula quando o Excel abre o
+  // arquivo — e histórico e nomes são texto livre de várias mãos. O
+  // apóstrofo na frente neutraliza sem mudar o que se lê. Números e
+  // booleanos não passam por aqui como texto, então não são afetados.
+  if (typeof valor === "string" && /^[=+\-@]/.test(texto)) {
+    texto = `'${texto}`;
+  }
+
   // Aspas, separador e quebra de linha exigem o campo entre aspas — sem
   // isso, uma observação com ponto e vírgula desloca a planilha inteira.
   if (texto.includes('"') || texto.includes(SEPARADOR) || /[\r\n]/.test(texto)) {

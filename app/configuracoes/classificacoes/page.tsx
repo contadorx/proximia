@@ -5,6 +5,7 @@ import { classificacoes, porGrupo } from "@/lib/classificacoes";
 import { criarClassificacao, excluirClassificacao } from "@/app/acoes/classificacoes";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
+import { BotaoEnviar } from "@/components/botao-enviar";
 import { BotaoExcluir } from "@/components/botao-excluir";
 
 export const dynamic = "force-dynamic";
@@ -76,9 +77,9 @@ export default async function PaginaClassificacoes({
                   <span>Descrição</span>
                   <input type="text" name="descricao" maxLength={160} placeholder="opcional" />
                 </label>
-                <button className="botao botao-primario" type="submit">
+                <BotaoEnviar>
                   Criar
-                </button>
+                </BotaoEnviar>
               </form>
             </Modal>
           </div>

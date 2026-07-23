@@ -51,8 +51,12 @@ export async function excluirPapel(formData: FormData) {
   const id = String(formData.get("id") ?? "");
 
   const supabase = criarClienteServidor();
-  const { error } = await supabase.from("papeis_operacionais").delete().eq("id", id);
+  const { error, count } = await supabase
+    .from("papeis_operacionais")
+    .delete({ count: "exact" })
+    .eq("id", id);
   if (error) comErro("/configuracoes", traduzir(error.message, error.code));
+  if (count === 0) comErro("/configuracoes", "Nada foi excluído: seu perfil não permite alterar papéis.");
 
   revalidatePath("/configuracoes");
   redirect(`/configuracoes?ok=${encodeURIComponent("Papel excluído.")}`);
@@ -96,8 +100,12 @@ export async function removerResponsavel(formData: FormData) {
   const rota = `/carteiras/${carteiraId}`;
 
   const supabase = criarClienteServidor();
-  const { error } = await supabase.from("responsabilidades").delete().eq("id", id);
+  const { error, count } = await supabase
+    .from("responsabilidades")
+    .delete({ count: "exact" })
+    .eq("id", id);
   if (error) comErro(rota, traduzir(error.message, error.code));
+  if (count === 0) comErro(rota, "Nada foi removido: seu perfil não permite alterar responsabilidades.");
 
   await supabase.rpc("atribuir_alertas", { p_org: org.orgId });
 

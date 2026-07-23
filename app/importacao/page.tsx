@@ -5,6 +5,7 @@ import { formatarData } from "@/lib/contas";
 import { MODELOS, type TipoImportacao } from "@/lib/importacao";
 import { conferirArquivo } from "@/app/acoes/importacao";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
+import { BotaoEnviar } from "@/components/botao-enviar";
 
 export const dynamic = "force-dynamic";
 
@@ -81,9 +82,9 @@ export default async function PaginaImportacao({
             />
           </label>
 
-          <button className="botao botao-primario" type="submit">
+          <BotaoEnviar>
             Conferir arquivo
-          </button>
+          </BotaoEnviar>
           <p className="nota" style={{ marginTop: 4 }}>
             Nada é gravado nesta etapa.
           </p>

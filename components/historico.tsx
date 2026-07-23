@@ -9,6 +9,8 @@ import {
 import { criarRegistro, editarRegistro } from "@/app/acoes/registros";
 import { Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
+import { BotaoEnviar } from "@/components/botao-enviar";
+import { FormAcao } from "@/components/form-acao";
 import { Plus, Pencil } from "lucide-react";
 
 /**
@@ -50,7 +52,7 @@ export async function Historico({
             descricao="Escreva como contaria a alguém que assume amanhã."
             icone={<Plus size={15} />}
           >
-            <form action={criarRegistro} className="formulario">
+            <FormAcao action={criarRegistro}>
               <input type="hidden" name="entidade_tipo" value={entidadeTipo} />
               <input type="hidden" name="entidade_id" value={entidadeId} />
               <input type="hidden" name="carteira_id" value={carteiraId} />
@@ -78,10 +80,8 @@ export async function Historico({
                 <span>O que aconteceu</span>
                 <textarea name="corpo" rows={4} required autoFocus />
               </label>
-              <button className="botao botao-primario" type="submit">
-                Registrar
-              </button>
-            </form>
+              <BotaoEnviar>Registrar</BotaoEnviar>
+            </FormAcao>
           </Modal>
         )}
       </div>
@@ -114,7 +114,7 @@ export async function Historico({
                     variante="link"
                     icone={<Pencil size={13} />}
                   >
-                  <form action={editarRegistro} className="formulario">
+                  <FormAcao action={editarRegistro}>
                     <input type="hidden" name="id" value={r.id} />
                     <input type="hidden" name="entidade_tipo" value={entidadeTipo} />
                     <input type="hidden" name="entidade_id" value={entidadeId} />
@@ -142,10 +142,8 @@ export async function Historico({
                       <span>Conteúdo</span>
                       <textarea name="corpo" rows={3} defaultValue={r.corpo} required />
                     </label>
-                    <button className="botao botao-secundario" type="submit">
-                      Salvar como nova versão
-                    </button>
-                    </form>
+                    <BotaoEnviar variante="secundario">Salvar como nova versão</BotaoEnviar>
+                    </FormAcao>
                   </Modal>
                 </div>
               )}

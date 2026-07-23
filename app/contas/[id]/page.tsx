@@ -27,6 +27,9 @@ import { SeletorMultiplo } from "@/components/seletor";
 import { Tags } from "lucide-react";
 import { Capturas } from "@/components/capturas";
 import { classeFase, formatarPayback, listarOportunidades, rotuloFase } from "@/lib/oportunidades";
+import { BotaoEnviar } from "@/components/botao-enviar";
+import { FormAcao } from "@/components/form-acao";
+import { CampoCnpj, CampoValor } from "@/components/campos";
 
 
 export const dynamic = "force-dynamic";
@@ -192,7 +195,7 @@ export default async function PaginaConta({
         )}
 
         {editavel && (
-          <form action={criarContato} className="formulario formulario-linha" style={{ marginTop: 20 }}>
+          <FormAcao action={criarContato} className="formulario formulario-linha">
             <input type="hidden" name="conta_id" value={conta.id} />
             <label className="campo">
               <span>Nome</span>
@@ -214,16 +217,14 @@ export default async function PaginaConta({
               <span>Principal</span>
               <input type="checkbox" name="principal" />
             </label>
-            <button className="botao botao-primario" type="submit">
-              Incluir contato
-            </button>
-          </form>
+            <BotaoEnviar>Incluir contato</BotaoEnviar>
+          </FormAcao>
         )}
       </section>
 
       {editavel && (
         <Modal rotulo="Editar conta" titulo="Editar conta" descricao="Potencial exige origem declarada." largo icone={<Pencil size={15} />} variante="secundario">
-          <form action={atualizarConta} className="formulario">
+          <FormAcao action={atualizarConta}>
             <input type="hidden" name="id" value={conta.id} />
 
             <div className="formulario-linha">
@@ -240,10 +241,9 @@ export default async function PaginaConta({
                   maxLength={160}
                 />
               </label>
-              <label className="campo">
-                <span>CNPJ</span>
-                <input type="text" name="documento" defaultValue={conta.documento ?? ""} maxLength={20} />
-              </label>
+              {/* Mesmo campo da criação: máscara e conferência de dígitos.
+                  Editar não pode ser menos cuidadoso do que criar. */}
+              <CampoCnpj inicial={conta.documento} />
             </div>
 
             <div className="formulario-linha">
@@ -292,15 +292,11 @@ export default async function PaginaConta({
             </div>
 
             <div className="formulario-linha">
-              <label className="campo">
-                <span>Potencial estimado</span>
-                <input
-                  type="text"
-                  name="potencial_bruto"
-                  inputMode="decimal"
-                  defaultValue={conta.potencial_bruto ?? ""}
-                />
-              </label>
+              <CampoValor
+                nome="potencial_bruto"
+                rotulo="Potencial estimado"
+                inicial={conta.potencial_bruto}
+              />
               <label className="campo">
                 <span>Origem da estimativa</span>
                 <input
@@ -326,10 +322,8 @@ export default async function PaginaConta({
               <textarea name="observacoes" rows={4} defaultValue={conta.observacoes ?? ""} />
             </label>
 
-            <button className="botao botao-primario" type="submit">
-              Salvar alterações
-            </button>
-          </form>
+            <BotaoEnviar>Salvar alterações</BotaoEnviar>
+          </FormAcao>
         </Modal>
       )}
 
@@ -380,9 +374,7 @@ export default async function PaginaConta({
                     rotuloTodas="Não classificado"
                   />
                 ))}
-                <button className="botao botao-primario" type="submit">
-                  Salvar classificação
-                </button>
+                <BotaoEnviar>Salvar classificação</BotaoEnviar>
                 <p className="nota">
                   Salvar substitui a classificação inteira da conta pelo que estiver marcado aqui.
                 </p>

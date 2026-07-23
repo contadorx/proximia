@@ -14,6 +14,8 @@ import {
 } from "@/lib/maturidade";
 import { concluirAvaliacao, reabrirAvaliacao, salvarRespostas } from "@/app/acoes/maturidade";
 import { Vazio } from "@/components/intro-secao";
+import { BotaoEnviar } from "@/components/botao-enviar";
+import { criarClienteServidor } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -28,13 +30,23 @@ export default async function PaginaAvaliacao({
   const avaliacao = await obterAvaliacao(params.id);
   if (!avaliacao) notFound();
 
-  const [dimensoes, perguntas, respostas, porDimensao, historico] = await Promise.all([
-    listarDimensoes(org.orgId),
-    listarPerguntas(org.orgId),
-    respostasDaAvaliacao(avaliacao.avaliacao_id),
-    scoresPorDimensao(avaliacao.avaliacao_id),
-    listarResultados(org.orgId),
-  ]);
+  const [dimensoes, perguntas, respostas, porDimensao, historico, { data: detalhe }] =
+    await Promise.all([
+      listarDimensoes(org.orgId),
+      listarPerguntas(org.orgId),
+      respostasDaAvaliacao(avaliacao.avaliacao_id),
+      scoresPorDimensao(avaliacao.avaliacao_id),
+      listarResultados(org.orgId),
+      // A visão de resultado não carrega as observações; elas moram na
+      // própria avaliação — e precisam voltar ao formulário, senão cada
+      // "Salvar respostas" apagava o que havia sido escrito.
+      criarClienteServidor()
+        .from("maturidade_avaliacoes")
+        .select("observacoes")
+        .eq("id", params.id)
+        .maybeSingle(),
+    ]);
+  const observacoes = ((detalhe as { observacoes: string | null } | null)?.observacoes ?? "").trim();
 
   const editavel = podeEscrever(org.papel) && avaliacao.status === "rascunho";
   const f = faixa(avaliacao.score);
@@ -71,19 +83,19 @@ export default async function PaginaAvaliacao({
           {avaliacao.status === "rascunho" && podeEscrever(org.papel) && (
             <form action={concluirAvaliacao}>
               <input type="hidden" name="id" value={avaliacao.avaliacao_id} />
-              <button className="botao botao-primario" type="submit">
+              <BotaoEnviar>
                 <CheckCircle2 size={15} />
                 Concluir avaliação
-              </button>
+              </BotaoEnviar>
             </form>
           )}
           {avaliacao.status === "concluida" && podeEscrever(org.papel) && (
             <form action={reabrirAvaliacao}>
               <input type="hidden" name="id" value={avaliacao.avaliacao_id} />
-              <button className="botao botao-secundario" type="submit">
+              <BotaoEnviar variante="secundario">
                 <RotateCcw size={15} />
                 Reabrir
-              </button>
+              </BotaoEnviar>
             </form>
           )}
         </div>
@@ -215,17 +227,27 @@ export default async function PaginaAvaliacao({
             <section className="painel">
               <label className="campo">
                 <span>Observações da avaliação</span>
-                <textarea name="observacoes" rows={3} />
+                <textarea name="observacoes" rows={3} defaultValue={observacoes} />
+                <small>O que estiver aqui é salvo junto com as respostas.</small>
               </label>
-              <button className="botao botao-primario" type="submit" style={{ marginTop: 16 }}>
-                Salvar respostas
-              </button>
+              <div style={{ marginTop: 16 }}>
+                <BotaoEnviar>Salvar respostas</BotaoEnviar>
+              </div>
               <p className="nota" style={{ marginTop: 10, marginBottom: 0 }}>
                 Pergunta deixada em branco fica fora do cálculo — não vira zero.
               </p>
             </section>
           )}
         </form>
+      )}
+
+      {!editavel && observacoes && (
+        <section className="painel">
+          <h2>Observações da avaliação</h2>
+          <p className="nota" style={{ marginBottom: 0 }}>
+            {observacoes}
+          </p>
+        </section>
       )}
     </>
   );

@@ -20,6 +20,9 @@ import { Historico } from "@/components/historico";
 import { Anexos } from "@/components/anexos";
 import { Compromissos } from "@/components/compromissos";
 import { Capturas } from "@/components/capturas";
+import { BotaoEnviar } from "@/components/botao-enviar";
+import { FormAcao } from "@/components/form-acao";
+import { CampoQuantidade, CampoValor } from "@/components/campos";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +64,11 @@ export default async function PaginaFrente({
 
       <div className="linha-titulo">
         <h1>{frente.titulo}</h1>
+        {frente.natureza === "protecao" && (
+          <span className="selo selo-atencao" title="Receita que já existe e pode ser perdida — não soma ao potencial de captura.">
+            proteção
+          </span>
+        )}
         <span className={classeStatus(frente.status)}>{rotuloStatus(frente.status)}</span>
       </div>
 
@@ -161,16 +169,14 @@ export default async function PaginaFrente({
               <span>Endereço</span>
               <input type="url" name="url" required placeholder="https://" />
             </label>
-            <button className="botao botao-secundario" type="submit">
-              Incluir link
-            </button>
+            <BotaoEnviar variante="secundario">Incluir link</BotaoEnviar>
           </form>
         )}
       </section>
 
       {editavel && (
         <Modal rotulo="Editar frente" titulo="Editar frente" descricao="Descarte exige motivo." largo icone={<Pencil size={15} />} variante="secundario">
-          <form action={atualizarFrente} className="formulario">
+          <FormAcao action={atualizarFrente}>
             <input type="hidden" name="id" value={frente.id} />
 
             <div className="formulario-linha">
@@ -212,6 +218,29 @@ export default async function PaginaFrente({
               </label>
             </div>
 
+            <div className="formulario-linha">
+              {/* Classificar errado na criação não pode ser para sempre:
+                  natureza e prioridade agora se corrigem aqui. */}
+              <label className="campo">
+                <span>Natureza</span>
+                <select name="natureza" defaultValue={frente.natureza}>
+                  <option value="captura">Captura — receita nova</option>
+                  <option value="protecao">Proteção — receita que já existe</option>
+                </select>
+                <small>Proteção não soma ao potencial a capturar.</small>
+              </label>
+              <label className="campo">
+                <span>Prioridade</span>
+                <select name="prioridade" defaultValue={String(frente.prioridade ?? 3)}>
+                  <option value="1">1 · Máxima</option>
+                  <option value="2">2 · Alta</option>
+                  <option value="3">3 · Média</option>
+                  <option value="4">4 · Baixa</option>
+                  <option value="5">5 · Mínima</option>
+                </select>
+              </label>
+            </div>
+
             <label className="campo">
               <span>Motivo do descarte</span>
               <input
@@ -225,10 +254,12 @@ export default async function PaginaFrente({
             </label>
 
             <div className="formulario-linha">
-              <label className="campo">
-                <span>Casos</span>
-                <input type="number" name="qtd_casos" min={0} defaultValue={frente.qtd_casos ?? ""} />
-              </label>
+              <CampoQuantidade
+                nome="qtd_casos"
+                rotulo="Casos"
+                inicial={frente.qtd_casos}
+                ajuda="Quantos itens a frente representa."
+              />
               <label className="campo">
                 <span>Próxima etapa</span>
                 <input
@@ -245,15 +276,11 @@ export default async function PaginaFrente({
             </div>
 
             <div className="formulario-linha">
-              <label className="campo">
-                <span>Potencial estimado</span>
-                <input
-                  type="text"
-                  name="potencial_bruto"
-                  inputMode="decimal"
-                  defaultValue={frente.potencial_bruto ?? ""}
-                />
-              </label>
+              <CampoValor
+                nome="potencial_bruto"
+                rotulo="Potencial estimado"
+                inicial={frente.potencial_bruto}
+              />
               <label className="campo">
                 <span>Origem da estimativa</span>
                 <input
@@ -278,10 +305,8 @@ export default async function PaginaFrente({
               <textarea name="observacoes" rows={4} defaultValue={frente.observacoes ?? ""} />
             </label>
 
-            <button className="botao botao-primario" type="submit">
-              Salvar alterações
-            </button>
-          </form>
+            <BotaoEnviar>Salvar alterações</BotaoEnviar>
+          </FormAcao>
         </Modal>
       )}
       <Capturas

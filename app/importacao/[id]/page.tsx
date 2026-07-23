@@ -5,6 +5,7 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { MODELOS, type TipoImportacao } from "@/lib/importacao";
 import { confirmarImportacao, descartarImportacao } from "@/app/acoes/importacao";
 import { Vazio } from "@/components/intro-secao";
+import { BotaoEnviar } from "@/components/botao-enviar";
 
 export const dynamic = "force-dynamic";
 
@@ -91,9 +92,9 @@ export default async function PaginaRelatorio({
           <div className="acoes-rodape" style={{ marginTop: 22 }}>
             <form action={confirmarImportacao}>
               <input type="hidden" name="id" value={imp.id} />
-              <button className="botao botao-primario" type="submit" disabled={imp.linhas_ok === 0}>
+              <BotaoEnviar desabilitado={imp.linhas_ok === 0} rotuloEnviando="Gravando…">
                 Gravar {imp.linhas_ok} {imp.linhas_ok === 1 ? "registro" : "registros"}
-              </button>
+              </BotaoEnviar>
             </form>
             <form action={descartarImportacao}>
               <input type="hidden" name="id" value={imp.id} />

@@ -73,6 +73,9 @@ export type Clausula = {
 const CAMPOS =
   "id, conta_id, carteira_id, numero, tipo, modalidade, natureza_beneficio, inicio, fim, renovacao_automatica, aviso_previa_dias, valor_base, periodicidade, status, link_documento, observacoes, janela_renegociacao";
 
+/** Teto de linhas por consulta. Quando a lista bate nele, a tela avisa. */
+export const LIMITE_CONTRATOS = 300;
+
 export async function listarContratos(opcoes: {
   orgId: string;
   contaId?: string;
@@ -87,7 +90,9 @@ export async function listarContratos(opcoes: {
   if (opcoes.carteiraId) consulta = consulta.eq("carteira_id", opcoes.carteiraId);
   if (opcoes.carteiras?.length) consulta = consulta.in("carteira_id", opcoes.carteiras);
 
-  const { data, error } = await consulta.order("fim", { nullsFirst: false }).limit(300);
+  const { data, error } = await consulta
+    .order("fim", { nullsFirst: false })
+    .limit(LIMITE_CONTRATOS);
   if (error) {
     console.error("[contratos] falha ao listar:", error.message);
     return [];

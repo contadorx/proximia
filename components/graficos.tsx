@@ -6,17 +6,30 @@ import type { MesCaptura } from "@/lib/captura";
  * JavaScript no navegador: são leituras, não brinquedos interativos.
  */
 
-export function BarrasMensais({ serie }: { serie: MesCaptura[] }) {
+export function BarrasMensais({
+  serie,
+  rotulo = "Valor confirmado por mês nos últimos doze meses",
+  formato = "valor",
+}: {
+  serie: MesCaptura[];
+  /** O que o gráfico mostra — vai para o leitor de tela. */
+  rotulo?: string;
+  /** "valor" formata em R$; "numero" é contagem. Reusar o gráfico para
+   *  contar assinantes anunciava "pico R$ 3" — número precisa dizer que
+   *  é número. */
+  formato?: "valor" | "numero";
+}) {
   const maior = Math.max(1, ...serie.map((p) => p.valor));
   const largura = 720;
   const altura = 180;
   const base = altura - 26;
-  const passo = largura / serie.length;
+  const passo = largura / Math.max(1, serie.length);
   const larguraBarra = Math.min(38, passo * 0.6);
+  const legivel = (v: number) =>
+    formato === "valor" ? formatarValor(v) : v.toLocaleString("pt-BR");
 
   return (
-    <svg viewBox={`0 0 ${largura} ${altura}`} className="grafico" role="img"
-      aria-label="Valor confirmado por mês nos últimos doze meses">
+    <svg viewBox={`0 0 ${largura} ${altura}`} className="grafico" role="img" aria-label={rotulo}>
       <line x1="0" y1={base} x2={largura} y2={base} stroke="var(--g200)" />
 
       {serie.map((p, i) => {
@@ -34,7 +47,10 @@ export function BarrasMensais({ serie }: { serie: MesCaptura[] }) {
                 rx="3"
                 fill={destaque ? "var(--esmeralda)" : "var(--esmeralda-pale)"}
                 stroke={destaque ? "var(--esmeralda)" : "#c4e8d7"}
-              />
+              >
+                {/* Cada barra diz o próprio valor — antes só o pico era legível. */}
+                <title>{`${p.rotulo}: ${legivel(p.valor)}`}</title>
+              </rect>
             )}
             <text
               x={i * passo + passo / 2}
@@ -49,7 +65,7 @@ export function BarrasMensais({ serie }: { serie: MesCaptura[] }) {
       })}
 
       <text x="0" y="12" className="rotulo-eixo">
-        pico {formatarValor(maior)}
+        pico {legivel(maior)}
       </text>
     </svg>
   );

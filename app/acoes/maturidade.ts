@@ -143,7 +143,7 @@ export async function criarReguaInicial() {
       );
     }
 
-    await supabase.from("maturidade_perguntas").insert(
+    const { error: erroPerguntas } = await supabase.from("maturidade_perguntas").insert(
       d.perguntas.map((texto, j) => ({
         org_id: org.orgId,
         dimensao_id: (data as { id: string }).id,
@@ -151,6 +151,9 @@ export async function criarReguaInicial() {
         ordem: j + 1,
       })),
     );
+    if (erroPerguntas) {
+      comErro("/maturidade", `A régua parou no meio: ${traduzir(erroPerguntas.message, erroPerguntas.code)}`);
+    }
   }
 
   revalidatePath("/maturidade");
@@ -246,10 +249,16 @@ export async function salvarRespostas(formData: FormData) {
     if (error) comErro(rota, traduzir(error.message, error.code));
   }
 
-  await supabase
-    .from("maturidade_avaliacoes")
-    .update({ observacoes: texto(formData, "observacoes") })
-    .eq("id", avaliacaoId);
+  // Só toca nas observações se o campo veio no formulário — e o campo
+  // agora vem preenchido com o que já existia. Antes, salvar respostas
+  // com o campo em branco apagava o que havia sido escrito.
+  if (formData.has("observacoes")) {
+    const { error: erroObs } = await supabase
+      .from("maturidade_avaliacoes")
+      .update({ observacoes: texto(formData, "observacoes") })
+      .eq("id", avaliacaoId);
+    if (erroObs) comErro(rota, traduzir(erroObs.message, erroObs.code));
+  }
 
   revalidatePath(rota);
   redirect(`${rota}?ok=${encodeURIComponent("Respostas salvas.")}`);
@@ -261,12 +270,13 @@ export async function concluirAvaliacao(formData: FormData) {
   const rota = `/maturidade/${id}`;
 
   const supabase = criarClienteServidor();
-  const { error } = await supabase
+  const { error, count } = await supabase
     .from("maturidade_avaliacoes")
-    .update({ status: "concluida" })
+    .update({ status: "concluida" }, { count: "exact" })
     .eq("id", id);
 
   if (error) comErro(rota, traduzir(error.message, error.code));
+  if (count === 0) comErro(rota, "Nada mudou: seu perfil não permite concluir esta avaliação.");
 
   revalidatePath(rota);
   revalidatePath("/maturidade");
@@ -279,7 +289,13 @@ export async function reabrirAvaliacao(formData: FormData) {
   const rota = `/maturidade/${id}`;
 
   const supabase = criarClienteServidor();
-  await supabase.from("maturidade_avaliacoes").update({ status: "rascunho" }).eq("id", id);
+  const { error, count } = await supabase
+    .from("maturidade_avaliacoes")
+    .update({ status: "rascunho" }, { count: "exact" })
+    .eq("id", id);
+
+  if (error) comErro(rota, traduzir(error.message, error.code));
+  if (count === 0) comErro(rota, "Nada mudou: seu perfil não permite reabrir esta avaliação.");
 
   revalidatePath(rota);
   redirect(`${rota}?ok=${encodeURIComponent("Avaliação reaberta.")}`);

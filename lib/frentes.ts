@@ -66,7 +66,7 @@ export type Frente = {
 export type TipoFrente = { id: string; nome: string; descricao: string | null; ativo: boolean };
 
 const CAMPOS =
-  "id, carteira_id, catalogo_id, titulo, status, motivo_descarte, dono_id, qtd_casos, potencial_bruto, potencial_origem, potencial_data, valor_capturado, capturado_confirmado_em, proxima_etapa, prazo, links, observacoes, atualizado_em";
+  "id, carteira_id, catalogo_id, titulo, natureza, prioridade, status, motivo_descarte, dono_id, qtd_casos, potencial_bruto, potencial_origem, potencial_data, valor_capturado, capturado_confirmado_em, proxima_etapa, prazo, links, observacoes, atualizado_em";
 
 const ORDEM: Record<StatusFrente, number> = {
   em_execucao: 0,
@@ -75,6 +75,9 @@ const ORDEM: Record<StatusFrente, number> = {
   concluida: 3,
   descartada: 4,
 };
+
+/** Teto de linhas por consulta. Quando a lista bate nele, a tela avisa. */
+export const LIMITE_FRENTES = 300;
 
 export async function listarFrentes(opcoes: {
   orgId: string;
@@ -89,7 +92,7 @@ export async function listarFrentes(opcoes: {
   if (opcoes.carteiras?.length) consulta = consulta.in("carteira_id", opcoes.carteiras);
   if (opcoes.status?.length) consulta = consulta.in("status", opcoes.status);
 
-  const { data, error } = await consulta.limit(300);
+  const { data, error } = await consulta.limit(LIMITE_FRENTES);
   if (error) {
     console.error("[frentes] falha ao listar:", error.message);
     return [];
@@ -133,13 +136,22 @@ export function classeStatus(status: StatusFrente): string {
   return "selo selo-neutro";
 }
 
-/** Totais de uma lista. Potencial e capturado somam separados, nunca juntos. */
+/**
+ * Totais de uma lista. Potencial e capturado somam separados, nunca
+ * juntos — e captura e proteção também: somar desconto a defender como
+ * receita a conquistar é o erro que a natureza existe para impedir.
+ */
 export function totais(frentes: Frente[]) {
   const ativas = frentes.filter((f) => f.status !== "descartada" && f.status !== "concluida");
   return {
     ativas: ativas.length,
     casos: ativas.reduce((t, f) => t + (f.qtd_casos ?? 0), 0),
-    potencial: ativas.reduce((t, f) => t + Number(f.potencial_bruto ?? 0), 0),
+    potencial: ativas
+      .filter((f) => f.natureza !== "protecao")
+      .reduce((t, f) => t + Number(f.potencial_bruto ?? 0), 0),
+    protecao: ativas
+      .filter((f) => f.natureza === "protecao")
+      .reduce((t, f) => t + Number(f.potencial_bruto ?? 0), 0),
     capturado: frentes.reduce((t, f) => t + Number(f.valor_capturado ?? 0), 0),
   };
 }

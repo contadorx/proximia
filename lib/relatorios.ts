@@ -103,12 +103,14 @@ export const fotosMensais = (org: string, c?: string[]) =>
     c,
   );
 
-export async function temposPorEtapa(orgId: string): Promise<LinhaEtapa[]> {
+export async function temposPorEtapa(orgId: string, carteiras?: string[]): Promise<LinhaEtapa[]> {
   const supabase = criarClienteServidor();
-  const { data } = await supabase
-    .from("tempo_por_etapa")
-    .select("fase, passagens, dias_medio, dias_mediana, dias_maximo")
-    .eq("org_id", orgId);
+  // A função filtra na origem: mediana não se recombina depois de
+  // agregada, então o recorte por carteira precisa nascer na consulta.
+  const { data } = await supabase.rpc("tempo_por_etapa_filtrado", {
+    p_org: orgId,
+    p_carteiras: carteiras?.length ? carteiras : null,
+  });
   return (data ?? []) as LinhaEtapa[];
 }
 

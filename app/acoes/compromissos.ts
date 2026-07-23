@@ -4,14 +4,10 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { exigirOrg, exigirUsuario } from "@/lib/auth";
+import { inteiroDe, textoDe, type EstadoAcao } from "@/lib/formulario";
 
 function comErro(rota: string, mensagem: string): never {
   redirect(`${rota}?erro=${encodeURIComponent(mensagem)}`);
-}
-
-function texto(formData: FormData, campo: string): string | null {
-  const valor = String(formData.get(campo) ?? "").trim();
-  return valor === "" ? null : valor;
 }
 
 function traduzir(mensagem: string, codigo?: string): string {
@@ -21,42 +17,70 @@ function traduzir(mensagem: string, codigo?: string): string {
   return mensagem;
 }
 
-export async function criarCompromisso(formData: FormData) {
+const TABELA_DO_ALVO: Record<string, string> = {
+  conta: "contas",
+  contrato: "contratos",
+  frente: "frentes",
+  oportunidade: "oportunidades",
+};
+
+export async function criarCompromisso(
+  _estado: EstadoAcao,
+  formData: FormData,
+): Promise<EstadoAcao> {
   const org = await exigirOrg();
   const usuario = await exigirUsuario();
   const rota = String(formData.get("volta") ?? "/compromissos");
 
-  const titulo = texto(formData, "titulo");
-  const venceEm = texto(formData, "vence_em");
+  const titulo = textoDe(formData, "titulo");
+  const venceEm = textoDe(formData, "vence_em");
 
   // A entidade chega como "tipo:id" num campo só. Dois seletores
   // dependentes seriam pior: o segundo teria de recarregar quando o
   // primeiro muda, e a pessoa erraria a combinação.
-  const alvo = texto(formData, "alvo");
+  const alvo = textoDe(formData, "alvo");
   const [tipoAlvo, idAlvo] = alvo ? alvo.split(":") : [];
 
-  const carteiraId = String(formData.get("carteira_id") ?? "");
+  let carteiraId = String(formData.get("carteira_id") ?? "");
 
-  if (!titulo) comErro(rota, "Diga o que precisa ser feito.");
-  if (!venceEm) comErro(rota, "Informe a data. Compromisso sem data não é compromisso.");
-  if (!carteiraId) comErro(rota, "Escolha a carteira.");
+  if (!titulo) return { erro: "Diga o que precisa ser feito." };
+  if (!venceEm) return { erro: "Informe a data. Compromisso sem data não é compromisso." };
 
   const supabase = criarClienteServidor();
+
+  // A carteira vem do alvo, não da escolha solta no formulário: um
+  // compromisso sobre a conta X não pode nascer preso à carteira Y —
+  // alertas e responsabilidade herdariam o endereço errado.
+  if (tipoAlvo === "carteira" && idAlvo) {
+    carteiraId = idAlvo;
+  } else if (tipoAlvo && idAlvo && TABELA_DO_ALVO[tipoAlvo]) {
+    const { data: dono } = await supabase
+      .from(TABELA_DO_ALVO[tipoAlvo])
+      .select("carteira_id")
+      .eq("id", idAlvo)
+      .maybeSingle();
+    if (!dono) return { erro: "O registro escolhido não foi encontrado ou está fora do seu alcance." };
+    carteiraId = (dono as { carteira_id: string }).carteira_id;
+  }
+
+  if (!carteiraId) return { erro: "Escolha a carteira." };
+
   const { error } = await supabase.from("compromissos").insert({
     org_id: org.orgId,
     carteira_id: carteiraId,
     entidade_tipo: tipoAlvo ?? String(formData.get("entidade_tipo") ?? "carteira"),
     entidade_id: idAlvo ?? String(formData.get("entidade_id") ?? carteiraId),
     titulo,
-    descricao: texto(formData, "descricao"),
+    descricao: textoDe(formData, "descricao"),
     vence_em: venceEm,
-    dono_id: texto(formData, "dono_id") ?? usuario.id,
-    alerta_dias: Number(formData.get("alerta_dias") ?? 7) || 7,
+    dono_id: textoDe(formData, "dono_id") ?? usuario.id,
+    // Zero é pedido legítimo: avisar só no dia. `|| 7` engolia o zero.
+    alerta_dias: inteiroDe(formData, "alerta_dias", 7, 0, 365),
     origem: "manual",
     criado_por: usuario.id,
   });
 
-  if (error) comErro(rota, traduzir(error.message, error.code));
+  if (error) return { erro: traduzir(error.message, error.code) };
 
   revalidatePath(rota);
   redirect(`${rota}?ok=${encodeURIComponent("Compromisso registrado.")}`);

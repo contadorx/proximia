@@ -3,6 +3,7 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { usuarioAtual } from "@/lib/auth";
 import { rotuloPapel, type Papel } from "@/lib/tipos";
 import { aceitarConvite } from "@/app/acoes/convites";
+import { BotaoEnviar } from "@/components/botao-enviar";
 
 export const dynamic = "force-dynamic";
 
@@ -75,9 +76,9 @@ export default async function PaginaConvite({
         <div className="painel">
           <form action={aceitarConvite}>
             <input type="hidden" name="token" value={params.token} />
-            <button className="botao botao-primario" type="submit">
+            <BotaoEnviar>
               Aceitar convite
-            </button>
+            </BotaoEnviar>
           </form>
         </div>
       )}

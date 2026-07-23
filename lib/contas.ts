@@ -53,6 +53,9 @@ export type Contato = {
 const CAMPOS =
   "id, carteira_id, nome, razao_social, documento, segmento, relacao, criticidade, status, responsavel_id, potencial_bruto, potencial_origem, potencial_data, valor_capturado, capturado_confirmado_em, observacoes, atualizado_em";
 
+/** Teto de linhas por consulta. Quando a lista bate nele, a tela avisa. */
+export const LIMITE_CONTAS = 300;
+
 export async function listarContas(opcoes: {
   orgId: string;
   busca?: string;
@@ -76,7 +79,7 @@ export async function listarContas(opcoes: {
         : consulta.or(`nome.ilike.%${busca}%,razao_social.ilike.%${busca}%`);
   }
 
-  const { data, error } = await consulta.order("nome").limit(300);
+  const { data, error } = await consulta.order("nome").limit(LIMITE_CONTAS);
   if (error) {
     console.error("[contas] falha ao listar:", error.message);
     return [];

@@ -19,6 +19,7 @@ import { criarTipoOportunidade } from "@/app/acoes/oportunidades";
 import { listarOportunidades, tiposDeOportunidade } from "@/lib/oportunidades";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
+import { BotaoEnviar } from "@/components/botao-enviar";
 import { excluirTipoFrente, excluirTipoOportunidade } from "@/app/acoes/exclusoes";
 
 export const dynamic = "force-dynamic";
@@ -179,9 +180,9 @@ export default async function PaginaConfiguracoes({
                     <span>Papel primário</span>
                   </label>
                 </div>
-                <button className="botao botao-primario" type="submit">
+                <BotaoEnviar>
                   Criar papel
-                </button>
+                </BotaoEnviar>
                 <p className="nota">
                   O papel primário é quem responde por uma carteira quando não há dono mais
                   específico. Só pode haver um.
@@ -236,9 +237,9 @@ export default async function PaginaConfiguracoes({
                   <span>Descrição</span>
                   <input type="text" name="descricao" maxLength={160} placeholder="opcional" />
                 </label>
-                <button className="botao botao-primario" type="submit">
+                <BotaoEnviar>
                   Incluir tipo
-                </button>
+                </BotaoEnviar>
               </form>
             </Modal>
           )}
@@ -291,9 +292,9 @@ export default async function PaginaConfiguracoes({
                   <span>Descrição</span>
                   <input type="text" name="descricao" maxLength={160} placeholder="opcional" />
                 </label>
-                <button className="botao botao-primario" type="submit">
+                <BotaoEnviar>
                   Incluir tipo
-                </button>
+                </BotaoEnviar>
               </form>
             </Modal>
           )}
@@ -330,9 +331,9 @@ export default async function PaginaConfiguracoes({
           {administra && (
             <form action={alternarAnexos}>
               <input type="hidden" name="permitir" value={permiteAnexos ? "0" : "1"} />
-              <button className="botao botao-secundario" type="submit">
+              <BotaoEnviar variante="secundario">
                 {permiteAnexos ? "Ligar anexo zero" : "Permitir anexos"}
-              </button>
+              </BotaoEnviar>
             </form>
           )}
         </div>
@@ -375,9 +376,9 @@ export default async function PaginaConfiguracoes({
               />
               <span>Só quando houver alerta de severidade alta</span>
             </label>
-            <button className="botao botao-secundario" type="submit">
+            <BotaoEnviar variante="secundario">
               Salvar preferência
-            </button>
+            </BotaoEnviar>
           </div>
         </form>
         <p className="nota" style={{ marginBottom: 0 }}>
@@ -407,9 +408,9 @@ export default async function PaginaConfiguracoes({
                 <span>Repita a senha</span>
                 <input type="password" name="confirmacao" required minLength={8} />
               </label>
-              <button className="botao botao-primario" type="submit">
+              <BotaoEnviar>
                 Salvar senha
-              </button>
+              </BotaoEnviar>
             </form>
           </Modal>
         </div>

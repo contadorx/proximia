@@ -1,10 +1,38 @@
 import { NextResponse } from "next/server";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { exigirOrg, exigirUsuario } from "@/lib/auth";
-import { RECURSOS, nomeArquivo, paraCsv } from "@/lib/exportacao";
+import { RECURSOS, nomeArquivo, paraCsv, type Recurso } from "@/lib/exportacao";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
+
+// Página da paginação, não teto: a rota busca em blocos até esgotar.
+// Antes havia um corte silencioso em 5.000 linhas — e a tela promete que
+// os dados saem inteiros. Corte que ninguém vê é promessa quebrada.
+const PAGINA = 1000;
+
+async function buscarTudo(
+  supabase: SupabaseClient,
+  recurso: Recurso,
+): Promise<{ linhas: Record<string, unknown>[]; erro: string | null }> {
+  const linhas: Record<string, unknown>[] = [];
+
+  for (let inicio = 0; ; inicio += PAGINA) {
+    let consulta = supabase
+      .from(recurso.tabela)
+      .select(recurso.colunas)
+      .range(inicio, inicio + PAGINA - 1);
+    if (recurso.ordem) consulta = consulta.order(recurso.ordem);
+
+    const { data, error } = await consulta;
+    if (error) return { linhas, erro: error.message };
+
+    const bloco = (data ?? []) as unknown as Record<string, unknown>[];
+    linhas.push(...bloco);
+    if (bloco.length < PAGINA) return { linhas, erro: null };
+  }
+}
 
 /**
  * Exportação de um recurso, ou de tudo em JSON.
@@ -42,14 +70,14 @@ export async function GET(
 
     let total = 0;
     for (const r of RECURSOS) {
-      const { data, error } = await supabase.from(r.tabela).select(r.colunas).limit(5000);
-      if (error) {
-        console.error(`[exportar] ${r.chave}:`, error.message);
+      const { linhas, erro } = await buscarTudo(supabase, r);
+      if (erro) {
+        console.error(`[exportar] ${r.chave}:`, erro);
         pacote[r.chave] = { erro: "não foi possível exportar este recurso" };
         continue;
       }
-      pacote[r.chave] = data ?? [];
-      total += (data ?? []).length;
+      pacote[r.chave] = linhas;
+      total += linhas.length;
     }
 
     await registrar("tudo", "json", total);
@@ -69,19 +97,15 @@ export async function GET(
     return NextResponse.json({ erro: "Recurso não reconhecido." }, { status: 404 });
   }
 
-  let consulta = supabase.from(recurso.tabela).select(recurso.colunas).limit(5000);
-  if (recurso.ordem) consulta = consulta.order(recurso.ordem);
+  const { linhas, erro } = await buscarTudo(supabase, recurso);
 
-  const { data, error } = await consulta;
-
-  if (error) {
+  if (erro) {
     return NextResponse.json(
-      { erro: `Não foi possível exportar: ${error.message}` },
+      { erro: `Não foi possível exportar: ${erro}` },
       { status: 500 },
     );
   }
 
-  const linhas = (data ?? []) as unknown as Record<string, unknown>[];
   const colunas = recurso.colunas.split(",").map((c) => c.trim());
 
   await registrar(recurso.chave, "csv", linhas.length);

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { pedirRedefinicao } from "@/app/acoes/senha";
+import { BotaoEnviar } from "@/components/botao-enviar";
 
 export const dynamic = "force-dynamic";
 
@@ -40,9 +41,9 @@ export default function PaginaEsqueci({
                 <span>E-mail</span>
                 <input type="email" name="email" required autoFocus />
               </label>
-              <button className="botao botao-primario" type="submit">
+              <BotaoEnviar>
                 Enviar link
-              </button>
+              </BotaoEnviar>
             </form>
           </div>
 

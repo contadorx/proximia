@@ -35,6 +35,30 @@ function useFechaFora(aberto: boolean, fechar: () => void) {
 }
 
 /**
+ * Setas navegam entre as opções da lista aberta; Home e End vão às pontas.
+ * Sem isso, role="listbox" era promessa: só o mouse escolhia.
+ */
+function navegarLista(e: React.KeyboardEvent<HTMLDivElement>) {
+  if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
+
+  const lista = e.currentTarget.querySelectorAll<HTMLButtonElement>(".seletor-item");
+  if (lista.length === 0) return;
+  e.preventDefault();
+
+  const atual = Array.from(lista).indexOf(document.activeElement as HTMLButtonElement);
+  const destino =
+    e.key === "Home"
+      ? 0
+      : e.key === "End"
+        ? lista.length - 1
+        : e.key === "ArrowDown"
+          ? Math.min(atual + 1, lista.length - 1)
+          : Math.max(atual - 1, 0);
+
+  lista[destino].focus();
+}
+
+/**
  * Escolha única, com busca. Usado onde o vínculo é único por natureza:
  * a conta pertence a uma carteira, o contrato a uma conta. Permitir marcar
  * vários aqui não daria liberdade, daria ambiguidade — na hora de gravar
@@ -92,7 +116,7 @@ export function Seletor({
         </button>
 
         {aberto && (
-          <div className="seletor-menu" role="listbox">
+          <div className="seletor-menu" role="listbox" onKeyDown={navegarLista}>
             <div className="seletor-busca">
               <Search size={14} />
               <input
@@ -108,6 +132,8 @@ export function Seletor({
               {vazio !== null && !obrigatorio && (
                 <button
                   type="button"
+                  role="option"
+                  aria-selected={valor === ""}
                   className={valor === "" ? "seletor-item marcado" : "seletor-item"}
                   onClick={() => {
                     setValor("");
@@ -126,6 +152,8 @@ export function Seletor({
                 <button
                   key={o.valor}
                   type="button"
+                  role="option"
+                  aria-selected={o.valor === valor}
                   className={o.valor === valor ? "seletor-item marcado" : "seletor-item"}
                   onClick={() => {
                     setValor(o.valor);
@@ -237,7 +265,7 @@ export function SeletorMultiplo({
         </button>
 
         {aberto && (
-          <div className="seletor-menu" role="listbox">
+          <div className="seletor-menu" role="listbox" aria-multiselectable onKeyDown={navegarLista}>
             <div className="seletor-busca">
               <Search size={14} />
               <input
@@ -252,6 +280,8 @@ export function SeletorMultiplo({
             <div className="seletor-lista">
               <button
                 type="button"
+                role="option"
+                aria-selected={marcados.length === 0}
                 className={marcados.length === 0 ? "seletor-item marcado" : "seletor-item"}
                 onClick={() => setMarcados([])}
               >
@@ -265,6 +295,8 @@ export function SeletorMultiplo({
                 <button
                   key={o.valor}
                   type="button"
+                  role="option"
+                  aria-selected={marcados.includes(o.valor)}
                   className={marcados.includes(o.valor) ? "seletor-item marcado" : "seletor-item"}
                   onClick={() => alternar(o.valor)}
                 >

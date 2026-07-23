@@ -9,6 +9,7 @@ import {
   criarPrimeiraOrganizacao,
   salvarNome,
 } from "@/app/acoes/comecar";
+import { BotaoEnviar } from "@/components/botao-enviar";
 
 export const dynamic = "force-dynamic";
 
@@ -90,9 +91,9 @@ export default async function PaginaComecar({
                 defaultValue={nome}
               />
             </label>
-            <button className="botao botao-primario" type="submit">
+            <BotaoEnviar>
               Continuar
-            </button>
+            </BotaoEnviar>
           </form>
         </div>
       )}
@@ -122,9 +123,9 @@ export default async function PaginaComecar({
               <input type="text" name="slug" maxLength={40} placeholder="opcional — derivamos do nome" />
               <small>Só letras, números e hífen. Usado em endereços internos.</small>
             </label>
-            <button className="botao botao-primario" type="submit">
+            <BotaoEnviar>
               Criar organização
-            </button>
+            </BotaoEnviar>
           </form>
         </div>
       )}
@@ -149,9 +150,9 @@ export default async function PaginaComecar({
                 <input type="text" name="codigo" maxLength={30} placeholder="opcional" />
               </label>
             </div>
-            <button className="botao botao-primario" type="submit">
+            <BotaoEnviar>
               Concluir
-            </button>
+            </BotaoEnviar>
           </form>
         </div>
       )}

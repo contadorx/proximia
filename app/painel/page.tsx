@@ -5,11 +5,12 @@ import { criarClienteServidor } from "@/lib/supabase/server";
 import { listarCarteiras } from "@/lib/carteiras";
 import { formatarData, formatarValor, listarContas } from "@/lib/contas";
 import { classeSelo, listarContratos, urgencia } from "@/lib/contratos";
-import { listarFrentes, totais } from "@/lib/frentes";
+import { listarFrentes } from "@/lib/frentes";
 import { FASES, listarOportunidades, rotuloFase } from "@/lib/oportunidades";
 import { classeSituacao, listarCompromissos, precisaAtencao, situacao } from "@/lib/compromissos";
 import { ROTULO_TIPO, classeSeveridade, listarAlertas } from "@/lib/alertas";
 import { capturaMensal, capturaSemData, variacao } from "@/lib/captura";
+import { panorama, totaisGerais } from "@/lib/panorama";
 import { faixa } from "@/lib/maturidade";
 import { caminhoEntidade } from "@/lib/registros";
 import { mudarStatusCompromisso } from "@/app/acoes/compromissos";
@@ -28,24 +29,35 @@ export default async function PaginaPainel({
   const org = await exigirOrg();
   const usuario = await exigirUsuario();
 
-  const [carteiras, contas, contratos, frentes, oportunidades, compromissos, alertas, serie, semData] =
-    await Promise.all([
-      listarCarteiras(org.orgId),
-      listarContas({ orgId: org.orgId }),
-      listarContratos({ orgId: org.orgId }),
-      listarFrentes({ orgId: org.orgId }),
-      listarOportunidades({ orgId: org.orgId }),
-      listarCompromissos({ orgId: org.orgId, status: "aberto" }),
-      listarAlertas({ orgId: org.orgId, status: "aberto" }),
-      capturaMensal(org.orgId),
-      capturaSemData(org.orgId),
-    ]);
-
-  const { data: contaOrg } = await criarClienteServidor()
-    .from("orgs")
-    .select("assinatura_status")
-    .eq("id", org.orgId)
-    .maybeSingle();
+  const [
+    carteiras,
+    contas,
+    contratos,
+    frentes,
+    oportunidades,
+    compromissos,
+    alertas,
+    serie,
+    semData,
+    resumo,
+    { data: contaOrg },
+  ] = await Promise.all([
+    listarCarteiras(org.orgId),
+    listarContas({ orgId: org.orgId }),
+    listarContratos({ orgId: org.orgId }),
+    listarFrentes({ orgId: org.orgId }),
+    listarOportunidades({ orgId: org.orgId }),
+    listarCompromissos({ orgId: org.orgId, status: "aberto" }),
+    listarAlertas({ orgId: org.orgId, status: "aberto" }),
+    capturaMensal(org.orgId),
+    capturaSemData(org.orgId),
+    panorama(org.orgId, "nome"),
+    criarClienteServidor()
+      .from("orgs")
+      .select("assinatura_status")
+      .eq("id", org.orgId)
+      .maybeSingle(),
+  ]);
   const situacaoConta = (contaOrg as { assinatura_status: string } | null)?.assinatura_status;
 
   const nomeCarteira = (id: string) => carteiras.find((c) => c.id === id)?.nome ?? "—";
@@ -56,9 +68,14 @@ export default async function PaginaPainel({
   const mesAtual = serie[serie.length - 1]?.valor ?? 0;
   const mesAnterior = serie[serie.length - 2]?.valor ?? 0;
   const varCaptura = variacao(mesAtual, mesAnterior);
-  const t = totais(frentes);
-  const potencialTotal =
-    t.potencial + contas.reduce((soma, c) => soma + Number(c.potencial_bruto ?? 0), 0);
+
+  // Os totais vêm da visão agregada, não das listas (que têm teto de
+  // linhas): o número do card continua certo com 3.000 contas. E o teto
+  // é só captura — proteção é receita a defender, não a conquistar, e as
+  // duas não se somam.
+  const tg = totaisGerais(resumo);
+  const potencialTotal = tg.potencial;
+  const protecaoTotal = tg.protecao;
 
   const alta = alertas.filter((a) => a.severidade === "alta").length;
   const meus = alertas.filter((a) => a.dono_id === usuario.id).length;
@@ -262,9 +279,12 @@ export default async function PaginaPainel({
           </p>
         </div>
         <div className="cartao">
-          <p className="olho">Potencial em aberto</p>
+          <p className="olho">Potencial estimado (captura)</p>
           <p className="cartao-valor teto">{formatarValor(potencialTotal)}</p>
-          <p className="cartao-nota">{t.ativas} frentes e {contas.length} contas</p>
+          <p className="cartao-nota">
+            {tg.frentes} frentes e {tg.contas} contas
+            {protecaoTotal > 0 ? ` · ${formatarValor(protecaoTotal)} em proteção, fora do teto` : ""}
+          </p>
         </div>
         <div className="cartao">
           <p className="olho">Alertas</p>

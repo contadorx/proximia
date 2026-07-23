@@ -5,15 +5,7 @@ import { revalidatePath } from "next/cache";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { exigirOrg, exigirUsuario } from "@/lib/auth";
 import { caminhoEntidade, type EntidadeTipo } from "@/lib/registros";
-
-function comErro(rota: string, mensagem: string): never {
-  redirect(`${rota}?erro=${encodeURIComponent(mensagem)}`);
-}
-
-function texto(formData: FormData, campo: string): string | null {
-  const valor = String(formData.get(campo) ?? "").trim();
-  return valor === "" ? null : valor;
-}
+import { textoDe, type EstadoAcao } from "@/lib/formulario";
 
 function traduzir(mensagem: string, codigo?: string): string {
   if (/nova versão/i.test(mensagem)) return mensagem;
@@ -24,7 +16,7 @@ function traduzir(mensagem: string, codigo?: string): string {
   return mensagem;
 }
 
-export async function criarRegistro(formData: FormData) {
+export async function criarRegistro(_estado: EstadoAcao, formData: FormData): Promise<EstadoAcao> {
   const org = await exigirOrg();
   const usuario = await exigirUsuario();
 
@@ -33,8 +25,8 @@ export async function criarRegistro(formData: FormData) {
   const carteiraId = String(formData.get("carteira_id") ?? "");
   const rota = caminhoEntidade(entidadeTipo, entidadeId);
 
-  const corpo = texto(formData, "corpo");
-  if (!corpo) comErro(rota, "Escreva o que aconteceu — é isso que fica de memória.");
+  const corpo = textoDe(formData, "corpo");
+  if (!corpo) return { erro: "Escreva o que aconteceu — é isso que fica de memória." };
 
   const supabase = criarClienteServidor();
   const { error } = await supabase.from("registros").insert({
@@ -43,20 +35,20 @@ export async function criarRegistro(formData: FormData) {
     entidade_tipo: entidadeTipo,
     entidade_id: entidadeId,
     tipo: String(formData.get("tipo") ?? "nota"),
-    titulo: texto(formData, "titulo"),
+    titulo: textoDe(formData, "titulo"),
     corpo,
-    ocorrido_em: texto(formData, "ocorrido_em") ?? new Date().toISOString().slice(0, 10),
+    ocorrido_em: textoDe(formData, "ocorrido_em") ?? new Date().toISOString().slice(0, 10),
     autor_id: usuario.id,
   });
 
-  if (error) comErro(rota, traduzir(error.message, error.code));
+  if (error) return { erro: traduzir(error.message, error.code) };
 
   revalidatePath(rota);
   revalidatePath("/historico");
   redirect(`${rota}?ok=${encodeURIComponent("Registro incluído.")}`);
 }
 
-export async function editarRegistro(formData: FormData) {
+export async function editarRegistro(_estado: EstadoAcao, formData: FormData): Promise<EstadoAcao> {
   await exigirOrg();
 
   const id = String(formData.get("id") ?? "");
@@ -64,19 +56,19 @@ export async function editarRegistro(formData: FormData) {
   const entidadeId = String(formData.get("entidade_id") ?? "");
   const rota = caminhoEntidade(entidadeTipo, entidadeId);
 
-  const corpo = texto(formData, "corpo");
-  if (!corpo) comErro(rota, "Escreva o conteúdo do registro.");
+  const corpo = textoDe(formData, "corpo");
+  if (!corpo) return { erro: "Escreva o conteúdo do registro." };
 
   const supabase = criarClienteServidor();
   const { error } = await supabase.rpc("editar_registro", {
     p_id: id,
-    p_titulo: texto(formData, "titulo"),
+    p_titulo: textoDe(formData, "titulo"),
     p_corpo: corpo,
     p_tipo: String(formData.get("tipo") ?? "nota"),
-    p_ocorrido_em: texto(formData, "ocorrido_em"),
+    p_ocorrido_em: textoDe(formData, "ocorrido_em"),
   });
 
-  if (error) comErro(rota, traduzir(error.message, error.code));
+  if (error) return { erro: traduzir(error.message, error.code) };
 
   revalidatePath(rota);
   revalidatePath("/historico");

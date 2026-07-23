@@ -75,6 +75,7 @@ Aplicadas até aqui:
 | `0030_busca.sql` | B39 | Busca unificada com índices de similaridade |
 | `0031_classificacao_governanca.sql` | B41 | Classificações livres, natureza, prioridade, marcos e anexo zero |
 | `0032_negocio.sql` | B42 | Planos, assinaturas, operador da plataforma e painel do negócio |
+| `0033_correcoes_auditoria.sql` | B43 | Proteção separada nas contas do panorama, captura_sem_data sob RLS e tempo por etapa filtrável |
 
 ## Verificação
 
@@ -142,7 +143,9 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 
 **A régua é do assinante.** Nenhum questionário vem embutido: dimensões e perguntas são cadastradas por quem usa, cada uma com peso. O produto entrega a mecânica — escala de 0 a 4, média ponderada, ciclos comparáveis e matriz maturidade × potencial —, não um modelo de maturidade de setor. Pergunta sem resposta fica fora do cálculo em vez de virar zero, então avaliação parcial mostra o score do que foi de fato avaliado.
 
-**Formulário fecha quando termina.** Toda ação de servidor devolve confirmação no endereço, e o modal observa essa mudança para se fechar sozinho — com o conteúdo em estado de espera enquanto grava. Sem isso não dá para saber se algo aconteceu.
+**Formulário fecha quando termina — e erro não apaga trabalho.** Sucesso devolve confirmação no endereço, e o modal observa essa mudança para se fechar sozinho. Erro de validação volta como estado, dentro do próprio formulário: a mensagem aparece, o preenchimento fica. O botão de envio trava enquanto grava — clique duplo não cria dois registros.
+
+**Número de formulário tem um leitor só.** Todo valor digitado passa por `lib/formulario.ts`, que entende tanto "1.234,56" quanto o "1234.56" da máscara. Cada arquivo com a própria cópia do parser foi como todo valor com centavos passou a valer cem vezes mais — o leitor único e testado é o que impede a reincidência.
 
 **Exclusão em duas etapas.** O primeiro clique pergunta, o segundo executa, e o aviso diz o que vai junto. Excluir carteira leva contas, contratos, frentes, oportunidades e histórico; excluir dimensão leva perguntas e respostas. Frente e oportunidade têm o descarte com motivo como caminho preferido — apagar perde o aprendizado.
 
@@ -299,5 +302,7 @@ supabase/
 F0 esqueleto ✓ · F1 acesso, organizações e papéis ✓ · F2 carteiras ✓ · F3 contas nomeadas ✓ · F4 contratos e cláusulas ✓ · F5 frentes ✓ · F6 timeline e memória institucional ✓ · F7 compromissos e alertas ✓ · F8 painel multi-carteira ✓ · F9 situação da carteira ✓ · F10 importação ✓ · F11 camada de interface ✓ — **fatia 1 completa**.
 
 Fase 2 completa: F12 oportunidades ✓ · F13 extrato automático ✓ · F14 maturidade ✓ · F16 seletor com busca ✓ · F17 panorama com oportunidades ✓ · F18 convite por e-mail ✓ · F19 alertas ✓ · F20 anexos ✓ · F21 registro de alterações ✓ · F22 portal da unidade ✓.
+
+B43 — correções da auditoria ✓: parser único de valores (o defeito do ×100), erro de formulário sem perder preenchimento, natureza gravada e respeitada em todas as somas, botão de envio com trava, contagem verificada nas ações, foco gerenciado no modal, busca viva com o menu recolhido, exportação sem teto silencioso, filtro de relatórios valendo em todas as seções e avisos de corte em toda lista limitada. Dados gravados pela interface antes do B43 podem estar com valores ×100 — `supabase/testes/conferencia_escala_valores.sql` lista os suspeitos para correção por estorno/captura ou pela administração.
 
 Uma feature por vez, com build passando entre cada uma.

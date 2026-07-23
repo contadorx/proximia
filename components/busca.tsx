@@ -34,8 +34,11 @@ const ROTULOS: Record<string, string> = {
  * Busca global. Quem usa não pensa em qual tela a informação mora: pensa
  * no nome do cliente, no número do contrato, no CNPJ. Abre por atalho
  * (barra ou Ctrl+K) porque a mão já está no teclado.
+ *
+ * Compacta (menu recolhido) vira só o ícone — mas continua montada, senão
+ * os atalhos de teclado morrem junto com o botão.
  */
-export function Busca() {
+export function Busca({ compacta = false }: { compacta?: boolean }) {
   const router = useRouter();
   const [aberto, setAberto] = useState(false);
   const [termo, setTermo] = useState("");
@@ -120,10 +123,16 @@ export function Busca() {
 
   return (
     <>
-      <button type="button" className="busca-gatilho" onClick={() => setAberto(true)}>
+      <button
+        type="button"
+        className={compacta ? "busca-gatilho compacta" : "busca-gatilho"}
+        onClick={() => setAberto(true)}
+        title="Buscar (/)"
+        aria-label="Buscar"
+      >
         <Search size={15} />
-        <span>Buscar</span>
-        <kbd>/</kbd>
+        {!compacta && <span>Buscar</span>}
+        {!compacta && <kbd>/</kbd>}
       </button>
 
       {aberto && (

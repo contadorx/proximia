@@ -35,6 +35,9 @@ import {
   desvincularPessoaCarteira,
   vincularPessoaCarteira,
 } from "@/app/acoes/carteiras";
+import { BotaoEnviar } from "@/components/botao-enviar";
+import { FormAcao } from "@/components/form-acao";
+import { CampoScore } from "@/components/campos";
 
 export const dynamic = "force-dynamic";
 
@@ -203,6 +206,7 @@ export default async function PaginaCarteira({
               icone={<UserCog size={15} />}
             >
               <form action={atribuirResponsavel} className="formulario">
+                {/* Ação sem estado: o formulário é curto e o erro raro. */}
                 <input type="hidden" name="carteira_id" value={carteira.id} />
                 <Seletor
                   nome="user_id"
@@ -228,9 +232,7 @@ export default async function PaginaCarteira({
                   <span>Observação</span>
                   <input type="text" name="observacao" maxLength={160} placeholder="opcional" />
                 </label>
-                <button className="botao botao-primario" type="submit">
-                  Definir
-                </button>
+                <BotaoEnviar>Definir</BotaoEnviar>
               </form>
             </Modal>
           )}
@@ -335,16 +337,14 @@ export default async function PaginaCarteira({
                 ))}
               </select>
             </label>
-            <button className="botao botao-primario" type="submit">
-              Vincular
-            </button>
+            <BotaoEnviar>Vincular</BotaoEnviar>
           </form>
         )}
       </section>
 
       {podeEditar ? (
         <Modal rotulo="Editar carteira" titulo="Editar carteira" descricao="Alterações valem para toda a organização." largo icone={<Pencil size={15} />} variante="secundario">
-          <form action={atualizarCarteira} className="formulario">
+          <FormAcao action={atualizarCarteira}>
             <input type="hidden" name="id" value={carteira.id} />
 
             <div className="formulario-linha">
@@ -384,15 +384,11 @@ export default async function PaginaCarteira({
                   ))}
                 </select>
               </label>
-              <label className="campo">
-                <span>Score</span>
-                <input
-                  type="text"
-                  name="score_maturidade"
-                  inputMode="decimal"
-                  defaultValue={carteira.score_maturidade ?? ""}
-                />
-              </label>
+              <CampoScore
+                rotulo="Score"
+                inicial={carteira.score_maturidade}
+                ajuda="Sobrescreve o publicado pela avaliação, se houver."
+              />
               <label className="campo">
                 <span>Ciclo</span>
                 <input type="text" name="score_ciclo" defaultValue={carteira.score_ciclo ?? ""} maxLength={20} />
@@ -404,10 +400,8 @@ export default async function PaginaCarteira({
               <textarea name="observacoes" rows={4} defaultValue={carteira.observacoes ?? ""} />
             </label>
 
-            <button className="botao botao-primario" type="submit">
-              Salvar alterações
-            </button>
-          </form>
+            <BotaoEnviar>Salvar alterações</BotaoEnviar>
+          </FormAcao>
         </Modal>
       ) : (
         carteira.observacoes && (
@@ -457,9 +451,7 @@ export default async function PaginaCarteira({
                       placeholder="um e-mail por linha"
                     />
                   </label>
-                  <button className="botao botao-primario" type="submit">
-                    Salvar cadência
-                  </button>
+                  <BotaoEnviar>Salvar cadência</BotaoEnviar>
                 </form>
               </Modal>
 
@@ -491,9 +483,7 @@ export default async function PaginaCarteira({
                     />
                     <small>Em branco, usa os destinatários salvos.</small>
                   </label>
-                  <button className="botao botao-primario" type="submit">
-                    Enviar
-                  </button>
+                  <BotaoEnviar rotuloEnviando="Enviando…">Enviar</BotaoEnviar>
                 </form>
               </Modal>
             </div>
@@ -587,9 +577,7 @@ export default async function PaginaCarteira({
                       <span>Mostrar valores</span>
                     </label>
                   </div>
-                  <button className="botao botao-primario" type="submit">
-                    Salvar
-                  </button>
+                  <BotaoEnviar>Salvar</BotaoEnviar>
                   <p className="nota">
                     Sem valores, a página mostra frentes, prazos e entregas sem os números de
                     dinheiro — útil quando o valor não deve circular fora de casa.
@@ -612,9 +600,9 @@ export default async function PaginaCarteira({
                   <form action={trocarEndereco}>
                     <input type="hidden" name="id" value={portal.id} />
                     <input type="hidden" name="carteira_id" value={carteira.id} />
-                    <button className="botao botao-perigo" type="submit">
+                    <BotaoEnviar variante="perigo" rotuloEnviando="Trocando…">
                       Trocar endereço
-                    </button>
+                    </BotaoEnviar>
                   </form>
                 </Modal>
               )}
@@ -648,12 +636,16 @@ export default async function PaginaCarteira({
         )}
       </section>
 
+      {/* Quem pode escrever registra compromisso — inclusive o ponto
+          focal, nas carteiras dele. A mesma ação tinha regra diferente
+          por tela, e a tela mais restritiva escondia botão de quem o
+          banco deixaria usar. */}
       <Compromissos
         entidadeTipo="carteira"
         entidadeId={carteira.id}
         carteiraId={carteira.id}
         pessoas={pessoasOrg}
-        editavel={podeEditar}
+        editavel={podeEscrever(org.papel)}
         usuarioId={usuario.id}
         volta={`/carteiras/${carteira.id}`}
       />

@@ -47,8 +47,14 @@ export async function alternarPlaybook(formData: FormData) {
   const ativar = formData.get("ativar") === "1";
 
   const supabase = criarClienteServidor();
-  const { error } = await supabase.from("playbooks").update({ ativo: ativar }).eq("id", id);
+  const { error, count } = await supabase
+    .from("playbooks")
+    .update({ ativo: ativar }, { count: "exact" })
+    .eq("id", id);
 
+  if (!error && count === 0) {
+    comErro("Nada mudou: seu perfil não permite alterar playbooks.");
+  }
   if (error) {
     comErro(
       /idx_playbook_fase_ativo/.test(error.message)
@@ -68,8 +74,9 @@ export async function excluirPlaybook(formData: FormData) {
   const id = String(formData.get("id") ?? "");
 
   const supabase = criarClienteServidor();
-  const { error } = await supabase.from("playbooks").delete().eq("id", id);
+  const { error, count } = await supabase.from("playbooks").delete({ count: "exact" }).eq("id", id);
   if (error) comErro(error.message);
+  if (count === 0) comErro("Nada foi excluído: seu perfil não permite alterar playbooks.");
 
   revalidatePath(ROTA);
   redirect(
@@ -109,8 +116,12 @@ export async function excluirTarefa(formData: FormData) {
   const id = String(formData.get("id") ?? "");
 
   const supabase = criarClienteServidor();
-  const { error } = await supabase.from("playbook_tarefas").delete().eq("id", id);
+  const { error, count } = await supabase
+    .from("playbook_tarefas")
+    .delete({ count: "exact" })
+    .eq("id", id);
   if (error) comErro(error.message);
+  if (count === 0) comErro("Nada foi removido: seu perfil não permite alterar playbooks.");
 
   revalidatePath(ROTA);
   redirect(`${ROTA}?ok=${encodeURIComponent("Tarefa removida do playbook.")}`);

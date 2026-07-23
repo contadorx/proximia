@@ -52,6 +52,9 @@ export async function registrosDaEntidade(
   return (data ?? []) as Registro[];
 }
 
+/** Teto de linhas por consulta. Quando a lista bate nele, a tela avisa. */
+export const LIMITE_HISTORICO = 200;
+
 export async function historico(opcoes: {
   orgId: string;
   carteiraId?: string;
@@ -74,7 +77,7 @@ export async function historico(opcoes: {
   const { data, error } = await consulta
     .order("ocorrido_em", { ascending: false })
     .order("criado_em", { ascending: false })
-    .limit(200);
+    .limit(LIMITE_HISTORICO);
 
   if (error) {
     console.error("[registros] falha no histórico:", error.message);

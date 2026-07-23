@@ -4,14 +4,10 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { exigirOrg } from "@/lib/auth";
+import { textoDe, type EstadoAcao } from "@/lib/formulario";
 
 function comErro(rota: string, mensagem: string): never {
   redirect(`${rota}?erro=${encodeURIComponent(mensagem)}`);
-}
-
-function texto(formData: FormData, campo: string): string | null {
-  const valor = String(formData.get(campo) ?? "").trim();
-  return valor === "" ? null : valor;
 }
 
 function traduzir(mensagem: string, codigo?: string): string {
@@ -27,17 +23,24 @@ function traduzir(mensagem: string, codigo?: string): string {
   return mensagem;
 }
 
-export async function criarCarteira(formData: FormData) {
+function lerScore(formData: FormData): { score: number | null; erro?: string } {
+  const bruto = textoDe(formData, "score_maturidade");
+  if (bruto === null) return { score: null };
+  const score = Number(bruto.replace(",", "."));
+  if (Number.isNaN(score) || score < 0 || score > 100) {
+    return { score: null, erro: "O score precisa ser um número entre 0 e 100." };
+  }
+  return { score };
+}
+
+export async function criarCarteira(_estado: EstadoAcao, formData: FormData): Promise<EstadoAcao> {
   const org = await exigirOrg();
 
-  const nome = texto(formData, "nome");
-  if (!nome) comErro("/carteiras", "Informe o nome da carteira.");
+  const nome = textoDe(formData, "nome");
+  if (!nome) return { erro: "Informe o nome da carteira." };
 
-  const scoreBruto = texto(formData, "score_maturidade");
-  const score = scoreBruto === null ? null : Number(scoreBruto.replace(",", "."));
-  if (score !== null && (Number.isNaN(score) || score < 0 || score > 100)) {
-    comErro("/carteiras", "O score precisa ser um número entre 0 e 100.");
-  }
+  const { score, erro } = lerScore(formData);
+  if (erro) return { erro };
 
   const supabase = criarClienteServidor();
   const { data, error } = await supabase
@@ -45,35 +48,35 @@ export async function criarCarteira(formData: FormData) {
     .insert({
       org_id: org.orgId,
       nome,
-      codigo: texto(formData, "codigo"),
-      regiao: texto(formData, "regiao"),
-      responsavel_id: texto(formData, "responsavel_id"),
+      codigo: textoDe(formData, "codigo"),
+      regiao: textoDe(formData, "regiao"),
+      responsavel_id: textoDe(formData, "responsavel_id"),
       score_maturidade: score,
-      score_ciclo: texto(formData, "score_ciclo"),
+      score_ciclo: textoDe(formData, "score_ciclo"),
     })
     .select("id")
     .single();
 
-  if (error) comErro("/carteiras", traduzir(error.message, error.code));
+  if (error) return { erro: traduzir(error.message, error.code) };
 
   revalidatePath("/carteiras");
   redirect(`/carteiras/${(data as { id: string }).id}`);
 }
 
-export async function atualizarCarteira(formData: FormData) {
+export async function atualizarCarteira(
+  _estado: EstadoAcao,
+  formData: FormData,
+): Promise<EstadoAcao> {
   await exigirOrg();
 
   const id = String(formData.get("id") ?? "");
   const rota = `/carteiras/${id}`;
 
-  const nome = texto(formData, "nome");
-  if (!nome) comErro(rota, "Informe o nome da carteira.");
+  const nome = textoDe(formData, "nome");
+  if (!nome) return { erro: "Informe o nome da carteira." };
 
-  const scoreBruto = texto(formData, "score_maturidade");
-  const score = scoreBruto === null ? null : Number(scoreBruto.replace(",", "."));
-  if (score !== null && (Number.isNaN(score) || score < 0 || score > 100)) {
-    comErro(rota, "O score precisa ser um número entre 0 e 100.");
-  }
+  const { score, erro } = lerScore(formData);
+  if (erro) return { erro };
 
   const supabase = criarClienteServidor();
   const { error, count } = await supabase
@@ -81,20 +84,20 @@ export async function atualizarCarteira(formData: FormData) {
     .update(
       {
         nome,
-        codigo: texto(formData, "codigo"),
-        regiao: texto(formData, "regiao"),
+        codigo: textoDe(formData, "codigo"),
+        regiao: textoDe(formData, "regiao"),
         status: String(formData.get("status") ?? "ativa"),
-        responsavel_id: texto(formData, "responsavel_id"),
+        responsavel_id: textoDe(formData, "responsavel_id"),
         score_maturidade: score,
-        score_ciclo: texto(formData, "score_ciclo"),
-        observacoes: texto(formData, "observacoes"),
+        score_ciclo: textoDe(formData, "score_ciclo"),
+        observacoes: textoDe(formData, "observacoes"),
       },
       { count: "exact" },
     )
     .eq("id", id);
 
-  if (error) comErro(rota, traduzir(error.message, error.code));
-  if (count === 0) comErro(rota, "Nada foi alterado: seu perfil não permite editar esta carteira.");
+  if (error) return { erro: traduzir(error.message, error.code) };
+  if (count === 0) return { erro: "Nada foi alterado: seu perfil não permite editar esta carteira." };
 
   revalidatePath(rota);
   redirect(`${rota}?ok=${encodeURIComponent("Carteira atualizada.")}`);
@@ -128,13 +131,14 @@ export async function desvincularPessoaCarteira(formData: FormData) {
   const rota = `/carteiras/${carteiraId}`;
 
   const supabase = criarClienteServidor();
-  const { error } = await supabase
+  const { error, count } = await supabase
     .from("carteira_membros")
-    .delete()
+    .delete({ count: "exact" })
     .eq("carteira_id", carteiraId)
     .eq("user_id", userId);
 
   if (error) comErro(rota, traduzir(error.message, error.code));
+  if (count === 0) comErro(rota, "Nada foi removido: seu perfil não permite alterar este vínculo.");
 
   revalidatePath(rota);
   redirect(`${rota}?ok=${encodeURIComponent("Vínculo removido.")}`);

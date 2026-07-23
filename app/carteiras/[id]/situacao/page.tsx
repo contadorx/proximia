@@ -48,9 +48,22 @@ export default async function PaginaSituacao({
     (r) => r.ocorrido_em <= periodo.fim && r.tipo !== "entrega" && r.tipo !== "decisao",
   );
 
+  // Captura e proteção não se somam: o teto do extrato é só o que há
+  // para conquistar; o que há para defender sai em número próprio.
   const potencial =
-    frentesAbertas.reduce((t, f) => t + Number(f.potencial_bruto ?? 0), 0) +
-    contas.reduce((t, c) => t + Number(c.potencial_bruto ?? 0), 0);
+    frentesAbertas
+      .filter((f) => f.natureza !== "protecao")
+      .reduce((t, f) => t + Number(f.potencial_bruto ?? 0), 0) +
+    contas
+      .filter((c) => c.relacao !== "protecao")
+      .reduce((t, c) => t + Number(c.potencial_bruto ?? 0), 0);
+  const protecao =
+    frentesAbertas
+      .filter((f) => f.natureza === "protecao")
+      .reduce((t, f) => t + Number(f.potencial_bruto ?? 0), 0) +
+    contas
+      .filter((c) => c.relacao === "protecao")
+      .reduce((t, c) => t + Number(c.potencial_bruto ?? 0), 0);
   const capturado =
     frentes.reduce((t, f) => t + Number(f.valor_capturado ?? 0), 0) +
     contas.reduce((t, c) => t + Number(c.valor_capturado ?? 0), 0);
@@ -118,9 +131,17 @@ export default async function PaginaSituacao({
             <p className="dado numero-folha">{frentesAbertas.length}</p>
           </div>
           <div>
-            <p className="olho">Potencial estimado</p>
+            <p className="olho">Potencial estimado (captura)</p>
             <p className="dado numero-folha valor-teto">{formatarValor(potencial)}</p>
           </div>
+          {protecao > 0 && (
+            <div>
+              <p className="olho">Em proteção</p>
+              <p className="dado numero-folha" style={{ color: "var(--ambar)" }}>
+                {formatarValor(protecao)}
+              </p>
+            </div>
+          )}
           <div>
             <p className="olho">Capturado</p>
             <p className="dado numero-folha valor-capturado">{formatarValor(capturado)}</p>
@@ -257,7 +278,8 @@ export default async function PaginaSituacao({
         <footer className="folha-rodape">
           <p>
             Potencial é teto estimado, com origem e data registradas em cada item; capturado é o que
-            já se confirmou. Os dois números têm naturezas diferentes e não se somam.
+            já se confirmou. Captura é receita a conquistar; proteção, receita a defender. Nenhum
+            desses números se soma a outro.
           </p>
           <p className="dado">
             {org.nome} · {carteira.nome} · gerado em {geradoEm}

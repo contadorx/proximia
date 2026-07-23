@@ -6,6 +6,8 @@ import { registrarCaptura, excluirCaptura } from "@/app/acoes/capturas";
 import { Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
 import { BotaoExcluir } from "@/components/botao-excluir";
+import { BotaoEnviar } from "@/components/botao-enviar";
+import { FormAcao } from "@/components/form-acao";
 import { CampoValor } from "@/components/campos";
 
 /**
@@ -36,7 +38,7 @@ export async function Capturas({
   const legado = lista.filter((c) => c.origem === "legado").length;
 
   const formulario = (tipo: "captura" | "estorno") => (
-    <form action={registrarCaptura} className="formulario">
+    <FormAcao action={registrarCaptura}>
       <input type="hidden" name="entidade_tipo" value={entidadeTipo} />
       <input type="hidden" name="entidade_id" value={entidadeId} />
       <input type="hidden" name="carteira_id" value={carteiraId} />
@@ -66,10 +68,8 @@ export async function Capturas({
         <input type="text" name="comprovacao" maxLength={200} placeholder="número da nota, contrato, link — opcional" />
       </label>
 
-      <button className="botao botao-primario" type="submit">
-        {tipo === "estorno" ? "Registrar estorno" : "Registrar captura"}
-      </button>
-    </form>
+      <BotaoEnviar>{tipo === "estorno" ? "Registrar estorno" : "Registrar captura"}</BotaoEnviar>
+    </FormAcao>
   );
 
   return (

@@ -8,6 +8,7 @@ import { baixarAnexo, enviarAnexo, excluirAnexo } from "@/app/acoes/anexos";
 import { Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
 import { BotaoExcluir } from "@/components/botao-excluir";
+import { BotaoEnviar } from "@/components/botao-enviar";
 
 /**
  * Anexos de uma entidade. O arquivo fica em bucket privado; o download
@@ -64,9 +65,7 @@ export async function Anexos({
                 <span>Descrição</span>
                 <input type="text" name="descricao" maxLength={160} placeholder="opcional" />
               </label>
-              <button className="botao botao-primario" type="submit">
-                Enviar
-              </button>
+              <BotaoEnviar rotuloEnviando="Enviando…">Enviar</BotaoEnviar>
               <p className="nota">
                 O arquivo fica em armazenamento privado, acessível apenas a quem tem acesso a esta
                 carteira.

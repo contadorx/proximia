@@ -3,8 +3,16 @@ import { criarClienteServidor } from "./supabase/server";
 export type PontoCaptura = { mes: string; valor: number; origem: string };
 export type MesCaptura = { mes: string; rotulo: string; valor: number };
 
-/** Série dos últimos N meses, com os meses vazios preenchidos com zero. */
-export async function capturaMensal(orgId: string, meses = 12): Promise<MesCaptura[]> {
+/**
+ * Série dos últimos N meses, com os meses vazios preenchidos com zero.
+ * Aceita recorte por carteira — o filtro da tela de relatórios vale
+ * também para esta curva, não só para as vizinhas.
+ */
+export async function capturaMensal(
+  orgId: string,
+  meses = 12,
+  carteiras?: string[],
+): Promise<MesCaptura[]> {
   const supabase = criarClienteServidor();
 
   const inicio = new Date();
@@ -12,11 +20,14 @@ export async function capturaMensal(orgId: string, meses = 12): Promise<MesCaptu
   inicio.setMonth(inicio.getMonth() - (meses - 1));
   const desde = inicio.toISOString().slice(0, 10);
 
-  const { data, error } = await supabase
+  let consulta = supabase
     .from("captura_mensal")
     .select("mes, valor, origem")
     .eq("org_id", orgId)
     .gte("mes", desde);
+  if (carteiras?.length) consulta = consulta.in("carteira_id", carteiras);
+
+  const { data, error } = await consulta;
 
   if (error) {
     console.error("[captura] falha ao consultar:", error.message);
@@ -45,9 +56,12 @@ export async function capturaMensal(orgId: string, meses = 12): Promise<MesCaptu
   return serie;
 }
 
-export async function capturaSemData(orgId: string): Promise<number> {
+export async function capturaSemData(orgId: string, carteiras?: string[]): Promise<number> {
   const supabase = criarClienteServidor();
-  const { data } = await supabase.rpc("captura_sem_data", { p_org: orgId });
+  const { data } = await supabase.rpc("captura_sem_data", {
+    p_org: orgId,
+    p_carteiras: carteiras?.length ? carteiras : null,
+  });
   return Number(data ?? 0);
 }
 

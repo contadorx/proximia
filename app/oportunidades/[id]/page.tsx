@@ -22,6 +22,8 @@ import {
 import { Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
 import { BotaoExcluir } from "@/components/botao-excluir";
+import { BotaoEnviar } from "@/components/botao-enviar";
+import { FormAcao } from "@/components/form-acao";
 import { excluirOportunidade } from "@/app/acoes/exclusoes";
 import { CampoValor } from "@/components/campos";
 import { Historico } from "@/components/historico";
@@ -84,6 +86,11 @@ export default async function PaginaOportunidade({
           <h1>{oportunidade.titulo}</h1>
           <p className="chamada" style={{ marginBottom: 0 }}>
             <span className={classeFase(oportunidade.fase)}>{rotuloFase(oportunidade.fase)}</span>{" "}
+            {oportunidade.natureza === "protecao" && (
+              <span className="selo selo-atencao" title="Receita que já existe e pode ser perdida.">
+                proteção
+              </span>
+            )}{" "}
             <span className={dias > 60 ? "texto-alerta" : undefined}>
               há {dias} dias nesta fase
             </span>
@@ -97,10 +104,10 @@ export default async function PaginaOportunidade({
               <form action={mudarFase}>
                 <input type="hidden" name="id" value={oportunidade.id} />
                 <input type="hidden" name="fase" value={proxima.valor} />
-                <button className="botao botao-secundario" type="submit">
+                <BotaoEnviar variante="secundario" rotuloEnviando="Avançando…">
                   Avançar para {proxima.rotulo}
                   <ArrowRight size={14} />
-                </button>
+                </BotaoEnviar>
               </form>
             )}
 
@@ -112,7 +119,7 @@ export default async function PaginaOportunidade({
               variante="secundario"
               largo
             >
-              <form action={atualizarOportunidade} className="formulario">
+              <FormAcao action={atualizarOportunidade}>
                 <input type="hidden" name="id" value={oportunidade.id} />
 
                 <div className="formulario-linha">
@@ -159,6 +166,23 @@ export default async function PaginaOportunidade({
                           {f.rotulo}
                         </option>
                       ))}
+                    </select>
+                  </label>
+                  <label className="campo">
+                    <span>Natureza</span>
+                    <select name="natureza" defaultValue={oportunidade.natureza ?? "captura"}>
+                      <option value="captura">Captura — receita nova</option>
+                      <option value="protecao">Proteção — receita que já existe</option>
+                    </select>
+                  </label>
+                  <label className="campo">
+                    <span>Prioridade</span>
+                    <select name="prioridade" defaultValue={String(oportunidade.prioridade ?? 3)}>
+                      <option value="1">1 · Máxima</option>
+                      <option value="2">2 · Alta</option>
+                      <option value="3">3 · Média</option>
+                      <option value="4">4 · Baixa</option>
+                      <option value="5">5 · Mínima</option>
                     </select>
                   </label>
                   <label className="campo">
@@ -277,10 +301,8 @@ export default async function PaginaOportunidade({
                   />
                 </label>
 
-                <button className="botao botao-primario" type="submit">
-                  Salvar alterações
-                </button>
-              </form>
+                <BotaoEnviar>Salvar alterações</BotaoEnviar>
+              </FormAcao>
             </Modal>
           </div>
         )}
@@ -380,9 +402,7 @@ export default async function PaginaOportunidade({
                   <span>Endereço</span>
                   <input type="url" name="url" required placeholder="https://" />
                 </label>
-                <button className="botao botao-primario" type="submit">
-                  Incluir
-                </button>
+                <BotaoEnviar>Incluir</BotaoEnviar>
               </form>
             </Modal>
           )}

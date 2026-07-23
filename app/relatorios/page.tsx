@@ -31,16 +31,19 @@ export default async function PaginaRelatorios({
   const org = await exigirOrg();
   const filtro = paraLista(searchParams.carteira);
 
+  // O filtro de carteira vale para TODAS as seções. Antes, captura e
+  // tempo por etapa ignoravam o recorte em silêncio — quem filtrava uma
+  // carteira lia dois números da rede inteira sem aviso.
   const [carteiras, serie, semData, alertas, esforco, vencimentos, conversao, etapas, fotos, fases] =
     await Promise.all([
       listarCarteiras(org.orgId),
-      capturaMensal(org.orgId),
-      capturaSemData(org.orgId),
+      capturaMensal(org.orgId, 12, filtro),
+      capturaSemData(org.orgId, filtro),
       alertasMensais(org.orgId, filtro),
       esforcoMensal(org.orgId, filtro),
       vencimentosMensais(org.orgId, filtro),
       conversaoPorCarteira(org.orgId, filtro),
-      temposPorEtapa(org.orgId),
+      temposPorEtapa(org.orgId, filtro),
       fotosMensais(org.orgId, filtro),
       fasesConfiguradas(org.orgId),
     ]);

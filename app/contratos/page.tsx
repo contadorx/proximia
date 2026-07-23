@@ -3,11 +3,19 @@ import { Plus, Search } from "lucide-react";
 import { exigirOrg, podeEscrever } from "@/lib/auth";
 import { listarCarteiras } from "@/lib/carteiras";
 import { formatarData, formatarValor, listarContas } from "@/lib/contas";
-import { PERIODICIDADES, classeSelo, listarContratos, urgencia } from "@/lib/contratos";
+import {
+  LIMITE_CONTRATOS,
+  PERIODICIDADES,
+  classeSelo,
+  listarContratos,
+  urgencia,
+} from "@/lib/contratos";
 import { criarContrato } from "@/app/acoes/contratos";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
 import { Seletor, SeletorMultiplo } from "@/components/seletor";
+import { BotaoEnviar } from "@/components/botao-enviar";
+import { FormAcao } from "@/components/form-acao";
 import { paraLista, temFiltro } from "@/lib/consulta";
 import { CampoValor } from "@/components/campos";
 
@@ -67,8 +75,7 @@ export default async function PaginaContratos({
               icone={<Plus size={15} />}
               largo
             >
-              <form action={criarContrato} className="formulario">
-                <input type="hidden" name="volta" value="/contratos" />
+              <FormAcao action={criarContrato}>
                 <div className="formulario-linha">
                   <Seletor
                     nome="conta_id"
@@ -140,10 +147,8 @@ export default async function PaginaContratos({
                   </label>
                 </div>
 
-                <button className="botao botao-primario" type="submit">
-                  Registrar contrato
-                </button>
-              </form>
+                <BotaoEnviar>Registrar contrato</BotaoEnviar>
+              </FormAcao>
             </Modal>
           </div>
         )}
@@ -237,6 +242,12 @@ export default async function PaginaContratos({
               );
             })}
           </ul>
+          {todos.length >= LIMITE_CONTRATOS && (
+            <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
+              Mostrando os primeiros {LIMITE_CONTRATOS} contratos por data de fim. Refine o filtro
+              por carteira ou situação para ver o restante.
+            </p>
+          )}
         </section>
       )}
     </>

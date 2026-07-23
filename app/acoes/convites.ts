@@ -87,8 +87,12 @@ export async function cancelarConvite(formData: FormData) {
   const id = String(formData.get("id") ?? "");
 
   const supabase = criarClienteServidor();
-  const { error } = await supabase.from("convites").update({ status: "cancelado" }).eq("id", id);
+  const { error, count } = await supabase
+    .from("convites")
+    .update({ status: "cancelado" }, { count: "exact" })
+    .eq("id", id);
   if (error) comErro("/configuracoes", error.message);
+  if (count === 0) comErro("/configuracoes", "Nada mudou: seu perfil não permite cancelar este convite.");
 
   revalidatePath("/configuracoes");
   redirect(`/configuracoes?ok=${encodeURIComponent("Convite cancelado.")}`);

@@ -33,16 +33,20 @@ export async function salvarFase(formData: FormData) {
   const prazo = String(formData.get("prazo_esperado_dias") ?? "").trim();
 
   const supabase = criarClienteServidor();
-  const { error } = await supabase
+  const { error, count } = await supabase
     .from("oportunidade_fases")
-    .update({
-      rotulo: String(formData.get("rotulo") ?? "").trim() || "Etapa",
-      prazo_esperado_dias: prazo === "" ? null : Math.max(1, Number(prazo) || 1),
-      ativa: formData.get("ativa") === "on",
-    })
+    .update(
+      {
+        rotulo: String(formData.get("rotulo") ?? "").trim() || "Etapa",
+        prazo_esperado_dias: prazo === "" ? null : Math.max(1, Number(prazo) || 1),
+        ativa: formData.get("ativa") === "on",
+      },
+      { count: "exact" },
+    )
     .eq("id", id);
 
   if (error) comErro(error.message);
+  if (count === 0) comErro("Nada mudou: seu perfil não permite alterar as etapas.");
 
   revalidatePath(ROTA);
   redirect(`${ROTA}?ok=${encodeURIComponent("Etapa atualizada.")}`);
@@ -76,8 +80,12 @@ export async function excluirMotivo(formData: FormData) {
   const id = String(formData.get("id") ?? "");
 
   const supabase = criarClienteServidor();
-  const { error } = await supabase.from("motivos_descarte").delete().eq("id", id);
+  const { error, count } = await supabase
+    .from("motivos_descarte")
+    .delete({ count: "exact" })
+    .eq("id", id);
   if (error) comErro(error.message);
+  if (count === 0) comErro("Nada foi excluído: seu perfil não permite alterar os motivos.");
 
   revalidatePath(ROTA);
   redirect(`${ROTA}?ok=${encodeURIComponent("Motivo excluído. As oportunidades ficam sem classificação.")}`);

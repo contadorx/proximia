@@ -57,7 +57,9 @@ export function Lateral({
         </button>
       </div>
 
-      {!recolhida && <Busca />}
+      {/* Sempre montada: desmontar a busca matava os atalhos / e Ctrl+K
+          junto com o botão. Recolhida, ela vira só o ícone. */}
+      <Busca compacta={recolhida} />
 
       <div className="lateral-rolagem">
         {grupos.map((g) => (

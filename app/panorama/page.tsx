@@ -175,7 +175,7 @@ export default async function PaginaPanorama({
                 <p className="cartao-valor" style={{ color: "var(--ambar)" }}>
                   {formatarValor(t.protecao)}
                 </p>
-                <p className="cartao-nota">receita que já existe e pode ser perdida</p>
+                <p className="cartao-nota">contas e frentes de defesa — fora do teto ao lado</p>
               </div>
             )}
             <div className="cartao">

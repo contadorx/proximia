@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { usuarioAtual } from "@/lib/auth";
 import { definirSenha } from "@/app/acoes/senha";
+import { BotaoEnviar } from "@/components/botao-enviar";
 
 export const dynamic = "force-dynamic";
 
@@ -54,9 +55,9 @@ export default async function PaginaRedefinir({
             <span>Repita a senha</span>
             <input type="password" name="confirmacao" required minLength={8} />
           </label>
-          <button className="botao botao-primario" type="submit">
+          <BotaoEnviar>
             Salvar senha
-          </button>
+          </BotaoEnviar>
         </form>
       </div>
     </div>

@@ -35,12 +35,13 @@ export async function reabrirAlerta(formData: FormData) {
   const volta = String(formData.get("volta") ?? "/alertas");
 
   const supabase = criarClienteServidor();
-  const { error } = await supabase
+  const { error, count } = await supabase
     .from("alertas")
-    .update({ status: "aberto", silenciado_por: null })
+    .update({ status: "aberto", silenciado_por: null }, { count: "exact" })
     .eq("id", id);
 
   if (error) comErro(error.message);
+  if (count === 0) comErro("Nada mudou: seu perfil não permite reabrir este alerta.");
 
   revalidatePath(volta);
   redirect(`${volta}?ok=${encodeURIComponent("Alerta reaberto.")}`);
@@ -58,8 +59,11 @@ export async function varrerAgora() {
   // Alerta sem dono é alerta de ninguém: a atribuição vem logo atrás da
   // varredura, usando a cadeia de responsabilidade da carteira.
   // Marcos de renovação: 180, 90 e 60 dias antes do fim, cada um uma vez.
-  await supabase.rpc("gerar_alertas_marcos", { p_org: org.orgId });
-  await supabase.rpc("atribuir_alertas", { p_org: org.orgId });
+  const { error: erroMarcos } = await supabase.rpc("gerar_alertas_marcos", { p_org: org.orgId });
+  if (erroMarcos) comErro(`A varredura parou nos marcos de renovação: ${erroMarcos.message}`);
+
+  const { error: erroAtribuir } = await supabase.rpc("atribuir_alertas", { p_org: org.orgId });
+  if (erroAtribuir) comErro(`Alertas gerados, mas a atribuição falhou: ${erroAtribuir.message}`);
 
   const diferenca = Number(data ?? 0);
   revalidatePath("/alertas");

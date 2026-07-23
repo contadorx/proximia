@@ -44,8 +44,12 @@ export async function excluirClassificacao(formData: FormData) {
   const id = String(formData.get("id") ?? "");
 
   const supabase = criarClienteServidor();
-  const { error } = await supabase.from("classificacoes").delete().eq("id", id);
+  const { error, count } = await supabase
+    .from("classificacoes")
+    .delete({ count: "exact" })
+    .eq("id", id);
   if (error) comErro(ROTA, error.message);
+  if (count === 0) comErro(ROTA, "Nada foi excluído: seu perfil não permite alterar classificações.");
 
   revalidatePath(ROTA);
   redirect(

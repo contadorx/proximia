@@ -5,6 +5,7 @@ import { listarCarteiras, nomePessoa, pessoasDaOrganizacao } from "@/lib/carteir
 import { formatarData, formatarValor, listarContas } from "@/lib/contas";
 import {
   FASES,
+  LIMITE_OPORTUNIDADES,
   classeFase,
   diasNaFase,
   formatarPayback,
@@ -18,6 +19,8 @@ import { criarOportunidade } from "@/app/acoes/oportunidades";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
 import { Seletor, SeletorMultiplo } from "@/components/seletor";
+import { BotaoEnviar } from "@/components/botao-enviar";
+import { FormAcao } from "@/components/form-acao";
 import { paraLista, temFiltro } from "@/lib/consulta";
 import { CampoValor } from "@/components/campos";
 
@@ -84,7 +87,7 @@ export default async function PaginaOportunidades({
               icone={<Plus size={15} />}
               largo
             >
-              <form action={criarOportunidade} className="formulario">
+              <FormAcao action={criarOportunidade}>
                 <div className="formulario-linha">
                   <label className="campo">
                     <span>Título</span>
@@ -200,10 +203,8 @@ export default async function PaginaOportunidades({
                   </label>
                 </div>
 
-                <button className="botao botao-primario" type="submit">
-                  Criar oportunidade
-                </button>
-              </form>
+                <BotaoEnviar>Criar oportunidade</BotaoEnviar>
+              </FormAcao>
             </Modal>
           </div>
         )}
@@ -317,6 +318,11 @@ export default async function PaginaOportunidades({
                       </td>
                       <td>
                         <span className={classeFase(o.fase)}>{rotuloFase(o.fase)}</span>
+                        {o.natureza === "protecao" && (
+                          <span className="selo selo-atencao" style={{ marginLeft: 6 }}>
+                            proteção
+                          </span>
+                        )}
                         <span className={dias > 60 ? "celula-sub texto-alerta" : "celula-sub"}>
                           há {dias} d
                         </span>
@@ -344,6 +350,12 @@ export default async function PaginaOportunidades({
               </tbody>
             </table>
           </div>
+          {oportunidades.length >= LIMITE_OPORTUNIDADES && (
+            <p className="nota" style={{ margin: "14px 18px" }}>
+              Mostrando as primeiras {LIMITE_OPORTUNIDADES}. Os cartões acima somam só o que está
+              na tabela — refine o filtro por carteira ou fase para ver o restante.
+            </p>
+          )}
         </section>
       )}
 

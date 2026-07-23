@@ -13,6 +13,7 @@ import {
 } from "@/app/acoes/playbooks";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
+import { BotaoEnviar } from "@/components/botao-enviar";
 import { BotaoExcluir } from "@/components/botao-excluir";
 
 export const dynamic = "force-dynamic";
@@ -86,9 +87,9 @@ export default async function PaginaPlaybooks({
                   <span>Descrição</span>
                   <input type="text" name="descricao" maxLength={200} placeholder="opcional" />
                 </label>
-                <button className="botao botao-primario" type="submit">
+                <BotaoEnviar>
                   Criar playbook
-                </button>
+                </BotaoEnviar>
               </form>
             </Modal>
           </div>
@@ -171,9 +172,9 @@ export default async function PaginaPlaybooks({
                             ))}
                           </select>
                         </label>
-                        <button className="botao botao-primario" type="submit">
+                        <BotaoEnviar>
                           Incluir tarefa
-                        </button>
+                        </BotaoEnviar>
                       </form>
                     </Modal>
 

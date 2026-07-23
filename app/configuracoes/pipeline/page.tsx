@@ -7,6 +7,7 @@ import { salvarTaxaDesconto } from "@/app/acoes/financeiro";
 import { criarMotivo, criarReguaFases, excluirMotivo, salvarFase } from "@/app/acoes/pipeline";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
+import { BotaoEnviar } from "@/components/botao-enviar";
 import { BotaoExcluir } from "@/components/botao-excluir";
 
 export const dynamic = "force-dynamic";
@@ -56,10 +57,10 @@ export default async function PaginaPipeline({
             acao={
               gere ? (
                 <form action={criarReguaFases}>
-                  <button className="botao botao-primario" type="submit">
+                  <BotaoEnviar>
                     <Sparkles size={15} />
                     Criar régua de etapas
-                  </button>
+                  </BotaoEnviar>
                 </form>
               ) : undefined
             }
@@ -115,9 +116,9 @@ export default async function PaginaPipeline({
                           <span>Em uso</span>
                         </label>
                       </div>
-                      <button className="botao botao-primario" type="submit">
+                      <BotaoEnviar>
                         Salvar etapa
-                      </button>
+                      </BotaoEnviar>
                     </form>
                   </Modal>
                 )}
@@ -166,9 +167,9 @@ export default async function PaginaPipeline({
                   placeholder="ex.: custo médio de capital aprovado pela diretoria"
                 />
               </label>
-              <button className="botao botao-primario" type="submit">
+              <BotaoEnviar>
                 Salvar taxa
-              </button>
+              </BotaoEnviar>
             </div>
           </form>
         )}
@@ -202,9 +203,9 @@ export default async function PaginaPipeline({
                   <span>Ordem</span>
                   <input type="number" name="ordem" defaultValue={motivos.length + 1} />
                 </label>
-                <button className="botao botao-primario" type="submit">
+                <BotaoEnviar>
                   Criar motivo
-                </button>
+                </BotaoEnviar>
               </form>
             </Modal>
           )}

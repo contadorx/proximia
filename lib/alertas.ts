@@ -35,6 +35,9 @@ export const ROTULO_TIPO: Record<TipoAlerta, string> = {
   potencial_sem_captura: "Potencial sem captura",
 };
 
+/** Teto de linhas por consulta. Quando a lista bate nele, a tela avisa. */
+export const LIMITE_ALERTAS = 200;
+
 export async function listarAlertas(opcoes: {
   orgId: string;
   status?: string;
@@ -51,7 +54,9 @@ export async function listarAlertas(opcoes: {
   if (opcoes.carteiras?.length) consulta = consulta.in("carteira_id", opcoes.carteiras);
   if (opcoes.severidades?.length) consulta = consulta.in("severidade", opcoes.severidades);
 
-  const { data, error } = await consulta.order("criado_em", { ascending: false }).limit(200);
+  const { data, error } = await consulta
+    .order("criado_em", { ascending: false })
+    .limit(LIMITE_ALERTAS);
   if (error) {
     console.error("[alertas] falha ao listar:", error.message);
     return [];

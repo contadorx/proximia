@@ -3,12 +3,13 @@ import { BellRing, RefreshCw } from "lucide-react";
 import { exigirOrg, exigirUsuario, podeEscrever } from "@/lib/auth";
 import { listarCarteiras, nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
 import { formatarData } from "@/lib/contas";
-import { ROTULO_TIPO, classeSeveridade, listarAlertas } from "@/lib/alertas";
+import { LIMITE_ALERTAS, ROTULO_TIPO, classeSeveridade, listarAlertas } from "@/lib/alertas";
 import { caminhoEntidade } from "@/lib/registros";
 import { reabrirAlerta, silenciarAlerta, varrerAgora } from "@/app/acoes/alertas";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Seletor, SeletorMultiplo } from "@/components/seletor";
 import { Modal } from "@/components/modal";
+import { BotaoEnviar } from "@/components/botao-enviar";
 import { reatribuirAlerta } from "@/app/acoes/responsabilidades";
 import { UserCog } from "lucide-react";
 import { paraLista, paraTexto } from "@/lib/consulta";
@@ -75,10 +76,10 @@ export default async function PaginaAlertas({
         {editavel && (
           <div className="cabeca-acoes">
             <form action={varrerAgora}>
-              <button className="botao botao-secundario" type="submit">
+              <BotaoEnviar variante="secundario" rotuloEnviando="Varrendo…">
                 <RefreshCw size={15} />
                 Varrer agora
-              </button>
+              </BotaoEnviar>
             </form>
           </div>
         )}
@@ -220,9 +221,7 @@ export default async function PaginaAlertas({
                         inicial={a.dono_id ?? ""}
                         vazio="Sem responsável"
                       />
-                      <button className="botao botao-primario" type="submit">
-                        Salvar
-                      </button>
+                      <BotaoEnviar>Salvar</BotaoEnviar>
                     </form>
                   </Modal>
                 )}
@@ -247,6 +246,12 @@ export default async function PaginaAlertas({
               </li>
             ))}
           </ul>
+          {todos.length >= LIMITE_ALERTAS && (
+            <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
+              Mostrando os {LIMITE_ALERTAS} mais recentes. Filtre por carteira ou severidade para
+              ver o restante.
+            </p>
+          )}
         </section>
       )}
 

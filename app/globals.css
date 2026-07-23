@@ -2555,6 +2555,14 @@ input[aria-invalid="true"] {
   color: #fff;
 }
 
+/* Menu recolhido: a busca vira só o ícone, mas continua viva — o atalho
+   de teclado depende de ela estar montada. */
+.busca-gatilho.compacta {
+  width: auto;
+  justify-content: center;
+  padding: 7px 8px;
+}
+
 .busca-gatilho span {
   flex: 1;
   text-align: left;

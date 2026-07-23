@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { exigirUsuario, vinculosDoUsuario } from "@/lib/auth";
 import { rotuloPapel } from "@/lib/tipos";
 import { criarOrganizacao, selecionarOrganizacao, sair } from "@/app/acoes/organizacoes";
+import { BotaoEnviar } from "@/components/botao-enviar";
 
 export const dynamic = "force-dynamic";
 
@@ -23,9 +24,9 @@ export default async function PaginaOrganizacoes({
         <p className="chamada">Você entra como {rotuloPapel(unica.papel).toLowerCase()}.</p>
         <form action={selecionarOrganizacao}>
           <input type="hidden" name="org_id" value={unica.orgId} />
-          <button className="botao botao-primario" type="submit">
+          <BotaoEnviar>
             Continuar
-          </button>
+          </BotaoEnviar>
         </form>
       </div>
     );
@@ -80,9 +81,9 @@ export default async function PaginaOrganizacoes({
             />
             <small>Letras minúsculas, números e hífen. Usado nos endereços.</small>
           </label>
-          <button className="botao botao-primario" type="submit">
+          <BotaoEnviar>
             Criar organização
-          </button>
+          </BotaoEnviar>
         </form>
       </div>
 

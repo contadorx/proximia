@@ -4,16 +4,10 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { exigirOrg, exigirUsuario } from "@/lib/auth";
+import { numeroDe, textoDe, type EstadoAcao } from "@/lib/formulario";
 
 function comErro(rota: string, mensagem: string): never {
   redirect(`${rota}?erro=${encodeURIComponent(mensagem)}`);
-}
-
-function numero(formData: FormData, campo: string): number | null {
-  const bruto = String(formData.get(campo) ?? "").trim();
-  if (!bruto) return null;
-  const valor = Number(bruto.replace(/\./g, "").replace(",", ".").replace(/[^\d.-]/g, ""));
-  return Number.isNaN(valor) ? null : valor;
 }
 
 function traduzir(mensagem: string, codigo?: string): string {
@@ -29,8 +23,14 @@ function traduzir(mensagem: string, codigo?: string): string {
   return mensagem;
 }
 
-/** Registra valor confirmado. Não edita nada: acrescenta um lançamento. */
-export async function registrarCaptura(formData: FormData) {
+/**
+ * Registra valor confirmado. Não edita nada: acrescenta um lançamento.
+ * Erro volta como estado — o formulário continua preenchido no modal.
+ */
+export async function registrarCaptura(
+  _estado: EstadoAcao,
+  formData: FormData,
+): Promise<EstadoAcao> {
   const org = await exigirOrg();
   const usuario = await exigirUsuario();
 
@@ -39,11 +39,11 @@ export async function registrarCaptura(formData: FormData) {
   const carteiraId = String(formData.get("carteira_id") ?? "");
   const rota = entidadeTipo === "conta" ? `/contas/${entidadeId}` : `/frentes/${entidadeId}`;
 
-  const valor = numero(formData, "valor");
+  const valor = numeroDe(formData, "valor");
   const confirmadoEm = String(formData.get("confirmado_em") ?? "").trim();
 
-  if (!valor || valor <= 0) comErro(rota, "Informe o valor confirmado.");
-  if (!confirmadoEm) comErro(rota, "Informe a data em que o valor foi confirmado.");
+  if (!valor || valor <= 0) return { erro: "Informe o valor confirmado." };
+  if (!confirmadoEm) return { erro: "Informe a data em que o valor foi confirmado." };
 
   const supabase = criarClienteServidor();
   const { error } = await supabase.from("capturas").insert({
@@ -54,12 +54,12 @@ export async function registrarCaptura(formData: FormData) {
     tipo: String(formData.get("tipo") ?? "captura"),
     valor,
     confirmado_em: confirmadoEm,
-    descricao: String(formData.get("descricao") ?? "").trim() || null,
-    comprovacao: String(formData.get("comprovacao") ?? "").trim() || null,
+    descricao: textoDe(formData, "descricao"),
+    comprovacao: textoDe(formData, "comprovacao"),
     autor_id: usuario.id,
   });
 
-  if (error) comErro(rota, traduzir(error.message, error.code));
+  if (error) return { erro: traduzir(error.message, error.code) };
 
   revalidatePath(rota);
   redirect(

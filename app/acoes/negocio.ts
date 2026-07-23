@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { exigirUsuario } from "@/lib/auth";
+import { interpretarNumero } from "@/lib/formulario";
 
 const ROTA = "/negocio";
 
@@ -90,14 +91,12 @@ export async function criarAssinante(formData: FormData) {
 export async function atualizarAssinatura(formData: FormData) {
   await exigirUsuario();
 
-  const valorBruto = String(formData.get("valor_mensal") ?? "0").replace(/\./g, "").replace(",", ".");
-
   const supabase = criarClienteServidor();
   const { error } = await supabase.rpc("atualizar_assinatura", {
     p_org: String(formData.get("org_id") ?? ""),
     p_status: String(formData.get("status") ?? "avaliacao"),
     p_plano: String(formData.get("plano_id") ?? "") || null,
-    p_valor: Number(valorBruto) || 0,
+    p_valor: interpretarNumero(String(formData.get("valor_mensal") ?? "0")) ?? 0,
     p_ciclo: String(formData.get("ciclo") ?? "mensal"),
     p_vencimento: String(formData.get("proximo_vencimento") ?? "") || null,
     p_avaliacao: String(formData.get("avaliacao_ate") ?? "") || null,

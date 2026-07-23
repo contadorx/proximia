@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useFormStatus } from "react-dom";
 import { Trash2 } from "lucide-react";
 
 /**
  * Exclusao em duas etapas: o primeiro clique pergunta, o segundo executa.
- * Sem caixa do navegador e sem exclusao por engano.
+ * Sem caixa do navegador e sem exclusao por engano. O "Confirmar" trava
+ * enquanto a acao roda — clique duplo nao exclui duas vezes nem dispara
+ * a acao sobre o que ja saiu.
  */
 export function BotaoExcluir({
   rotulo = "Excluir",
@@ -34,12 +37,24 @@ export function BotaoExcluir({
   return (
     <span className="confirmacao">
       {aviso && <span className="confirmacao-aviso">{aviso}</span>}
-      <button type="submit" className={compacto ? "link-acao link-perigo" : "botao botao-perigo"}>
-        Confirmar
-      </button>
+      <BotaoConfirmar compacto={compacto} />
       <button type="button" className="link-acao" onClick={() => setConfirmando(false)}>
         Cancelar
       </button>
     </span>
+  );
+}
+
+function BotaoConfirmar({ compacto }: { compacto: boolean }) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      className={compacto ? "link-acao link-perigo" : "botao botao-perigo"}
+      disabled={pending}
+      aria-busy={pending}
+    >
+      {pending ? "Excluindo…" : "Confirmar"}
+    </button>
   );
 }

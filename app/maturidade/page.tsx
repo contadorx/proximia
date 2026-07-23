@@ -23,6 +23,7 @@ import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { BotaoExcluir } from "@/components/botao-excluir";
 import { excluirCiclo, excluirDimensao, excluirPergunta } from "@/app/acoes/exclusoes";
 import { Modal } from "@/components/modal";
+import { BotaoEnviar } from "@/components/botao-enviar";
 
 export const dynamic = "force-dynamic";
 
@@ -123,9 +124,9 @@ export default async function PaginaMaturidade({
                       ))}
                     </select>
                   </label>
-                  <button className="botao botao-primario" type="submit">
+                  <BotaoEnviar>
                     Começar avaliação
-                  </button>
+                  </BotaoEnviar>
                 </form>
               </Modal>
             )}
@@ -150,9 +151,9 @@ export default async function PaginaMaturidade({
                     defaultValue={new Date().toISOString().slice(0, 10)}
                   />
                 </label>
-                <button className="botao botao-primario" type="submit">
+                <BotaoEnviar>
                   Criar ciclo
-                </button>
+                </BotaoEnviar>
               </form>
             </Modal>
           </div>
@@ -176,10 +177,10 @@ export default async function PaginaMaturidade({
             acao={
               gere ? (
                 <form action={criarReguaInicial}>
-                  <button className="botao botao-primario" type="submit">
+                  <BotaoEnviar>
                     <Sparkles size={15} />
                     Criar régua inicial
-                  </button>
+                  </BotaoEnviar>
                 </form>
               ) : undefined
             }
@@ -203,9 +204,9 @@ export default async function PaginaMaturidade({
                   ))}
                 </select>
               </label>
-              <button className="botao botao-secundario" type="submit">
+              <BotaoEnviar variante="secundario">
                 Ver ciclo
-              </button>
+              </BotaoEnviar>
             </form>
           )}
 
@@ -364,9 +365,9 @@ export default async function PaginaMaturidade({
                           <input type="number" name="ordem" defaultValue={dimensoes.length + 1} />
                         </label>
                       </div>
-                      <button className="botao botao-primario" type="submit">
+                      <BotaoEnviar>
                         Criar dimensão
-                      </button>
+                      </BotaoEnviar>
                     </form>
                   </Modal>
 
@@ -409,9 +410,9 @@ export default async function PaginaMaturidade({
                           <input type="number" name="ordem" defaultValue={perguntas.length + 1} />
                         </label>
                       </div>
-                      <button className="botao botao-primario" type="submit">
+                      <BotaoEnviar>
                         Criar pergunta
-                      </button>
+                      </BotaoEnviar>
                     </form>
                   </Modal>
                 </div>

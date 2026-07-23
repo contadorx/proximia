@@ -5,21 +5,10 @@ import { revalidatePath } from "next/cache";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { exigirOrg } from "@/lib/auth";
 import { obterOportunidade } from "@/lib/oportunidades";
+import { inteiroDe, numeroDe, textoDe, type EstadoAcao } from "@/lib/formulario";
 
 function comErro(rota: string, mensagem: string): never {
   redirect(`${rota}?erro=${encodeURIComponent(mensagem)}`);
-}
-
-function texto(formData: FormData, campo: string): string | null {
-  const valor = String(formData.get(campo) ?? "").trim();
-  return valor === "" ? null : valor;
-}
-
-function numero(formData: FormData, campo: string): number | null {
-  const bruto = texto(formData, campo);
-  if (bruto === null) return null;
-  const valor = Number(bruto.replace(/\./g, "").replace(",", ".").replace(/[^\d.-]/g, ""));
-  return Number.isNaN(valor) ? null : valor;
 }
 
 function traduzir(mensagem: string, codigo?: string): string {
@@ -37,26 +26,31 @@ function traduzir(mensagem: string, codigo?: string): string {
 }
 
 function dados(formData: FormData) {
-  const investimento = numero(formData, "investimento");
-  const retorno = numero(formData, "retorno_mensal");
-  const origem = texto(formData, "estimativa_origem");
+  const investimento = numeroDe(formData, "investimento");
+  const retorno = numeroDe(formData, "retorno_mensal");
+  const origem = textoDe(formData, "estimativa_origem");
   const temEstimativa = investimento !== null || retorno !== null;
 
   return {
-    titulo: texto(formData, "titulo"),
-    descricao: texto(formData, "descricao"),
-    conta_id: texto(formData, "conta_id"),
-    catalogo_id: texto(formData, "catalogo_id"),
-    responsavel_id: texto(formData, "responsavel_id"),
-    proxima_etapa: texto(formData, "proxima_etapa"),
-    prazo: texto(formData, "prazo"),
+    titulo: textoDe(formData, "titulo"),
+    descricao: textoDe(formData, "descricao"),
+    conta_id: textoDe(formData, "conta_id"),
+    catalogo_id: textoDe(formData, "catalogo_id"),
+    responsavel_id: textoDe(formData, "responsavel_id"),
+    // O formulário sempre perguntou natureza e prioridade; a ação jogava
+    // fora. "Proteção" marcada tem de chegar ao banco — é a disciplina
+    // captura × proteção valendo desde a entrada do dado.
+    natureza: String(formData.get("natureza") ?? "captura"),
+    prioridade: inteiroDe(formData, "prioridade", 3, 1, 5),
+    proxima_etapa: textoDe(formData, "proxima_etapa"),
+    prazo: textoDe(formData, "prazo"),
     investimento,
     retorno_mensal: retorno,
-    custo_mensal: numero(formData, "custo_mensal") ?? 0,
-    horizonte_meses: Math.max(1, Math.round(numero(formData, "horizonte_meses") ?? 60)),
+    custo_mensal: numeroDe(formData, "custo_mensal") ?? 0,
+    horizonte_meses: inteiroDe(formData, "horizonte_meses", 60, 1, 600),
     estimativa_origem: temEstimativa ? origem : null,
     estimativa_data: temEstimativa
-      ? (texto(formData, "estimativa_data") ?? new Date().toISOString().slice(0, 10))
+      ? (textoDe(formData, "estimativa_data") ?? new Date().toISOString().slice(0, 10))
       : null,
     temEstimativa,
     origem,
@@ -65,14 +59,14 @@ function dados(formData: FormData) {
 
 export async function criarTipoOportunidade(formData: FormData) {
   const org = await exigirOrg();
-  const nome = texto(formData, "nome");
+  const nome = textoDe(formData, "nome");
   if (!nome) comErro("/configuracoes", "Informe o nome do tipo.");
 
   const supabase = criarClienteServidor();
   const { error } = await supabase.from("oportunidade_catalogo").insert({
     org_id: org.orgId,
     nome,
-    descricao: texto(formData, "descricao"),
+    descricao: textoDe(formData, "descricao"),
   });
 
   if (error) comErro("/configuracoes", traduzir(error.message, error.code));
@@ -81,15 +75,18 @@ export async function criarTipoOportunidade(formData: FormData) {
   redirect(`/configuracoes?ok=${encodeURIComponent("Tipo de oportunidade incluído.")}`);
 }
 
-export async function criarOportunidade(formData: FormData) {
+export async function criarOportunidade(
+  _estado: EstadoAcao,
+  formData: FormData,
+): Promise<EstadoAcao> {
   const org = await exigirOrg();
   const carteiraId = String(formData.get("carteira_id") ?? "");
   const d = dados(formData);
 
-  if (!d.titulo) comErro("/oportunidades", "Informe o título da oportunidade.");
-  if (!carteiraId) comErro("/oportunidades", "Escolha a carteira.");
+  if (!d.titulo) return { erro: "Informe o título da oportunidade." };
+  if (!carteiraId) return { erro: "Escolha a carteira." };
   if (d.temEstimativa && !d.origem) {
-    comErro("/oportunidades", "Informe de onde veio a estimativa de investimento e retorno.");
+    return { erro: "Informe de onde veio a estimativa de investimento e retorno." };
   }
 
   const { temEstimativa: _t, origem: _o, ...campos } = d;
@@ -106,27 +103,30 @@ export async function criarOportunidade(formData: FormData) {
     .select("id")
     .single();
 
-  if (error) comErro("/oportunidades", traduzir(error.message, error.code));
+  if (error) return { erro: traduzir(error.message, error.code) };
 
   revalidatePath("/oportunidades");
   redirect(`/oportunidades/${(data as { id: string }).id}`);
 }
 
-export async function atualizarOportunidade(formData: FormData) {
+export async function atualizarOportunidade(
+  _estado: EstadoAcao,
+  formData: FormData,
+): Promise<EstadoAcao> {
   await exigirOrg();
   const id = String(formData.get("id") ?? "");
   const rota = `/oportunidades/${id}`;
   const d = dados(formData);
 
-  if (!d.titulo) comErro(rota, "Informe o título da oportunidade.");
+  if (!d.titulo) return { erro: "Informe o título da oportunidade." };
 
   const fase = String(formData.get("fase") ?? "identificacao");
-  const motivo = texto(formData, "motivo_descarte");
+  const motivo = textoDe(formData, "motivo_descarte");
   if (fase === "descartada" && !motivo) {
-    comErro(rota, "Para descartar, escreva o motivo. É o que fica de aprendizado.");
+    return { erro: "Para descartar, escreva o motivo. É o que fica de aprendizado." };
   }
   if (d.temEstimativa && !d.origem) {
-    comErro(rota, "Informe de onde veio a estimativa de investimento e retorno.");
+    return { erro: "Informe de onde veio a estimativa de investimento e retorno." };
   }
 
   const { temEstimativa: _t, origem: _o, ...campos } = d;
@@ -139,17 +139,19 @@ export async function atualizarOportunidade(formData: FormData) {
         ...campos,
         fase,
         motivo_descarte: fase === "descartada" ? motivo : null,
-        investimento_realizado: numero(formData, "investimento_realizado"),
-        retorno_confirmado: numero(formData, "retorno_confirmado"),
-        confirmado_em: texto(formData, "confirmado_em"),
-        observacoes: texto(formData, "observacoes"),
+        investimento_realizado: numeroDe(formData, "investimento_realizado"),
+        retorno_confirmado: numeroDe(formData, "retorno_confirmado"),
+        confirmado_em: textoDe(formData, "confirmado_em"),
+        observacoes: textoDe(formData, "observacoes"),
       },
       { count: "exact" },
     )
     .eq("id", id);
 
-  if (error) comErro(rota, traduzir(error.message, error.code));
-  if (count === 0) comErro(rota, "Nada foi alterado: seu perfil não permite editar esta oportunidade.");
+  if (error) return { erro: traduzir(error.message, error.code) };
+  if (count === 0) {
+    return { erro: "Nada foi alterado: seu perfil não permite editar esta oportunidade." };
+  }
 
   revalidatePath(rota);
   redirect(`${rota}?ok=${encodeURIComponent("Oportunidade atualizada.")}`);
@@ -162,9 +164,13 @@ export async function mudarFase(formData: FormData) {
   const rota = `/oportunidades/${id}`;
 
   const supabase = criarClienteServidor();
-  const { error } = await supabase.from("oportunidades").update({ fase }).eq("id", id);
+  const { error, count } = await supabase
+    .from("oportunidades")
+    .update({ fase }, { count: "exact" })
+    .eq("id", id);
 
   if (error) comErro(rota, traduzir(error.message, error.code));
+  if (count === 0) comErro(rota, "Nada mudou: seu perfil não permite alterar esta oportunidade.");
 
   revalidatePath(rota);
   redirect(`${rota}?ok=${encodeURIComponent("Fase alterada.")}`);
@@ -175,20 +181,21 @@ export async function incluirLinkOportunidade(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const rota = `/oportunidades/${id}`;
 
-  const rotulo = texto(formData, "rotulo");
-  const url = texto(formData, "url");
+  const rotulo = textoDe(formData, "rotulo");
+  const url = textoDe(formData, "url");
   if (!rotulo || !url) comErro(rota, "Informe o nome e o endereço do link.");
 
   const oportunidade = await obterOportunidade(id);
   if (!oportunidade) comErro(rota, "Oportunidade não encontrada.");
 
   const supabase = criarClienteServidor();
-  const { error } = await supabase
+  const { error, count } = await supabase
     .from("oportunidades")
-    .update({ links: [...(oportunidade.links ?? []), { rotulo, url }] })
+    .update({ links: [...(oportunidade.links ?? []), { rotulo, url }] }, { count: "exact" })
     .eq("id", id);
 
   if (error) comErro(rota, traduzir(error.message, error.code));
+  if (count === 0) comErro(rota, "Nada mudou: seu perfil não permite editar esta oportunidade.");
 
   revalidatePath(rota);
   redirect(`${rota}?ok=${encodeURIComponent("Link incluído.")}`);

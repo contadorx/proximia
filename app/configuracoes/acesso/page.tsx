@@ -16,6 +16,7 @@ import {
 import { convidarPessoa } from "@/app/acoes/convites";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
+import { BotaoEnviar } from "@/components/botao-enviar";
 import { SeletorMultiplo } from "@/components/seletor";
 import { BotaoExcluir } from "@/components/botao-excluir";
 
@@ -86,9 +87,9 @@ export default async function PaginaAcesso({
                     ))}
                   </select>
                 </label>
-                <button className="botao botao-primario" type="submit">
+                <BotaoEnviar>
                   Enviar convite
-                </button>
+                </BotaoEnviar>
               </form>
             </Modal>
           </div>
@@ -260,9 +261,9 @@ export default async function PaginaAcesso({
                                 inicial={meus}
                                 rotuloTodas="Nenhuma"
                               />
-                              <button className="botao botao-primario" type="submit">
+                              <BotaoEnviar>
                                 Salvar alcance
-                              </button>
+                              </BotaoEnviar>
                               <p className="nota">
                                 Sem nenhuma marcada, a pessoa entra e não vê carteira alguma.
                               </p>

@@ -4,6 +4,7 @@ import { exigirOrg, podeEscrever } from "@/lib/auth";
 import { listarCarteiras, nomePessoa, pessoasDaOrganizacao } from "@/lib/carteiras";
 import { formatarData, formatarValor } from "@/lib/contas";
 import {
+  LIMITE_FRENTES,
   STATUS_FRENTE,
   classeStatus,
   listarFrentes,
@@ -15,6 +16,8 @@ import { criarFrente } from "@/app/acoes/frentes";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
 import { Seletor, SeletorMultiplo } from "@/components/seletor";
+import { BotaoEnviar } from "@/components/botao-enviar";
+import { FormAcao } from "@/components/form-acao";
 import { paraLista, temFiltro } from "@/lib/consulta";
 import { CampoQuantidade, CampoValor } from "@/components/campos";
 
@@ -63,7 +66,7 @@ export default async function PaginaFrentes({
               icone={<Plus size={15} />}
               largo
             >
-              <form action={criarFrente} className="formulario">
+              <FormAcao action={criarFrente}>
                 <div className="formulario-linha">
                   <label className="campo">
                     <span>Título</span>
@@ -155,10 +158,8 @@ export default async function PaginaFrentes({
                   </label>
                 </div>
 
-                <button className="botao botao-primario" type="submit">
-                  Criar frente
-                </button>
-              </form>
+                <BotaoEnviar>Criar frente</BotaoEnviar>
+              </FormAcao>
             </Modal>
           </div>
         )}
@@ -186,8 +187,17 @@ export default async function PaginaFrentes({
           <div className="cartao">
             <p className="olho">Potencial estimado</p>
             <p className="cartao-valor teto">{formatarValor(t.potencial)}</p>
-            <p className="cartao-nota">teto das frentes em aberto</p>
+            <p className="cartao-nota">só captura — proteção não entra neste teto</p>
           </div>
+          {t.protecao > 0 && (
+            <div className="cartao">
+              <p className="olho">Em proteção</p>
+              <p className="cartao-valor" style={{ color: "var(--ambar)" }}>
+                {formatarValor(t.protecao)}
+              </p>
+              <p className="cartao-nota">receita que já existe e pode ser perdida</p>
+            </div>
+          )}
           <div className="cartao">
             <p className="olho">Capturado</p>
             <p className="cartao-valor capturado">{formatarValor(t.capturado)}</p>
@@ -257,10 +267,17 @@ export default async function PaginaFrentes({
                   <span className="valor-teto">teto {formatarValor(f.potencial_bruto)}</span>
                   <span className="valor-capturado">capt. {formatarValor(f.valor_capturado)}</span>
                 </span>
+                {f.natureza === "protecao" && <span className="selo selo-atencao">proteção</span>}
                 <span className={classeStatus(f.status)}>{rotuloStatus(f.status)}</span>
               </li>
             ))}
           </ul>
+          {frentes.length >= LIMITE_FRENTES && (
+            <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
+              Mostrando as primeiras {LIMITE_FRENTES}. Os cartões acima somam só o que está na
+              lista — refine o filtro por carteira ou situação para ver o restante.
+            </p>
+          )}
         </section>
       )}
     </>

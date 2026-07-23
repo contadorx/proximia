@@ -7,6 +7,8 @@ import { assumirOperacao, atualizarAssinatura, criarAssinante } from "@/app/acoe
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
 import { BarrasMensais } from "@/components/graficos";
+import { BotaoEnviar } from "@/components/botao-enviar";
+import { CampoValor } from "@/components/campos";
 
 export const dynamic = "force-dynamic";
 
@@ -43,9 +45,9 @@ export default async function PaginaNegocio({
               <span>E-mail</span>
               <input type="email" name="email" required defaultValue={usuario.email ?? ""} />
             </label>
-            <button className="botao botao-primario" type="submit">
+            <BotaoEnviar>
               Assumir
-            </button>
+            </BotaoEnviar>
           </form>
         </div>
       </div>
@@ -120,9 +122,9 @@ export default async function PaginaNegocio({
                 </label>
               </div>
 
-              <button className="botao botao-primario" type="submit">
+              <BotaoEnviar>
                 Criar assinante
-              </button>
+              </BotaoEnviar>
               <p className="nota">
                 Conta de teste fica fora de toda métrica — sem isso, a demonstração do próprio time
                 infla a receita e o número deixa de servir para decidir.
@@ -179,7 +181,13 @@ export default async function PaginaNegocio({
             <h2>Novos assinantes por mês</h2>
             <span className="passos-contagem">últimos seis meses</span>
           </div>
-          <BarrasMensais serie={serie} />
+          {/* formato "numero": é contagem de assinantes, não dinheiro —
+              o rótulo padrão anunciava "pico R$ 3" para três contas. */}
+          <BarrasMensais
+            serie={serie}
+            formato="numero"
+            rotulo="Novos assinantes por mês nos últimos seis meses"
+          />
         </section>
       )}
 
@@ -277,15 +285,11 @@ export default async function PaginaNegocio({
                           </div>
 
                           <div className="formulario-linha">
-                            <label className="campo campo-numerico">
-                              <span>Valor mensal</span>
-                              <input
-                                type="text"
-                                name="valor_mensal"
-                                inputMode="decimal"
-                                defaultValue={String(a.valor_mensal ?? 0)}
-                              />
-                            </label>
+                            <CampoValor
+                              nome="valor_mensal"
+                              rotulo="Valor mensal"
+                              inicial={a.valor_mensal ?? 0}
+                            />
                             <label className="campo">
                               <span>Ciclo</span>
                               <select name="ciclo" defaultValue={a.ciclo}>
@@ -326,9 +330,7 @@ export default async function PaginaNegocio({
                             />
                           </label>
 
-                          <button className="botao botao-primario" type="submit">
-                            Salvar assinatura
-                          </button>
+                          <BotaoEnviar>Salvar assinatura</BotaoEnviar>
                         </form>
                       </Modal>
                     </td>
