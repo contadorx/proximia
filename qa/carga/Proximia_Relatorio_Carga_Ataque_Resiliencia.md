@@ -478,3 +478,50 @@ limpo · `next build` compilando.
 b42. As tabelas e políticas envolvidas são as mesmas, então a ordem de grandeza
 vale — mas se for decidir com base neles, rode `qa/carga/01_massa.sql` e
 `02_bench.sql` na b44 antes.
+
+---
+
+## Correção da própria 0035 — cirurgia de texto não sobrevive à produção
+
+A primeira versão da 0035 lia `pg_get_functiondef` e injetava o gate procurando o
+texto `begin` do corpo. Falhou na instância real:
+
+```
+ERROR: P0001: Não encontrei o begin do corpo de gerar_alertas — blindagem abortada
+```
+
+**Causa reproduzida:** basta o corpo estar gravado com quebra de linha CRLF —
+arquivo salvo no Windows, ou colado no editor SQL a partir de um arquivo CRLF —
+para `position(E'\nbegin\n' in def)` devolver zero. Confirmei em laboratório
+criando a função com corpo CRLF: a busca retorna 0, exatamente o erro relatado.
+Maiúscula (`BEGIN`), espaço à esquerda ou comentário no meio dariam no mesmo.
+
+Eu havia sinalizado esse risco antes de embarcar e embarquei assim mesmo. A lição
+não é "melhorar a busca" — é não depender dela.
+
+**A versão nova não manipula texto nenhum.** Cada função original é **renomeada**
+para `<nome>__nucleo` (DDL puro; o corpo permanece intacto byte a byte) e um
+invólucro com o nome original é criado à mão, com o gate na entrada e a delegação
+ao núcleo. Sem parsing, sem sensibilidade a espaço, caixa ou fim de linha.
+
+**Um segundo defeito, pego pela verificação da própria migration.** Depois do
+rename, o núcleo herdava o `grant execute ... to authenticated` das migrations
+originais (0014, 0018, 0027, 0031) — dava para chamar o núcleo direto e contornar
+o gate. O bloco de verificação no fim do arquivo detectou e abortou a migration,
+como devia. Corrigido revogando de `public` **e** de `authenticated`.
+
+**Ganho colateral:** com o núcleo fora do alcance e o invólucro sem grant para
+`anon`, o anônimo agora é barrado no privilégio antes mesmo de chegar ao gate —
+`permission denied for function gerar_alertas`. Defesa em profundidade.
+
+**Validação da versão final, na b44:**
+
+| Verificação | Resultado |
+|---|---|
+| Migration aplicada em arquivo LF | ok |
+| Migration aplicada em arquivo **CRLF** (o cenário que falhou) | ok |
+| Rodar a migration duas vezes (idempotência) | ok |
+| Gate pelos 4 perfis via `authenticator` | anônimo e forasteiro recusados; dono (752 alertas) e serviço funcionando |
+| Suíte SQL do zero | 17/17 |
+| Testes de unidade | 97/97 |
+| typecheck · `next build` | limpos |
