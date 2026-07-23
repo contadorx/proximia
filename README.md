@@ -267,6 +267,8 @@ Quem cria a organização vira dono. A criação passa pela função `criar_orga
 
 ## Se algo der errado na publicação
 
+**E-mail de confirmação de cadastro não chega** — esse e-mail não é do Proximia: é do **Supabase Auth**, e não passa pela Brevo. O diagnóstico em Configurações testa a Brevo (convite, extrato, resumo) e fica verde mesmo com a confirmação sem sair, porque são caminhos diferentes. O SMTP embutido do Supabase existe para teste, é limitado a poucos envios por hora e costuma não entregar. Configure SMTP próprio em Project Settings › Authentication › SMTP Settings — `supabase/emails/README.md` traz o passo a passo com Brevo, as três armadilhas comuns (a senha SMTP não é a chave de API; o remetente precisa de domínio verificado; `/auth/callback` precisa estar nas Redirect URLs) e os modelos em português já no visual do produto. Para destravar na hora, confirme o usuário à mão em Authentication › Users.
+
 **Erro 500 com `MIDDLEWARE_INVOCATION_FAILED`** — em geral são as variáveis de ambiente. Cadastre `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` no projeto da Vercel e **refaça o deploy**: variáveis `NEXT_PUBLIC_` entram no pacote na compilação, então cadastrá-las depois de publicar não muda o que já está no ar.
 
 **Erro de servidor com `Digest: <número>`** — abra `/diagnostico`. A página testa, em ordem, as variáveis, o formato da URL, a chave, a conexão com o projeto, a sessão e se as tabelas existem, e aponta qual item falhou. Ela não expõe chaves.
