@@ -1,0 +1,77 @@
+-- =====================================================================
+-- RECOMENDAÇÃO MEDIDA — reformular as políticas de alcance por carteira.
+--
+-- NÃO é para aplicar às cegas: é uma proposta com número, para o dono do
+-- produto decidir. A regra de acesso não muda; muda a FORMA de escrevê-la.
+--
+-- O problema, medido com a massa de carga (15 mil registros na org):
+--
+--   A política de `registros` (e das outras tabelas por carteira) chama
+--   public.tem_acesso_carteira(carteira_id) — uma função — para CADA
+--   LINHA avaliada. Com 18.800 linhas na tabela, são 18.800 chamadas de
+--   função, cada uma abrindo sua própria consulta. O plano confirma:
+--
+--     Seq Scan on registros
+--       Filter: tem_acesso_carteira(carteira_id)
+--       Rows Removed by Filter: 3800
+--
+--   Custo observado: 1.545 ms para um simples count(*).
+--
+-- A alternativa, com a MESMA regra escrita como lista resolvida uma vez:
+--
+--     using (carteira_id in (select public.carteiras_visiveis()))
+--
+--   O planejador resolve a lista uma única vez (InitPlan) e depois faz
+--   busca por hash linha a linha. Custo observado: 8,5 ms.
+--
+--   1.545 ms -> 8,5 ms. Cento e oitenta vezes mais rápido.
+--
+-- Equivalência verificada nos quatro perfis, contra a política atual:
+--
+--   dono da org      : 15.000 linhas nas duas formulações
+--   ponto focal      :    600 linhas nas duas
+--   atacante de fora :      0 nas duas
+--   anônimo          : sem permissão nas duas
+--
+-- Ou seja: não afrouxa nada. É a mesma pergunta, feita uma vez em vez de
+-- dezoito mil vezes.
+--
+-- COMO APLICAR (sugestão de migration 0034, a ser decidida):
+--
+--   1. Criar a função de alcance, uma por eixo de acesso:
+--
+--        create or replace function public.carteiras_visiveis()
+--        returns setof uuid language sql stable security definer
+--        set search_path to 'public','pg_temp' as $$
+--          select c.id from public.carteiras c
+--          where public.e_membro(c.org_id)
+--            and (public.papel_na_org(c.org_id) <> 'ponto_focal'
+--                 or public.e_membro_carteira(c.id));
+--        $$;
+--        revoke execute on function public.carteiras_visiveis() from public;
+--        grant  execute on function public.carteiras_visiveis() to authenticated;
+--
+--   2. Reescrever as políticas de SELECT das tabelas por carteira
+--      (registros, contas, contratos, frentes, oportunidades,
+--      compromissos, alertas, capturas, anexos) trocando
+--
+--        using (public.tem_acesso_carteira(carteira_id))
+--      por
+--        using (carteira_id in (select public.carteiras_visiveis()))
+--
+--   3. Repetir a verificação de equivalência acima ANTES de publicar:
+--      para cada perfil (dono, analista, ponto focal, atacante de outra
+--      org, anônimo), a contagem por tabela tem de bater exatamente com a
+--      da política antiga. Diferença de uma linha é motivo para parar.
+--
+--   4. As políticas de ESCRITA (with check) continuam como estão: elas
+--      avaliam uma linha só por vez, então o custo por linha não aparece.
+--
+-- Por que isso importa mais que índice: os índices candidatos
+-- (qa/carga/03_indices_candidatos.sql) tiraram a varredura sequencial de
+-- compromissos do plano, mas o tempo total do Comparativo caiu só 2% —
+-- de 1.571 ms para 1.544 ms. O gargalo nunca foi o índice; era a função
+-- por linha. Vale aplicar os índices mesmo assim (eles removem trabalho
+-- inútil e ajudam quando o volume cresce), mas sem esperar deles o ganho
+-- que só a reformulação entrega.
+-- =====================================================================
