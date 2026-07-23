@@ -117,6 +117,11 @@ begin
 
   perform set_config('role','postgres', true);
   delete from public.orgs where slug in ('sureya','demo');
+  -- A partir da 0042, o último operador não sai por delete solto: a trava
+  -- existe para a operação nunca ficar sem dono, inclusive por cascata.
+  -- Limpeza de teste é o caso previsto para desligá-la.
+  alter table public.plataforma_admins disable trigger trg_proteger_ultimo_operador;
   delete from public.plataforma_admins;
+  alter table public.plataforma_admins enable trigger trg_proteger_ultimo_operador;
   raise notice 'TODOS OS TESTES DE NEGÓCIO PASSARAM';
 end $$;

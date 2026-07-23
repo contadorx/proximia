@@ -1,5 +1,7 @@
 "use client";
 
+import { RelatarErro } from "@/components/relatar-erro";
+
 export default function Erro({
   error,
   reset,
@@ -9,6 +11,7 @@ export default function Erro({
 }) {
   return (
     <div className="coluna-estreita">
+      <RelatarErro erro={error} onde="tela" />
       <p className="olho">Erro</p>
       <h1>Algo falhou nesta tela</h1>
       <p className="chamada">

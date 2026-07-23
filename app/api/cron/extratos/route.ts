@@ -297,6 +297,10 @@ export async function GET(requisicao: Request) {
     }
   }
 
+  // Limpeza do que não ajuda mais: erro de trinta dias atrás não
+  // diagnostica nada e vira custo de armazenamento.
+  await supabase.rpc("limpar_erros_antigos", { p_dias: 30 });
+
   // Fecha o diário. A situação é derivada: ok, parcial ou falhou.
   await supabase.rpc("rotina_concluir", {
     p_id: execucaoId,

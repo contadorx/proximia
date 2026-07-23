@@ -89,15 +89,49 @@ corpo e ajuste o assunto.
 
 | Arquivo | Aba no Supabase | Assunto sugerido | O produto usa? |
 |---|---|---|---|
-| `01-confirmacao-de-cadastro.html` | Confirm signup | Confirme seu acesso ao Proximia | sim |
-| `02-redefinir-senha.html` | Reset Password | Redefinir a senha do Proximia | sim |
-| `03-trocar-email.html` | Change Email Address | Confirme o novo e-mail do seu acesso | só se a troca de e-mail for usada |
+### Autenticação
 
-**Magic Link, Invite user e Reauthentication ficam como estão.** O produto não os
-usa: o convite para a organização é do próprio produto e sai pela Brevo, com o
-token de `public.convites` e a tela `/convite/[token]`. Se alguém usar o botão
-*Invite* do painel do Supabase, a pessoa recebe um e-mail que cria acesso mas não
-vincula a organização nenhuma — o caminho certo é convidar pela tela do produto.
+| Arquivo | Aba no Supabase | O produto usa? |
+|---|---|---|
+| `01-confirmacao-de-cadastro.html` | Confirm sign up | **sim** |
+| `02-redefinir-senha.html` | Reset password | **sim** |
+| `03-trocar-email.html` | Change email address | só se a troca de e-mail for usada |
+| `04-convite-supabase.html` | Invite user | **não** — ver aviso abaixo |
+| `05-link-de-entrada.html` | Magic link or OTP | não — só se ligar entrada sem senha |
+| `06-reautenticacao.html` | Reauthentication | não — só se ligar reautenticação |
+
+**Sobre o Invite user:** o convite do Proximia **não** passa por ele. O produto
+envia o convite pela Brevo, com o token de `public.convites` e a tela
+`/convite/[token]`, que já vincula a pessoa à organização. Se alguém usar o botão
+*Invite* do painel do Supabase, a pessoa recebe um e-mail, cria acesso e **não
+enxerga nada** — porque não há vínculo. O modelo `04` existe para esse caso não
+virar chamado: ele avisa, no próprio e-mail, que falta o vínculo e qual é o
+caminho certo.
+
+### Segurança
+
+Sete avisos que comunicam mudança na conta. **Ligue todos** — é a detecção mais
+barata de conta tomada. Nenhum tem botão, de propósito: quem invadiu receberia o
+mesmo e-mail e clicaria antes do dono.
+
+| Arquivo | Aba no Supabase |
+|---|---|
+| `07-seguranca-senha-alterada.html` | Password changed |
+| `08-seguranca-email-alterado.html` | Email address changed |
+| `09-seguranca-telefone-alterado.html` | Phone number changed |
+| `10-seguranca-metodo-vinculado.html` | Sign-in method linked |
+| `11-seguranca-metodo-removido.html` | Sign-in method removed |
+| `12-seguranca-mfa-adicionado.html` | MFA method added |
+| `13-seguranca-mfa-removido.html` | MFA method removed |
+
+> Os avisos de segurança usam apenas `{{ .Email }}` e `{{ .SiteURL }}`, que são
+> as variáveis seguras em todos eles. Cada tela do Supabase lista as variáveis
+> disponíveis naquele modelo — se a sua mostrar data, dispositivo ou endereço de
+> origem, vale acrescentar: quanto mais concreto o aviso, mais fácil a pessoa
+> reconhecer o que não foi ela.
+
+**A configuração de segurança do projeto está em `SEGURANCA.md`, neste mesmo
+diretório** — e o primeiro item de lá é para hoje.
 
 ### O que os modelos assumem
 

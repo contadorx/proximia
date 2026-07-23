@@ -25,12 +25,51 @@ export const dynamic = "force-dynamic";
  *
  * `?detalhado=1` inclui a saúde da rotina; sem isso, a checagem é só
  * ambiente + banco, que é o que um ping de um minuto precisa.
+ *
+ * MEDIÇÃO DE DISPONIBILIDADE
+ *
+ * Com `?ping=SEGREDO` (o valor de MONITOR_SECRET), o resultado desta
+ * checagem é gravado como o minuto medido. É assim que a promessa dos
+ * Termos deixa de ser afirmação e vira número: um monitor externo bate
+ * aqui de minuto em minuto, e cada passagem vira uma linha.
+ *
+ * Duas decisões que valem explicação:
+ *
+ *   · O segredo existe porque, sem ele, qualquer um poderia marcar
+ *     minutos como fora do ar e estragar a própria medição que você vai
+ *     usar numa discussão de contrato.
+ *
+ *   · Quem mede é externo, de propósito. Um monitor rodando aqui dentro
+ *     não consegue registrar a própria queda — e é justamente a queda que
+ *     interessa. Por isso o minuto sem registro conta como fora do ar no
+ *     número defensável (migration 0043): o silêncio não vira nota alta.
  */
 export async function GET(requisicao: Request) {
   const inicio = Date.now();
-  const detalhado = new URL(requisicao.url).searchParams.get("detalhado") === "1";
+  const parametros = new URL(requisicao.url).searchParams;
+  const detalhado = parametros.get("detalhado") === "1";
+
+  const segredo = process.env.MONITOR_SECRET;
+  const medindo = Boolean(segredo) && parametros.get("ping") === segredo;
+
+  /** Grava o minuto medido. Nunca derruba a resposta: monitor que quebra
+   *  a página que monitora é pior que monitor nenhum. */
+  const registrar = async (saudavel: boolean, detalhe: string | null) => {
+    if (!medindo) return;
+    try {
+      const admin = criarClienteAdmin();
+      await admin.rpc("registrar_ping", {
+        p_saudavel: saudavel,
+        p_ms: Date.now() - inicio,
+        p_detalhe: detalhe,
+      });
+    } catch {
+      // silêncio deliberado
+    }
+  };
 
   if (!ambienteCompleto()) {
+    await registrar(false, "ambiente incompleto");
     return NextResponse.json(
       {
         estado: "incompleto",
@@ -52,6 +91,7 @@ export async function GET(requisicao: Request) {
       signal: AbortSignal.timeout(5000),
     });
     if (!resposta.ok) {
+      await registrar(false, `plataforma respondeu ${resposta.status}`);
       return NextResponse.json(
         {
           estado: "erro",
@@ -64,6 +104,7 @@ export async function GET(requisicao: Request) {
       );
     }
   } catch {
+    await registrar(false, "plataforma inacessível");
     return NextResponse.json(
       {
         estado: "erro",
@@ -120,6 +161,11 @@ export async function GET(requisicao: Request) {
     rotina !== null &&
     ["nunca_rodou", "atrasada", "falhou"].includes(String(rotina.situacao ?? ""));
   const saudavel = banco === "ok" && !rotinaRuim;
+
+  // A rotina atrasada degrada o estado, mas não é queda da aplicação: o
+  // minuto medido registra a saúde de responder, não a da rotina diária,
+  // que tem alarme próprio.
+  await registrar(banco === "ok", banco === "ok" ? null : detalheBanco);
 
   return NextResponse.json(
     {

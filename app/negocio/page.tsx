@@ -1,9 +1,27 @@
 import Link from "next/link";
-import { Building2, Plus, Settings2 } from "lucide-react";
+import { Building2, Plus, Settings2, ShieldCheck, UserPlus } from "lucide-react";
 import { exigirUsuario } from "@/lib/auth";
 import { formatarData, formatarValor } from "@/lib/contas";
-import { diasSemUso, painelNegocio, planos, seloStatus, souOperador } from "@/lib/negocio";
-import { assumirOperacao, atualizarAssinatura, criarAssinante } from "@/app/acoes/negocio";
+import {
+  agruparErros,
+  diasSemUso,
+  disponibilidadeDosUltimos,
+  errosRecentes,
+  lerDisponibilidade,
+  operadoresDaPlataforma,
+  saudeDaRotina,
+  painelNegocio,
+  planos,
+  seloStatus,
+  souOperador,
+} from "@/lib/negocio";
+import {
+  assumirOperacao,
+  atualizarAssinatura,
+  criarAssinante,
+  promoverOperador,
+  removerOperador,
+} from "@/app/acoes/negocio";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
 import { BarrasMensais } from "@/components/graficos";
@@ -54,8 +72,18 @@ export default async function PaginaNegocio({
     );
   }
 
-  const [painel, listaPlanos] = await Promise.all([painelNegocio(), planos()]);
+  const [painel, listaPlanos, operadores, disponibilidade, rotina, erros] = await Promise.all([
+    painelNegocio(),
+    planos(),
+    operadoresDaPlataforma(),
+    disponibilidadeDosUltimos(30),
+    saudeDaRotina(),
+    errosRecentes(7),
+  ]);
   if (!painel) return <Vazio>Não foi possível carregar o painel agora.</Vazio>;
+
+  const leituraDisp = lerDisponibilidade(disponibilidade);
+  const gruposErro = agruparErros(erros);
 
   const serie = painel.serie.map((s) => ({
     mes: s.mes,
@@ -71,6 +99,72 @@ export default async function PaginaNegocio({
           <h1>Painel do negócio</h1>
         </div>
         <div className="cabeca-acoes">
+          <Modal
+            rotulo="Quem opera"
+            titulo="Quem opera a plataforma"
+            descricao="Enxerga a lista de assinantes e a assinatura de cada um — nunca os dados deles."
+            variante="secundario"
+            icone={<ShieldCheck size={15} />}
+            largo
+          >
+            <ul className="lista-estado">
+              {operadores.map((o) => (
+                <li key={o.user_id}>
+                  <span className="rotulo">
+                    {o.nome}
+                    <span className="dica">
+                      {o.email} · desde {formatarData(o.criado_em.slice(0, 10))}
+                    </span>
+                  </span>
+                  {o.sou_eu ? (
+                    <span className="selo selo-neutro">você</span>
+                  ) : (
+                    <form action={removerOperador}>
+                      <input type="hidden" name="user_id" value={o.user_id} />
+                      <button className="link-acao" type="submit">
+                        Remover
+                      </button>
+                    </form>
+                  )}
+                </li>
+              ))}
+            </ul>
+
+            <form action={promoverOperador} className="formulario" style={{ marginTop: 18 }}>
+              <label className="campo">
+                <span>Promover quem já tem acesso</span>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  placeholder="pessoa@suaempresa.com.br"
+                />
+                <small>
+                  A pessoa precisa já ter criado o acesso no Proximia — promover não cria conta.
+                </small>
+              </label>
+              <BotaoEnviar rotuloEnviando="Promovendo…">
+                <UserPlus size={15} />
+                Promover
+              </BotaoEnviar>
+            </form>
+
+            <p className="nota" style={{ marginBottom: 0 }}>
+              {operadores.length === 1 ? (
+                <>
+                  <strong>Hoje só você opera.</strong> Vale promover uma segunda pessoa: se a sua
+                  conta for perdida ou apagada, não sobra ninguém para promover — e resolver isso
+                  exige acesso ao banco.
+                </>
+              ) : (
+                <>
+                  Ninguém remove o próprio acesso, e a plataforma nunca fica sem operador: a última
+                  pessoa da lista não pode ser removida, nem apagando o usuário no Supabase.
+                </>
+              )}
+            </p>
+          </Modal>
+
           <Modal
             rotulo="Novo assinante"
             titulo="Criar organização de um cliente"
@@ -140,7 +234,124 @@ export default async function PaginaNegocio({
         não é motivo para ler a operação de ninguém.
       </IntroSecao>
 
-      {searchParams.erro && <p className="aviso aviso-erro">{searchParams.erro}</p>}
+      
+      {/* ---------- operação: o que sustenta a promessa dos Termos ---------- */}
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>Operação</h2>
+          <span className="passos-contagem">últimos 30 dias</span>
+        </div>
+
+        <ul className="lista-estado">
+          <li>
+            <span className="rotulo">
+              Disponibilidade
+              <span className="dica">{leituraDisp.frase}</span>
+            </span>
+            <span className={leituraDisp.classe}>
+              {leituraDisp.estado === "sem_medicao"
+                ? "sem medição"
+                : `${disponibilidade?.disponibilidade_defensavel_pct}%`}
+            </span>
+          </li>
+
+          {disponibilidade && disponibilidade.minutos_medidos > 0 && (
+            <li>
+              <span className="rotulo">
+                Cobertura da medição
+                <span className="dica">
+                  {disponibilidade.minutos_medidos} de {disponibilidade.minutos_esperados} minutos
+                  registrados · sobre o que respondeu, {disponibilidade.disponibilidade_pct}%
+                </span>
+              </span>
+              <span
+                className={
+                  disponibilidade.cobertura_pct >= 95 ? "selo selo-ok" : "selo selo-neutro"
+                }
+              >
+                {disponibilidade.cobertura_pct}%
+              </span>
+            </li>
+          )}
+
+          <li>
+            <span className="rotulo">
+              Rotina diária
+              <span className="dica">
+                {rotina?.detalhe ?? "não foi possível consultar o diário da rotina."}
+              </span>
+            </span>
+            <span
+              className={
+                rotina?.situacao === "ok"
+                  ? "selo selo-ok"
+                  : rotina?.situacao === "parcial"
+                    ? "selo selo-neutro"
+                    : "selo selo-falta"
+              }
+            >
+              {rotina?.situacao ?? "desconhecida"}
+            </span>
+          </li>
+        </ul>
+
+        <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
+          A disponibilidade conta <strong>minuto sem medição como fora do ar</strong> — é o número
+          que se defende diante de um cliente cobrando o crédito previsto nos Termos. O outro,
+          calculado só sobre o que respondeu, aparece ao lado da cobertura e serve para outra
+          pergunta: quando respondeu, respondeu bem? Quem mede é um monitor externo batendo em{" "}
+          <code>/api/saude?ping=…</code>: monitor rodando aqui dentro não registraria a própria
+          queda, que é justamente o que interessa.
+        </p>
+      </section>
+
+      {/* ---------- erros que chegaram do navegador ---------- */}
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>Erros na tela dos assinantes</h2>
+          <span className="passos-contagem">últimos 7 dias · {erros.length} ocorrência(s)</span>
+        </div>
+
+        {gruposErro.length === 0 ? (
+          <Vazio>
+            Nenhum erro reportado. A tela de erro do produto manda o relato sozinha — silêncio aqui
+            é silêncio de verdade, não falta de instrumentação.
+          </Vazio>
+        ) : (
+          <ul className="lista-estado">
+            {gruposErro.slice(0, 12).map((g) => (
+              <li key={`${g.tipo}-${g.mensagem}`}>
+                <span className="rotulo">
+                  {g.mensagem}
+                  <span className="dica">
+                    {[
+                      g.tipo,
+                      g.rotas.length > 0 ? g.rotas.join(", ") : null,
+                      g.organizacoes > 0
+                        ? `${g.organizacoes} organização(ões)`
+                        : "fora de sessão",
+                      `última em ${formatarData(g.ultima.slice(0, 10))}`,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                </span>
+                <span className={g.ocorrencias > 10 ? "selo selo-falta" : "selo selo-neutro"}>
+                  {g.ocorrencias}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
+          Agrupado por mensagem: cem ocorrências do mesmo erro são um problema, não cem. O relato
+          leva rota, tipo e mensagem técnica — <strong>nunca dado de negócio</strong>: nome de
+          conta, valor e texto de registro são removidos antes de sair do navegador do assinante, e
+          há teste que trava isso. Guardamos trinta dias.
+        </p>
+      </section>
+{searchParams.erro && <p className="aviso aviso-erro">{searchParams.erro}</p>}
       {searchParams.ok && <p className="aviso aviso-ok">{searchParams.ok}</p>}
 
       <div className="cartoes">

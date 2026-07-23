@@ -1,0 +1,1623 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Proximia — modelos de e-mail do Supabase</title>
+<style>
+  :root { --tinta:#1b2a4a; --cinza:#64748b; --linha:#e2e8f0; --fundo:#f6f8fa; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--fundo); color:var(--tinta);
+         font:400 15px/1.6 Arial,Helvetica,sans-serif; }
+  .area { max-width:1180px; margin:0 auto; padding:32px 24px 80px; }
+  h1 { font-size:28px; margin:0 0 6px; }
+  .chamada { color:var(--cinza); margin:0 0 28px; max-width:70ch; }
+  .secao { font-size:13px; text-transform:uppercase; letter-spacing:1px;
+            color:var(--cinza); margin:38px 0 14px; }
+  .indice { background:#fff; border:1px solid var(--linha); border-radius:10px;
+             padding:18px 22px; margin-bottom:28px; }
+  .indice ul { list-style:none; margin:0; padding:0; columns:2; }
+  .indice li { padding:3px 0; break-inside:avoid; }
+  .indice .secao-indice { font-size:12px; text-transform:uppercase; letter-spacing:1px;
+                           color:var(--cinza); margin-top:10px; }
+  .indice a { color:var(--tinta); text-decoration:none; }
+  .indice a:hover { text-decoration:underline; }
+  .modelo { background:#fff; border:1px solid var(--linha); border-radius:10px;
+             padding:22px 24px; margin-bottom:22px; }
+  .cabeca { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; }
+  .cabeca h3 { margin:2px 0 4px; font-size:19px; }
+  .passo { margin:0; font-size:12px; color:var(--cinza); }
+  .onde { margin:0; font-size:13px; color:var(--cinza); }
+  .selo { font-size:12px; font-weight:700; padding:5px 11px; border-radius:999px;
+           white-space:nowrap; }
+  .explica { font-size:13px; color:var(--cinza); margin:12px 0 16px; }
+  label { display:block; font-size:11px; text-transform:uppercase; letter-spacing:1px;
+           color:var(--cinza); margin:0 0 6px; }
+  .campo { margin-bottom:16px; }
+  .valor { background:#f8fafc; border:1px solid var(--linha); border-radius:8px;
+            padding:10px 12px; font:400 14px/1.4 Arial,sans-serif; cursor:pointer; }
+  .duas { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width:900px) { .duas { grid-template-columns:1fr; } .indice ul { columns:1; } }
+  .preview { width:100%; height:420px; border:1px solid var(--linha); border-radius:8px;
+              background:#fff; }
+  .codigo { margin:0; height:420px; overflow:auto; background:#0f172a; color:#e2e8f0;
+             border-radius:8px; padding:14px; font:400 11.5px/1.55 ui-monospace,Menlo,Consolas,monospace;
+             white-space:pre-wrap; word-break:break-word; cursor:pointer; }
+  .copiado { outline:2px solid #157a51; }
+  .aviso { background:#fff; border:1px solid var(--linha); border-left:4px solid #b45309;
+            border-radius:8px; padding:16px 18px; margin-bottom:24px; }
+  .aviso p { margin:0 0 8px; font-size:14px; }
+  .aviso p:last-child { margin-bottom:0; }
+  code { font:400 12.5px ui-monospace,Menlo,Consolas,monospace; }
+</style>
+</head>
+<body>
+<div class="area">
+
+  <h1>Modelos de e-mail do Supabase</h1>
+  <p class="chamada">
+    Os treze modelos no visual dos e-mails que o Proximia já manda. Cada um mostra como
+    chega na caixa de entrada e o código para colar. Clique no assunto ou no código para
+    copiar.
+  </p>
+
+  <div class="aviso">
+    <p><strong>Antes de colar:</strong> o preview usa valores de exemplo
+    (<code>ana.silva@acme.com.br</code>, um código de seis dígitos, um endereço de retorno).
+    O código à direita mantém as variáveis reais do Supabase — não substitua nada nele.</p>
+    <p>O comentário de cabeçalho de cada arquivo <strong>não</strong> vai para o Supabase:
+    o que se cola é só o que está no bloco de código.</p>
+  </div>
+
+  <div class="indice"><ul><li class="secao-indice">Autenticação</li><li><a href="#m1">Confirm signup</a></li><li><a href="#m2">Reset Password</a></li><li><a href="#m3">Change Email Address</a></li><li><a href="#m4">Invite user</a></li><li><a href="#m5">Magic link or OTP</a></li><li><a href="#m6">Reauthentication</a></li><li class="secao-indice">Segurança</li><li><a href="#m7">Password changed</a></li><li><a href="#m8">Email address changed</a></li><li><a href="#m9">Phone number changed</a></li><li><a href="#m10">Sign-in method linked</a></li><li><a href="#m11">Sign-in method removed</a></li><li><a href="#m12">MFA method added</a></li><li><a href="#m13">MFA method removed</a></li></ul></div>
+
+  <h2 class="secao">Autenticação</h2>
+<section class="modelo" id="m1">
+  <div class="cabeca">
+    <div>
+      <p class="passo">Modelo 1 de 13 · arquivo <code>01-confirmacao-de-cadastro.html</code></p>
+      <h3>Confirm signup</h3>
+      <p class="onde">
+        Supabase › Authentication › Emails › <strong>Confirm signup</strong>
+      </p>
+    </div>
+    <span class="selo" style="color:#157a51;background:#e7f6ef;">o produto usa</span>
+  </div>
+
+  <p class="explica">Confirmação de cadastro do produto.</p>
+
+  <div class="campo">
+    <label>Assunto</label>
+    <div class="valor" onclick="copiar(this)" title="clique para copiar">Confirme seu acesso ao Proximia</div>
+  </div>
+
+  <div class="duas">
+    <div>
+      <label>Como chega</label>
+      <iframe class="preview" srcdoc="&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · acesso
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Confirme seu e-mail
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        ana.silva@acme.com.br
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Alguém criou um acesso ao Proximia com este endereço. Clique no botão para confirmar
+        que é você — o link vale por uma hora e serve uma vez só.
+      &lt;/p&gt;
+
+      &lt;table cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 18px;&quot;&gt;
+        &lt;tr&gt;&lt;td style=&quot;background:#1b2a4a;border-radius:8px;&quot;&gt;
+          &lt;a href=&quot;https://proximia.seudominio.com.br/auth/callback?code=8f2a1c9e&quot;
+             style=&quot;display:inline-block;padding:12px 22px;font:600 14px/1 Arial,sans-serif;color:#ffffff;text-decoration:none;&quot;&gt;
+            Confirmar e entrar
+          &lt;/a&gt;
+        &lt;/td&gt;&lt;/tr&gt;
+      &lt;/table&gt;
+
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0 0 6px;&quot;&gt;
+        Se o botão não abrir, copie este endereço no navegador:
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#1b2a4a;word-break:break-all;margin:0 0 18px;&quot;&gt;
+        https://proximia.seudominio.com.br/auth/callback?code=8f2a1c9e
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;Não foi você?&lt;/strong&gt; Ignore esta mensagem. Sem a
+          confirmação, o acesso não é ativado e ninguém entra com este endereço.
+        &lt;/p&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:10px 0 0;&quot;&gt;
+          Confirmar o e-mail cria o acesso, mas ainda não dá acesso a nenhuma organização —
+          isso depende de convite ou de vínculo feito por quem administra.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;" loading="lazy"></iframe>
+    </div>
+    <div>
+      <label>Código — cole no corpo do modelo</label>
+      <pre class="codigo" onclick="copiar(this)" title="clique para copiar">&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · acesso
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Confirme seu e-mail
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        {{ .Email }}
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Alguém criou um acesso ao Proximia com este endereço. Clique no botão para confirmar
+        que é você — o link vale por uma hora e serve uma vez só.
+      &lt;/p&gt;
+
+      &lt;table cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 18px;&quot;&gt;
+        &lt;tr&gt;&lt;td style=&quot;background:#1b2a4a;border-radius:8px;&quot;&gt;
+          &lt;a href=&quot;{{ .ConfirmationURL }}&quot;
+             style=&quot;display:inline-block;padding:12px 22px;font:600 14px/1 Arial,sans-serif;color:#ffffff;text-decoration:none;&quot;&gt;
+            Confirmar e entrar
+          &lt;/a&gt;
+        &lt;/td&gt;&lt;/tr&gt;
+      &lt;/table&gt;
+
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0 0 6px;&quot;&gt;
+        Se o botão não abrir, copie este endereço no navegador:
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#1b2a4a;word-break:break-all;margin:0 0 18px;&quot;&gt;
+        {{ .ConfirmationURL }}
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;Não foi você?&lt;/strong&gt; Ignore esta mensagem. Sem a
+          confirmação, o acesso não é ativado e ninguém entra com este endereço.
+        &lt;/p&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:10px 0 0;&quot;&gt;
+          Confirmar o e-mail cria o acesso, mas ainda não dá acesso a nenhuma organização —
+          isso depende de convite ou de vínculo feito por quem administra.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;</pre>
+    </div>
+  </div>
+</section>
+<section class="modelo" id="m2">
+  <div class="cabeca">
+    <div>
+      <p class="passo">Modelo 2 de 13 · arquivo <code>02-redefinir-senha.html</code></p>
+      <h3>Reset Password</h3>
+      <p class="onde">
+        Supabase › Authentication › Emails › <strong>Reset Password</strong>
+      </p>
+    </div>
+    <span class="selo" style="color:#157a51;background:#e7f6ef;">o produto usa</span>
+  </div>
+
+  <p class="explica">Tela “Esqueci a senha” do produto.</p>
+
+  <div class="campo">
+    <label>Assunto</label>
+    <div class="valor" onclick="copiar(this)" title="clique para copiar">Redefinir a senha do Proximia</div>
+  </div>
+
+  <div class="duas">
+    <div>
+      <label>Como chega</label>
+      <iframe class="preview" srcdoc="&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · acesso
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Definir uma senha nova
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        ana.silva@acme.com.br
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Recebemos um pedido para redefinir a senha desta conta. O link abaixo abre a tela de
+        senha nova, vale por uma hora e serve uma vez só.
+      &lt;/p&gt;
+
+      &lt;table cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 18px;&quot;&gt;
+        &lt;tr&gt;&lt;td style=&quot;background:#1b2a4a;border-radius:8px;&quot;&gt;
+          &lt;a href=&quot;https://proximia.seudominio.com.br/auth/callback?code=8f2a1c9e&quot;
+             style=&quot;display:inline-block;padding:12px 22px;font:600 14px/1 Arial,sans-serif;color:#ffffff;text-decoration:none;&quot;&gt;
+            Definir nova senha
+          &lt;/a&gt;
+        &lt;/td&gt;&lt;/tr&gt;
+      &lt;/table&gt;
+
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0 0 6px;&quot;&gt;
+        Se o botão não abrir, copie este endereço no navegador:
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#1b2a4a;word-break:break-all;margin:0 0 18px;&quot;&gt;
+        https://proximia.seudominio.com.br/auth/callback?code=8f2a1c9e
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;Não pediu isso?&lt;/strong&gt; Ignore esta mensagem. A senha
+          atual continua valendo e ninguém é avisado de que você recebeu este e-mail.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;" loading="lazy"></iframe>
+    </div>
+    <div>
+      <label>Código — cole no corpo do modelo</label>
+      <pre class="codigo" onclick="copiar(this)" title="clique para copiar">&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · acesso
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Definir uma senha nova
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        {{ .Email }}
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Recebemos um pedido para redefinir a senha desta conta. O link abaixo abre a tela de
+        senha nova, vale por uma hora e serve uma vez só.
+      &lt;/p&gt;
+
+      &lt;table cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 18px;&quot;&gt;
+        &lt;tr&gt;&lt;td style=&quot;background:#1b2a4a;border-radius:8px;&quot;&gt;
+          &lt;a href=&quot;{{ .ConfirmationURL }}&quot;
+             style=&quot;display:inline-block;padding:12px 22px;font:600 14px/1 Arial,sans-serif;color:#ffffff;text-decoration:none;&quot;&gt;
+            Definir nova senha
+          &lt;/a&gt;
+        &lt;/td&gt;&lt;/tr&gt;
+      &lt;/table&gt;
+
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0 0 6px;&quot;&gt;
+        Se o botão não abrir, copie este endereço no navegador:
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#1b2a4a;word-break:break-all;margin:0 0 18px;&quot;&gt;
+        {{ .ConfirmationURL }}
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;Não pediu isso?&lt;/strong&gt; Ignore esta mensagem. A senha
+          atual continua valendo e ninguém é avisado de que você recebeu este e-mail.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;</pre>
+    </div>
+  </div>
+</section>
+<section class="modelo" id="m3">
+  <div class="cabeca">
+    <div>
+      <p class="passo">Modelo 3 de 13 · arquivo <code>03-trocar-email.html</code></p>
+      <h3>Change Email Address</h3>
+      <p class="onde">
+        Supabase › Authentication › Emails › <strong>Change Email Address</strong>
+      </p>
+    </div>
+    <span class="selo" style="color:#b45309;background:#fef3c7;">depende do uso</span>
+  </div>
+
+  <p class="explica">Só se a troca de e-mail for usada.</p>
+
+  <div class="campo">
+    <label>Assunto</label>
+    <div class="valor" onclick="copiar(this)" title="clique para copiar">Confirme o novo e-mail do seu acesso</div>
+  </div>
+
+  <div class="duas">
+    <div>
+      <label>Como chega</label>
+      <iframe class="preview" srcdoc="&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · acesso
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Confirme o endereço novo
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        de ana.silva@acme.com.br para ana.silva@novodominio.com.br
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Para trocar o e-mail de entrada, confirme que este endereço é seu. Enquanto não
+        confirmar, o acesso continua pelo endereço antigo.
+      &lt;/p&gt;
+
+      &lt;table cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 18px;&quot;&gt;
+        &lt;tr&gt;&lt;td style=&quot;background:#1b2a4a;border-radius:8px;&quot;&gt;
+          &lt;a href=&quot;https://proximia.seudominio.com.br/auth/callback?code=8f2a1c9e&quot;
+             style=&quot;display:inline-block;padding:12px 22px;font:600 14px/1 Arial,sans-serif;color:#ffffff;text-decoration:none;&quot;&gt;
+            Confirmar endereço
+          &lt;/a&gt;
+        &lt;/td&gt;&lt;/tr&gt;
+      &lt;/table&gt;
+
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0 0 6px;&quot;&gt;
+        Se o botão não abrir, copie este endereço no navegador:
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#1b2a4a;word-break:break-all;margin:0 0 18px;&quot;&gt;
+        https://proximia.seudominio.com.br/auth/callback?code=8f2a1c9e
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;Não pediu a troca?&lt;/strong&gt; Ignore esta mensagem e
+          avise quem administra a sua organização — pode ser sinal de acesso indevido.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;" loading="lazy"></iframe>
+    </div>
+    <div>
+      <label>Código — cole no corpo do modelo</label>
+      <pre class="codigo" onclick="copiar(this)" title="clique para copiar">&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · acesso
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Confirme o endereço novo
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        de {{ .Email }} para {{ .NewEmail }}
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Para trocar o e-mail de entrada, confirme que este endereço é seu. Enquanto não
+        confirmar, o acesso continua pelo endereço antigo.
+      &lt;/p&gt;
+
+      &lt;table cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 18px;&quot;&gt;
+        &lt;tr&gt;&lt;td style=&quot;background:#1b2a4a;border-radius:8px;&quot;&gt;
+          &lt;a href=&quot;{{ .ConfirmationURL }}&quot;
+             style=&quot;display:inline-block;padding:12px 22px;font:600 14px/1 Arial,sans-serif;color:#ffffff;text-decoration:none;&quot;&gt;
+            Confirmar endereço
+          &lt;/a&gt;
+        &lt;/td&gt;&lt;/tr&gt;
+      &lt;/table&gt;
+
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0 0 6px;&quot;&gt;
+        Se o botão não abrir, copie este endereço no navegador:
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#1b2a4a;word-break:break-all;margin:0 0 18px;&quot;&gt;
+        {{ .ConfirmationURL }}
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;Não pediu a troca?&lt;/strong&gt; Ignore esta mensagem e
+          avise quem administra a sua organização — pode ser sinal de acesso indevido.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;</pre>
+    </div>
+  </div>
+</section>
+<section class="modelo" id="m4">
+  <div class="cabeca">
+    <div>
+      <p class="passo">Modelo 4 de 13 · arquivo <code>04-convite-supabase.html</code></p>
+      <h3>Invite user</h3>
+      <p class="onde">
+        Supabase › Authentication › Emails › <strong>Invite user</strong>
+      </p>
+    </div>
+    <span class="selo" style="color:#64748b;background:#f1f5f9;">o produto não usa</span>
+  </div>
+
+  <p class="explica">O convite do Proximia sai pela Brevo, não por aqui.</p>
+
+  <div class="campo">
+    <label>Assunto</label>
+    <div class="valor" onclick="copiar(this)" title="clique para copiar">Você recebeu um convite de acesso</div>
+  </div>
+
+  <div class="duas">
+    <div>
+      <label>Como chega</label>
+      <iframe class="preview" srcdoc="&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · acesso
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Convite para criar acesso
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        ana.silva@acme.com.br
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Alguém do time criou um acesso ao Proximia para este endereço. Clique para definir sua senha e entrar. O link vale por uma hora e serve uma vez só.
+      &lt;/p&gt;
+      &lt;table cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 18px;&quot;&gt;
+        &lt;tr&gt;&lt;td style=&quot;background:#1b2a4a;border-radius:8px;&quot;&gt;
+          &lt;a href=&quot;https://proximia.seudominio.com.br/auth/callback?code=8f2a1c9e&quot;
+             style=&quot;display:inline-block;padding:12px 22px;font:600 14px/1 Arial,sans-serif;color:#ffffff;text-decoration:none;&quot;&gt;
+            Definir senha e entrar
+          &lt;/a&gt;
+        &lt;/td&gt;&lt;/tr&gt;
+      &lt;/table&gt;
+
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0 0 6px;&quot;&gt;
+        Se o botão não abrir, copie este endereço no navegador:
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#1b2a4a;word-break:break-all;margin:0 0 18px;&quot;&gt;
+        https://proximia.seudominio.com.br/auth/callback?code=8f2a1c9e
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;Depois de entrar, você pode não ver nada ainda.&lt;/strong&gt; Criar o acesso e ter acesso a uma organização são coisas diferentes: peça a quem administra que inclua você — ou entre pelo convite que o próprio Proximia envia, que já vincula tudo de uma vez.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;" loading="lazy"></iframe>
+    </div>
+    <div>
+      <label>Código — cole no corpo do modelo</label>
+      <pre class="codigo" onclick="copiar(this)" title="clique para copiar">&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · acesso
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Convite para criar acesso
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        {{ .Email }}
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Alguém do time criou um acesso ao Proximia para este endereço. Clique para definir sua senha e entrar. O link vale por uma hora e serve uma vez só.
+      &lt;/p&gt;
+      &lt;table cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 18px;&quot;&gt;
+        &lt;tr&gt;&lt;td style=&quot;background:#1b2a4a;border-radius:8px;&quot;&gt;
+          &lt;a href=&quot;{{ .ConfirmationURL }}&quot;
+             style=&quot;display:inline-block;padding:12px 22px;font:600 14px/1 Arial,sans-serif;color:#ffffff;text-decoration:none;&quot;&gt;
+            Definir senha e entrar
+          &lt;/a&gt;
+        &lt;/td&gt;&lt;/tr&gt;
+      &lt;/table&gt;
+
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0 0 6px;&quot;&gt;
+        Se o botão não abrir, copie este endereço no navegador:
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#1b2a4a;word-break:break-all;margin:0 0 18px;&quot;&gt;
+        {{ .ConfirmationURL }}
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;Depois de entrar, você pode não ver nada ainda.&lt;/strong&gt; Criar o acesso e ter acesso a uma organização são coisas diferentes: peça a quem administra que inclua você — ou entre pelo convite que o próprio Proximia envia, que já vincula tudo de uma vez.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;</pre>
+    </div>
+  </div>
+</section>
+<section class="modelo" id="m5">
+  <div class="cabeca">
+    <div>
+      <p class="passo">Modelo 5 de 13 · arquivo <code>05-link-de-entrada.html</code></p>
+      <h3>Magic link or OTP</h3>
+      <p class="onde">
+        Supabase › Authentication › Emails › <strong>Magic link or OTP</strong>
+      </p>
+    </div>
+    <span class="selo" style="color:#64748b;background:#f1f5f9;">o produto não usa</span>
+  </div>
+
+  <p class="explica">Só se ligar entrada sem senha.</p>
+
+  <div class="campo">
+    <label>Assunto</label>
+    <div class="valor" onclick="copiar(this)" title="clique para copiar">Seu link de entrada no Proximia</div>
+  </div>
+
+  <div class="duas">
+    <div>
+      <label>Como chega</label>
+      <iframe class="preview" srcdoc="&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · acesso
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Entrar sem senha
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        ana.silva@acme.com.br
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Use o botão abaixo para entrar sem digitar senha. O link vale por uma hora, serve uma vez só e não deve ser encaminhado para ninguém — quem tiver este endereço entra como você.
+      &lt;/p&gt;
+      &lt;table cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 18px;&quot;&gt;
+        &lt;tr&gt;&lt;td style=&quot;background:#1b2a4a;border-radius:8px;&quot;&gt;
+          &lt;a href=&quot;https://proximia.seudominio.com.br/auth/callback?code=8f2a1c9e&quot;
+             style=&quot;display:inline-block;padding:12px 22px;font:600 14px/1 Arial,sans-serif;color:#ffffff;text-decoration:none;&quot;&gt;
+            Entrar no Proximia
+          &lt;/a&gt;
+        &lt;/td&gt;&lt;/tr&gt;
+      &lt;/table&gt;
+
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0 0 6px;&quot;&gt;
+        Se o botão não abrir, copie este endereço no navegador:
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#1b2a4a;word-break:break-all;margin:0 0 18px;&quot;&gt;
+        https://proximia.seudominio.com.br/auth/callback?code=8f2a1c9e
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0 0 6px;&quot;&gt;
+        Se preferir digitar o código:
+      &lt;/p&gt;
+      &lt;p style=&quot;font:700 30px/1.2 Arial,sans-serif;color:#1b2a4a;letter-spacing:6px;margin:0 0 18px;&quot;&gt;
+        482913
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;Não pediu para entrar?&lt;/strong&gt; Ignore esta mensagem e troque sua senha. Um pedido que você não fez pode significar que alguém sabe o seu endereço e está tentando.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;" loading="lazy"></iframe>
+    </div>
+    <div>
+      <label>Código — cole no corpo do modelo</label>
+      <pre class="codigo" onclick="copiar(this)" title="clique para copiar">&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · acesso
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Entrar sem senha
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        {{ .Email }}
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Use o botão abaixo para entrar sem digitar senha. O link vale por uma hora, serve uma vez só e não deve ser encaminhado para ninguém — quem tiver este endereço entra como você.
+      &lt;/p&gt;
+      &lt;table cellpadding=&quot;0&quot; cellspacing=&quot;0&quot; style=&quot;margin:8px 0 18px;&quot;&gt;
+        &lt;tr&gt;&lt;td style=&quot;background:#1b2a4a;border-radius:8px;&quot;&gt;
+          &lt;a href=&quot;{{ .ConfirmationURL }}&quot;
+             style=&quot;display:inline-block;padding:12px 22px;font:600 14px/1 Arial,sans-serif;color:#ffffff;text-decoration:none;&quot;&gt;
+            Entrar no Proximia
+          &lt;/a&gt;
+        &lt;/td&gt;&lt;/tr&gt;
+      &lt;/table&gt;
+
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0 0 6px;&quot;&gt;
+        Se o botão não abrir, copie este endereço no navegador:
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#1b2a4a;word-break:break-all;margin:0 0 18px;&quot;&gt;
+        {{ .ConfirmationURL }}
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0 0 6px;&quot;&gt;
+        Se preferir digitar o código:
+      &lt;/p&gt;
+      &lt;p style=&quot;font:700 30px/1.2 Arial,sans-serif;color:#1b2a4a;letter-spacing:6px;margin:0 0 18px;&quot;&gt;
+        {{ .Token }}
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;Não pediu para entrar?&lt;/strong&gt; Ignore esta mensagem e troque sua senha. Um pedido que você não fez pode significar que alguém sabe o seu endereço e está tentando.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;</pre>
+    </div>
+  </div>
+</section>
+<section class="modelo" id="m6">
+  <div class="cabeca">
+    <div>
+      <p class="passo">Modelo 6 de 13 · arquivo <code>06-reautenticacao.html</code></p>
+      <h3>Reauthentication</h3>
+      <p class="onde">
+        Supabase › Authentication › Emails › <strong>Reauthentication</strong>
+      </p>
+    </div>
+    <span class="selo" style="color:#64748b;background:#f1f5f9;">o produto não usa</span>
+  </div>
+
+  <p class="explica">Só se ligar reautenticação.</p>
+
+  <div class="campo">
+    <label>Assunto</label>
+    <div class="valor" onclick="copiar(this)" title="clique para copiar">Código para confirmar sua identidade</div>
+  </div>
+
+  <div class="duas">
+    <div>
+      <label>Como chega</label>
+      <iframe class="preview" srcdoc="&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · acesso
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Confirme que é você
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        ana.silva@acme.com.br
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Uma operação sensível foi pedida na sua conta. Digite o código abaixo na tela para confirmar. Ele expira em poucos minutos.
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0 0 6px;&quot;&gt;
+        Seu código:
+      &lt;/p&gt;
+      &lt;p style=&quot;font:700 30px/1.2 Arial,sans-serif;color:#1b2a4a;letter-spacing:6px;margin:0 0 18px;&quot;&gt;
+        482913
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;Ninguém do suporte vai pedir este código.&lt;/strong&gt; Se alguém pedir por telefone, mensagem ou e-mail, é golpe. Se você não pediu nada, troque sua senha agora.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;" loading="lazy"></iframe>
+    </div>
+    <div>
+      <label>Código — cole no corpo do modelo</label>
+      <pre class="codigo" onclick="copiar(this)" title="clique para copiar">&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · acesso
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Confirme que é você
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        {{ .Email }}
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Uma operação sensível foi pedida na sua conta. Digite o código abaixo na tela para confirmar. Ele expira em poucos minutos.
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0 0 6px;&quot;&gt;
+        Seu código:
+      &lt;/p&gt;
+      &lt;p style=&quot;font:700 30px/1.2 Arial,sans-serif;color:#1b2a4a;letter-spacing:6px;margin:0 0 18px;&quot;&gt;
+        {{ .Token }}
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;Ninguém do suporte vai pedir este código.&lt;/strong&gt; Se alguém pedir por telefone, mensagem ou e-mail, é golpe. Se você não pediu nada, troque sua senha agora.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;</pre>
+    </div>
+  </div>
+</section><h2 class="secao">Segurança</h2>
+<section class="modelo" id="m7">
+  <div class="cabeca">
+    <div>
+      <p class="passo">Modelo 7 de 13 · arquivo <code>07-seguranca-senha-alterada.html</code></p>
+      <h3>Password changed</h3>
+      <p class="onde">
+        Supabase › Authentication › Emails › <strong>Password changed</strong>
+      </p>
+    </div>
+    <span class="selo" style="color:#1b2a4a;background:#e8edf5;">recomendado ligar</span>
+  </div>
+
+  <p class="explica">Aviso de segurança — recomendado ligar.</p>
+
+  <div class="campo">
+    <label>Assunto</label>
+    <div class="valor" onclick="copiar(this)" title="clique para copiar">Sua senha do Proximia foi alterada</div>
+  </div>
+
+  <div class="duas">
+    <div>
+      <label>Como chega</label>
+      <iframe class="preview" srcdoc="&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · segurança
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Senha alterada
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        ana.silva@acme.com.br
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        A senha desta conta acabou de ser alterada.
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        &lt;strong&gt;Foi você?&lt;/strong&gt; Não precisa fazer nada — este aviso existe só para
+        você ficar sabendo.
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 13px/1.6 Arial,sans-serif;color:#b91c1c;margin:0 0 10px;&quot;&gt;
+          &lt;strong&gt;Não foi você?&lt;/strong&gt; Redefina a senha imediatamente e avise quem
+          administra a sua organização.
+        &lt;/p&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          Faça isso indo direto a https://proximia.seudominio.com.br e usando &amp;ldquo;Esqueci a senha&amp;rdquo; —
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;não&lt;/strong&gt; por link recebido em e-mail. Nenhuma
+          mensagem legítima do Proximia pede senha, código ou confirmação por telefone.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;" loading="lazy"></iframe>
+    </div>
+    <div>
+      <label>Código — cole no corpo do modelo</label>
+      <pre class="codigo" onclick="copiar(this)" title="clique para copiar">&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · segurança
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Senha alterada
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        {{ .Email }}
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        A senha desta conta acabou de ser alterada.
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        &lt;strong&gt;Foi você?&lt;/strong&gt; Não precisa fazer nada — este aviso existe só para
+        você ficar sabendo.
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 13px/1.6 Arial,sans-serif;color:#b91c1c;margin:0 0 10px;&quot;&gt;
+          &lt;strong&gt;Não foi você?&lt;/strong&gt; Redefina a senha imediatamente e avise quem
+          administra a sua organização.
+        &lt;/p&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          Faça isso indo direto a {{ .SiteURL }} e usando &amp;ldquo;Esqueci a senha&amp;rdquo; —
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;não&lt;/strong&gt; por link recebido em e-mail. Nenhuma
+          mensagem legítima do Proximia pede senha, código ou confirmação por telefone.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;</pre>
+    </div>
+  </div>
+</section>
+<section class="modelo" id="m8">
+  <div class="cabeca">
+    <div>
+      <p class="passo">Modelo 8 de 13 · arquivo <code>08-seguranca-email-alterado.html</code></p>
+      <h3>Email address changed</h3>
+      <p class="onde">
+        Supabase › Authentication › Emails › <strong>Email address changed</strong>
+      </p>
+    </div>
+    <span class="selo" style="color:#1b2a4a;background:#e8edf5;">recomendado ligar</span>
+  </div>
+
+  <p class="explica">Aviso de segurança — recomendado ligar.</p>
+
+  <div class="campo">
+    <label>Assunto</label>
+    <div class="valor" onclick="copiar(this)" title="clique para copiar">O e-mail do seu acesso foi alterado</div>
+  </div>
+
+  <div class="duas">
+    <div>
+      <label>Como chega</label>
+      <iframe class="preview" srcdoc="&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · segurança
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        E-mail de acesso alterado
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        ana.silva@acme.com.br
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        O endereço de e-mail desta conta acabou de ser alterado. A partir de agora, a entrada acontece pelo endereço novo.
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        &lt;strong&gt;Foi você?&lt;/strong&gt; Não precisa fazer nada — este aviso existe só para
+        você ficar sabendo.
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 13px/1.6 Arial,sans-serif;color:#b91c1c;margin:0 0 10px;&quot;&gt;
+          &lt;strong&gt;Não foi você?&lt;/strong&gt; Redefina a senha imediatamente e avise quem
+          administra a sua organização.
+        &lt;/p&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          Faça isso indo direto a https://proximia.seudominio.com.br e usando &amp;ldquo;Esqueci a senha&amp;rdquo; —
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;não&lt;/strong&gt; por link recebido em e-mail. Nenhuma
+          mensagem legítima do Proximia pede senha, código ou confirmação por telefone.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;" loading="lazy"></iframe>
+    </div>
+    <div>
+      <label>Código — cole no corpo do modelo</label>
+      <pre class="codigo" onclick="copiar(this)" title="clique para copiar">&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · segurança
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        E-mail de acesso alterado
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        {{ .Email }}
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        O endereço de e-mail desta conta acabou de ser alterado. A partir de agora, a entrada acontece pelo endereço novo.
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        &lt;strong&gt;Foi você?&lt;/strong&gt; Não precisa fazer nada — este aviso existe só para
+        você ficar sabendo.
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 13px/1.6 Arial,sans-serif;color:#b91c1c;margin:0 0 10px;&quot;&gt;
+          &lt;strong&gt;Não foi você?&lt;/strong&gt; Redefina a senha imediatamente e avise quem
+          administra a sua organização.
+        &lt;/p&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          Faça isso indo direto a {{ .SiteURL }} e usando &amp;ldquo;Esqueci a senha&amp;rdquo; —
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;não&lt;/strong&gt; por link recebido em e-mail. Nenhuma
+          mensagem legítima do Proximia pede senha, código ou confirmação por telefone.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;</pre>
+    </div>
+  </div>
+</section>
+<section class="modelo" id="m9">
+  <div class="cabeca">
+    <div>
+      <p class="passo">Modelo 9 de 13 · arquivo <code>09-seguranca-telefone-alterado.html</code></p>
+      <h3>Phone number changed</h3>
+      <p class="onde">
+        Supabase › Authentication › Emails › <strong>Phone number changed</strong>
+      </p>
+    </div>
+    <span class="selo" style="color:#1b2a4a;background:#e8edf5;">recomendado ligar</span>
+  </div>
+
+  <p class="explica">Aviso de segurança — recomendado ligar.</p>
+
+  <div class="campo">
+    <label>Assunto</label>
+    <div class="valor" onclick="copiar(this)" title="clique para copiar">O telefone do seu acesso foi alterado</div>
+  </div>
+
+  <div class="duas">
+    <div>
+      <label>Como chega</label>
+      <iframe class="preview" srcdoc="&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · segurança
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Telefone alterado
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        ana.silva@acme.com.br
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        O telefone desta conta acabou de ser alterado.
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        &lt;strong&gt;Foi você?&lt;/strong&gt; Não precisa fazer nada — este aviso existe só para
+        você ficar sabendo.
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 13px/1.6 Arial,sans-serif;color:#b91c1c;margin:0 0 10px;&quot;&gt;
+          &lt;strong&gt;Não foi você?&lt;/strong&gt; Redefina a senha imediatamente e avise quem
+          administra a sua organização.
+        &lt;/p&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          Faça isso indo direto a https://proximia.seudominio.com.br e usando &amp;ldquo;Esqueci a senha&amp;rdquo; —
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;não&lt;/strong&gt; por link recebido em e-mail. Nenhuma
+          mensagem legítima do Proximia pede senha, código ou confirmação por telefone.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;" loading="lazy"></iframe>
+    </div>
+    <div>
+      <label>Código — cole no corpo do modelo</label>
+      <pre class="codigo" onclick="copiar(this)" title="clique para copiar">&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · segurança
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Telefone alterado
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        {{ .Email }}
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        O telefone desta conta acabou de ser alterado.
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        &lt;strong&gt;Foi você?&lt;/strong&gt; Não precisa fazer nada — este aviso existe só para
+        você ficar sabendo.
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 13px/1.6 Arial,sans-serif;color:#b91c1c;margin:0 0 10px;&quot;&gt;
+          &lt;strong&gt;Não foi você?&lt;/strong&gt; Redefina a senha imediatamente e avise quem
+          administra a sua organização.
+        &lt;/p&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          Faça isso indo direto a {{ .SiteURL }} e usando &amp;ldquo;Esqueci a senha&amp;rdquo; —
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;não&lt;/strong&gt; por link recebido em e-mail. Nenhuma
+          mensagem legítima do Proximia pede senha, código ou confirmação por telefone.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;</pre>
+    </div>
+  </div>
+</section>
+<section class="modelo" id="m10">
+  <div class="cabeca">
+    <div>
+      <p class="passo">Modelo 10 de 13 · arquivo <code>10-seguranca-metodo-vinculado.html</code></p>
+      <h3>Sign-in method linked</h3>
+      <p class="onde">
+        Supabase › Authentication › Emails › <strong>Sign-in method linked</strong>
+      </p>
+    </div>
+    <span class="selo" style="color:#1b2a4a;background:#e8edf5;">recomendado ligar</span>
+  </div>
+
+  <p class="explica">Aviso de segurança — recomendado ligar.</p>
+
+  <div class="campo">
+    <label>Assunto</label>
+    <div class="valor" onclick="copiar(this)" title="clique para copiar">Uma nova forma de entrar foi vinculada</div>
+  </div>
+
+  <div class="duas">
+    <div>
+      <label>Como chega</label>
+      <iframe class="preview" srcdoc="&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · segurança
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Nova forma de entrar
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        ana.silva@acme.com.br
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Uma nova forma de entrar acabou de ser vinculada a esta conta — por exemplo, acesso corporativo ou outro provedor. Quem tiver essa forma passa a entrar como você.
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        &lt;strong&gt;Foi você?&lt;/strong&gt; Não precisa fazer nada — este aviso existe só para
+        você ficar sabendo.
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 13px/1.6 Arial,sans-serif;color:#b91c1c;margin:0 0 10px;&quot;&gt;
+          &lt;strong&gt;Não foi você?&lt;/strong&gt; Redefina a senha imediatamente e avise quem
+          administra a sua organização.
+        &lt;/p&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          Faça isso indo direto a https://proximia.seudominio.com.br e usando &amp;ldquo;Esqueci a senha&amp;rdquo; —
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;não&lt;/strong&gt; por link recebido em e-mail. Nenhuma
+          mensagem legítima do Proximia pede senha, código ou confirmação por telefone.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;" loading="lazy"></iframe>
+    </div>
+    <div>
+      <label>Código — cole no corpo do modelo</label>
+      <pre class="codigo" onclick="copiar(this)" title="clique para copiar">&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · segurança
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Nova forma de entrar
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        {{ .Email }}
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Uma nova forma de entrar acabou de ser vinculada a esta conta — por exemplo, acesso corporativo ou outro provedor. Quem tiver essa forma passa a entrar como você.
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        &lt;strong&gt;Foi você?&lt;/strong&gt; Não precisa fazer nada — este aviso existe só para
+        você ficar sabendo.
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 13px/1.6 Arial,sans-serif;color:#b91c1c;margin:0 0 10px;&quot;&gt;
+          &lt;strong&gt;Não foi você?&lt;/strong&gt; Redefina a senha imediatamente e avise quem
+          administra a sua organização.
+        &lt;/p&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          Faça isso indo direto a {{ .SiteURL }} e usando &amp;ldquo;Esqueci a senha&amp;rdquo; —
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;não&lt;/strong&gt; por link recebido em e-mail. Nenhuma
+          mensagem legítima do Proximia pede senha, código ou confirmação por telefone.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;</pre>
+    </div>
+  </div>
+</section>
+<section class="modelo" id="m11">
+  <div class="cabeca">
+    <div>
+      <p class="passo">Modelo 11 de 13 · arquivo <code>11-seguranca-metodo-removido.html</code></p>
+      <h3>Sign-in method removed</h3>
+      <p class="onde">
+        Supabase › Authentication › Emails › <strong>Sign-in method removed</strong>
+      </p>
+    </div>
+    <span class="selo" style="color:#1b2a4a;background:#e8edf5;">recomendado ligar</span>
+  </div>
+
+  <p class="explica">Aviso de segurança — recomendado ligar.</p>
+
+  <div class="campo">
+    <label>Assunto</label>
+    <div class="valor" onclick="copiar(this)" title="clique para copiar">Uma forma de entrar foi removida</div>
+  </div>
+
+  <div class="duas">
+    <div>
+      <label>Como chega</label>
+      <iframe class="preview" srcdoc="&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · segurança
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Forma de entrar removida
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        ana.silva@acme.com.br
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Uma das formas de entrar foi removida desta conta. Se era a que você usava, a entrada passa a ser pelas que sobraram.
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        &lt;strong&gt;Foi você?&lt;/strong&gt; Não precisa fazer nada — este aviso existe só para
+        você ficar sabendo.
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 13px/1.6 Arial,sans-serif;color:#b91c1c;margin:0 0 10px;&quot;&gt;
+          &lt;strong&gt;Não foi você?&lt;/strong&gt; Redefina a senha imediatamente e avise quem
+          administra a sua organização.
+        &lt;/p&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          Faça isso indo direto a https://proximia.seudominio.com.br e usando &amp;ldquo;Esqueci a senha&amp;rdquo; —
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;não&lt;/strong&gt; por link recebido em e-mail. Nenhuma
+          mensagem legítima do Proximia pede senha, código ou confirmação por telefone.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;" loading="lazy"></iframe>
+    </div>
+    <div>
+      <label>Código — cole no corpo do modelo</label>
+      <pre class="codigo" onclick="copiar(this)" title="clique para copiar">&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · segurança
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Forma de entrar removida
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        {{ .Email }}
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Uma das formas de entrar foi removida desta conta. Se era a que você usava, a entrada passa a ser pelas que sobraram.
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        &lt;strong&gt;Foi você?&lt;/strong&gt; Não precisa fazer nada — este aviso existe só para
+        você ficar sabendo.
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 13px/1.6 Arial,sans-serif;color:#b91c1c;margin:0 0 10px;&quot;&gt;
+          &lt;strong&gt;Não foi você?&lt;/strong&gt; Redefina a senha imediatamente e avise quem
+          administra a sua organização.
+        &lt;/p&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          Faça isso indo direto a {{ .SiteURL }} e usando &amp;ldquo;Esqueci a senha&amp;rdquo; —
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;não&lt;/strong&gt; por link recebido em e-mail. Nenhuma
+          mensagem legítima do Proximia pede senha, código ou confirmação por telefone.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;</pre>
+    </div>
+  </div>
+</section>
+<section class="modelo" id="m12">
+  <div class="cabeca">
+    <div>
+      <p class="passo">Modelo 12 de 13 · arquivo <code>12-seguranca-mfa-adicionado.html</code></p>
+      <h3>MFA method added</h3>
+      <p class="onde">
+        Supabase › Authentication › Emails › <strong>MFA method added</strong>
+      </p>
+    </div>
+    <span class="selo" style="color:#1b2a4a;background:#e8edf5;">recomendado ligar</span>
+  </div>
+
+  <p class="explica">Aviso de segurança — recomendado ligar.</p>
+
+  <div class="campo">
+    <label>Assunto</label>
+    <div class="valor" onclick="copiar(this)" title="clique para copiar">Verificação em duas etapas ativada</div>
+  </div>
+
+  <div class="duas">
+    <div>
+      <label>Como chega</label>
+      <iframe class="preview" srcdoc="&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · segurança
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Verificação em duas etapas ativada
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        ana.silva@acme.com.br
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Uma verificação em duas etapas acabou de ser adicionada a esta conta. A partir de agora, entrar exige o segundo fator.
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        &lt;strong&gt;Foi você?&lt;/strong&gt; Não precisa fazer nada — este aviso existe só para
+        você ficar sabendo.
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 13px/1.6 Arial,sans-serif;color:#b91c1c;margin:0 0 10px;&quot;&gt;
+          &lt;strong&gt;Não foi você?&lt;/strong&gt; Redefina a senha imediatamente e avise quem
+          administra a sua organização.
+        &lt;/p&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          Faça isso indo direto a https://proximia.seudominio.com.br e usando &amp;ldquo;Esqueci a senha&amp;rdquo; —
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;não&lt;/strong&gt; por link recebido em e-mail. Nenhuma
+          mensagem legítima do Proximia pede senha, código ou confirmação por telefone.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;" loading="lazy"></iframe>
+    </div>
+    <div>
+      <label>Código — cole no corpo do modelo</label>
+      <pre class="codigo" onclick="copiar(this)" title="clique para copiar">&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · segurança
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Verificação em duas etapas ativada
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        {{ .Email }}
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Uma verificação em duas etapas acabou de ser adicionada a esta conta. A partir de agora, entrar exige o segundo fator.
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        &lt;strong&gt;Foi você?&lt;/strong&gt; Não precisa fazer nada — este aviso existe só para
+        você ficar sabendo.
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 13px/1.6 Arial,sans-serif;color:#b91c1c;margin:0 0 10px;&quot;&gt;
+          &lt;strong&gt;Não foi você?&lt;/strong&gt; Redefina a senha imediatamente e avise quem
+          administra a sua organização.
+        &lt;/p&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          Faça isso indo direto a {{ .SiteURL }} e usando &amp;ldquo;Esqueci a senha&amp;rdquo; —
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;não&lt;/strong&gt; por link recebido em e-mail. Nenhuma
+          mensagem legítima do Proximia pede senha, código ou confirmação por telefone.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;</pre>
+    </div>
+  </div>
+</section>
+<section class="modelo" id="m13">
+  <div class="cabeca">
+    <div>
+      <p class="passo">Modelo 13 de 13 · arquivo <code>13-seguranca-mfa-removido.html</code></p>
+      <h3>MFA method removed</h3>
+      <p class="onde">
+        Supabase › Authentication › Emails › <strong>MFA method removed</strong>
+      </p>
+    </div>
+    <span class="selo" style="color:#1b2a4a;background:#e8edf5;">recomendado ligar</span>
+  </div>
+
+  <p class="explica">Aviso de segurança — recomendado ligar.</p>
+
+  <div class="campo">
+    <label>Assunto</label>
+    <div class="valor" onclick="copiar(this)" title="clique para copiar">Verificação em duas etapas removida</div>
+  </div>
+
+  <div class="duas">
+    <div>
+      <label>Como chega</label>
+      <iframe class="preview" srcdoc="&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · segurança
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Verificação em duas etapas removida
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        ana.silva@acme.com.br
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Uma verificação em duas etapas acabou de ser removida desta conta. A proteção extra deixou de valer.
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        &lt;strong&gt;Foi você?&lt;/strong&gt; Não precisa fazer nada — este aviso existe só para
+        você ficar sabendo.
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 13px/1.6 Arial,sans-serif;color:#b91c1c;margin:0 0 10px;&quot;&gt;
+          &lt;strong&gt;Não foi você?&lt;/strong&gt; Redefina a senha imediatamente e avise quem
+          administra a sua organização.
+        &lt;/p&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          Faça isso indo direto a https://proximia.seudominio.com.br e usando &amp;ldquo;Esqueci a senha&amp;rdquo; —
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;não&lt;/strong&gt; por link recebido em e-mail. Nenhuma
+          mensagem legítima do Proximia pede senha, código ou confirmação por telefone.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;" loading="lazy"></iframe>
+    </div>
+    <div>
+      <label>Código — cole no corpo do modelo</label>
+      <pre class="codigo" onclick="copiar(this)" title="clique para copiar">&lt;div style=&quot;margin:0;padding:24px;background:#f6f8fa;&quot;&gt;
+  &lt;table width=&quot;100%&quot; cellpadding=&quot;0&quot; cellspacing=&quot;0&quot;
+         style=&quot;max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;&quot;&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:28px 30px 0;&quot;&gt;
+      &lt;div style=&quot;font:600 11px/1.4 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#64748b;&quot;&gt;
+        Proximia · segurança
+      &lt;/div&gt;
+      &lt;h1 style=&quot;font:700 22px/1.25 Arial,sans-serif;color:#1b2a4a;margin:6px 0 4px;&quot;&gt;
+        Verificação em duas etapas removida
+      &lt;/h1&gt;
+      &lt;div style=&quot;font:400 13px/1.5 Arial,sans-serif;color:#64748b;&quot;&gt;
+        {{ .Email }}
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:20px 30px 0;&quot;&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        Uma verificação em duas etapas acabou de ser removida desta conta. A proteção extra deixou de valer.
+      &lt;/p&gt;
+      &lt;p style=&quot;font:400 14px/1.6 Arial,sans-serif;color:#1b2a4a;margin:0 0 16px;&quot;&gt;
+        &lt;strong&gt;Foi você?&lt;/strong&gt; Não precisa fazer nada — este aviso existe só para
+        você ficar sabendo.
+      &lt;/p&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+    &lt;tr&gt;&lt;td style=&quot;padding:0 30px 26px;&quot;&gt;
+      &lt;div style=&quot;border-top:1px solid #e2e8f0;padding-top:14px;&quot;&gt;
+        &lt;p style=&quot;font:400 13px/1.6 Arial,sans-serif;color:#b91c1c;margin:0 0 10px;&quot;&gt;
+          &lt;strong&gt;Não foi você?&lt;/strong&gt; Redefina a senha imediatamente e avise quem
+          administra a sua organização.
+        &lt;/p&gt;
+        &lt;p style=&quot;font:400 12px/1.6 Arial,sans-serif;color:#64748b;margin:0;&quot;&gt;
+          Faça isso indo direto a {{ .SiteURL }} e usando &amp;ldquo;Esqueci a senha&amp;rdquo; —
+          &lt;strong style=&quot;color:#1b2a4a;&quot;&gt;não&lt;/strong&gt; por link recebido em e-mail. Nenhuma
+          mensagem legítima do Proximia pede senha, código ou confirmação por telefone.
+        &lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/td&gt;&lt;/tr&gt;
+
+  &lt;/table&gt;
+&lt;/div&gt;</pre>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+  function copiar(elemento) {
+    const texto = elemento.innerText;
+    navigator.clipboard.writeText(texto).then(function () {
+      elemento.classList.add('copiado');
+      setTimeout(function () { elemento.classList.remove('copiado'); }, 900);
+    });
+  }
+</script>
+</body>
+</html>

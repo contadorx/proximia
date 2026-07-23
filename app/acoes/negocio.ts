@@ -109,3 +109,42 @@ export async function atualizarAssinatura(formData: FormData) {
   revalidatePath(ROTA);
   redirect(`${ROTA}?ok=${encodeURIComponent("Assinatura atualizada.")}`);
 }
+
+/**
+ * Promove outra pessoa a operadora da plataforma.
+ *
+ * Diferente de `assumirOperacao`, que só serve na instalação vazia: esta
+ * é a porta de todo dia, e depende de já haver operador — a função no
+ * banco recusa quem não for.
+ */
+export async function promoverOperador(formData: FormData) {
+  await exigirUsuario();
+  const email = String(formData.get("email") ?? "").trim();
+
+  if (!email) comErro("Informe o e-mail de quem vai operar.");
+
+  const supabase = criarClienteServidor();
+  const { error } = await supabase.rpc("promover_admin_plataforma", { p_email: email });
+
+  if (error) comErro(error.message);
+
+  revalidatePath(ROTA);
+  redirect(
+    `${ROTA}?ok=${encodeURIComponent(
+      `${email} passa a operar a plataforma. Avise a pessoa — ela vê a lista de assinantes, não os dados deles.`,
+    )}`,
+  );
+}
+
+export async function removerOperador(formData: FormData) {
+  await exigirUsuario();
+  const userId = String(formData.get("user_id") ?? "");
+
+  const supabase = criarClienteServidor();
+  const { error } = await supabase.rpc("remover_admin_plataforma", { p_user_id: userId });
+
+  if (error) comErro(error.message);
+
+  revalidatePath(ROTA);
+  redirect(`${ROTA}?ok=${encodeURIComponent("Acesso de operador removido.")}`);
+}
