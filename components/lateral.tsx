@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Menu, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { Busca } from "@/components/busca";
 
 export type ItemMenu = { href: string; rotulo: string; icone: React.ReactNode };
@@ -30,7 +30,19 @@ export function Lateral({
   recolhidaInicial: boolean;
 }) {
   const [recolhida, setRecolhida] = useState(recolhidaInicial);
+
+  // Menu do celular. Abaixo de 860px a lateral vira uma barra no topo, e
+  // os 12 destinos empilhavam em cinco linhas — meia tela de menu antes
+  // do conteúdo começar. Aqui ele nasce fechado e abre sob demanda.
+  const [aberto, setAberto] = useState(false);
   const caminho = usePathname();
+
+  // Navegou: fecha. Sem isto, o menu fica aberto por cima da tela nova e
+  // a pessoa precisa fechá-lo à mão a cada clique — que é pior do que
+  // estava antes.
+  useEffect(() => {
+    setAberto(false);
+  }, [caminho]);
 
   function alternar() {
     setRecolhida((atual) => {
@@ -43,9 +55,30 @@ export function Lateral({
   const ativo = (href: string) => caminho === href || caminho.startsWith(`${href}/`);
 
   return (
-    <aside className={recolhida ? "lateral recolhida" : "lateral"}>
+    <aside
+      className={[
+        recolhida ? "lateral recolhida" : "lateral",
+        aberto ? "lateral-aberta" : undefined,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <div className="lateral-topo">
         {!recolhida && marca}
+
+        {/* Só aparece no celular, por CSS. No computador o menu não
+            precisa de botão: ele está sempre lá. */}
+        <button
+          type="button"
+          className="lateral-menu-movel"
+          onClick={() => setAberto((a) => !a)}
+          aria-label={aberto ? "Fechar menu" : "Abrir menu"}
+          aria-expanded={aberto}
+        >
+          {aberto ? <X size={18} /> : <Menu size={18} />}
+          <span>{aberto ? "Fechar" : "Menu"}</span>
+        </button>
+
         <button
           type="button"
           className="lateral-alternar"

@@ -161,6 +161,10 @@ export default async function PaginaComecar({
         {org ? (
           <>
             Prefere olhar antes? <Link href="/painel">Ir para o painel</Link>.
+            <br />
+            <strong>Já tem os dados numa planilha?</strong>{" "}
+            <Link href="/importacao">Importe carteiras, contas e contratos de uma vez</Link> — é o
+            caminho mais curto entre o cadastro e a primeira leitura que vale alguma coisa.
           </>
         ) : (
           <>

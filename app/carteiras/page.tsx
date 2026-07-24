@@ -99,12 +99,11 @@ export default async function PaginaCarteiras({
       {searchParams.erro && <p className="aviso aviso-erro">{searchParams.erro}</p>}
 
       {carteiras.length === 0 ? (
-        <Vazio>
-          Nenhuma carteira cadastrada ainda.
-          {podeCriar
-            ? " Use o botão acima para criar a primeira."
-            : " Peça a inclusão a um administrador."}
-        </Vazio>
+        <Vazio
+              acao={<Link className="botao botao-primario" href="/importacao">Importar por planilha</Link>}
+            >
+              Nenhuma carteira ainda. A carteira é a unidade que você acompanha — regional, filial ou praça — e tudo o mais se pendura nela.
+            </Vazio>
       ) : (
         <section className="painel">
           <ul className="lista-estado">

@@ -1501,6 +1501,79 @@ input[type="file"] {
   }
 }
 
+/* ---------------- menu do celular ---------------- */
+
+/* No computador o menu está sempre visível: botão nenhum. */
+.lateral-menu-movel {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .lateral-menu-movel {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-left: auto;
+    padding: 7px 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: var(--r-p);
+    color: #dbe3ef;
+    font: 600 13px/1 Arial, sans-serif;
+    cursor: pointer;
+  }
+
+  .lateral-menu-movel:hover {
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  /* Fechado é o padrão: a barra fica com uma linha só — marca à esquerda,
+     botão à direita — e o conteúdo começa logo abaixo. Antes, os doze
+     destinos empilhavam em cinco linhas e comiam metade da tela. */
+  .lateral .lateral-rolagem,
+  .lateral .lateral-rodape {
+    display: none;
+  }
+
+  .lateral.lateral-aberta .lateral-rolagem {
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .lateral.lateral-aberta .lateral-rodape {
+    display: flex;
+    width: 100%;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+  }
+
+  /* Aberto, os destinos viram duas colunas: doze itens em seis linhas
+     curtas, com alvo de toque grande. Uma coluna daria rolagem; três não
+     cabe o rótulo. */
+  .lateral.lateral-aberta .lateral-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+
+  .lateral.lateral-aberta .lateral-nav a {
+    padding: 11px 10px;
+  }
+
+  /* Com o menu aberto, os títulos de grupo voltam: são eles que fazem
+     doze itens virarem três listas curtas em vez de uma lista longa. */
+  .lateral.lateral-aberta .lateral-titulo {
+    display: block;
+    margin: 10px 0 4px;
+  }
+
+  .lateral.lateral-aberta .lateral-grupo + .lateral-grupo {
+    margin-top: 6px;
+  }
+}
+
 /* ---------------- acessibilidade e impressão ---------------- */
 
 :focus-visible {
@@ -2792,4 +2865,16 @@ input[aria-invalid="true"] {
   font-size: 12px;
   line-height: 1.5;
   color: var(--g500);
+}
+
+/* ---------------- matriz de cobertura ---------------- */
+
+/* A célula vazia não usa selo: um selo cinza pesaria tanto quanto os
+   outros e a matriz viraria um mural. Lacuna é ausência, e ausência
+   deve parecer ausência — o traço marca o lugar sem competir. */
+.cobertura-lacuna {
+  display: inline-block;
+  color: var(--g300);
+  font-size: 13px;
+  line-height: 1;
 }

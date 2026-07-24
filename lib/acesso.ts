@@ -87,3 +87,74 @@ export const MATRIZ: {
     administra: "Nada",
   },
 ];
+
+/**
+ * Atividade por pessoa — a leitura de adoção que faltava ao gestor.
+ *
+ * O produto media uso, mas só no painel do operador da plataforma. Quem
+ * administra a organização não tinha como responder "quem da minha
+ * equipe ainda não começou?", que é a conversa em que adoção de
+ * ferramenta interna se ganha ou se perde.
+ *
+ * Mede atividade com significado — último registro, registros no mês,
+ * compromissos em aberto. NÃO mede presença: nada de contagem de cliques
+ * nem de tempo de sessão. Presença é vigilância com outro nome, e o
+ * número que ela produz não ajuda ninguém a conversar.
+ */
+export type AtividadePessoa = {
+  user_id: string;
+  papel: string;
+  ultimo_registro: string | null;
+  registros_30d: number;
+  compromissos_abertos: number;
+};
+
+export async function atividadeDaEquipe(orgId: string): Promise<AtividadePessoa[]> {
+  const supabase = criarClienteServidor();
+  const { data, error } = await supabase
+    .from("adocao_equipe")
+    .select("user_id, papel, ultimo_registro, registros_30d, compromissos_abertos")
+    .eq("org_id", orgId);
+
+  if (error) {
+    console.error("[acesso] atividade da equipe:", error.message);
+    return [];
+  }
+  return (data ?? []) as AtividadePessoa[];
+}
+
+/** Como ler o número: nunca entrou, parou, ou está em uso. */
+export function lerAtividade(a: AtividadePessoa): {
+  estado: "nunca" | "parou" | "ativo";
+  frase: string;
+  classe: string;
+} {
+  if (!a.ultimo_registro) {
+    return {
+      estado: "nunca",
+      frase:
+        a.compromissos_abertos > 0
+          ? `nunca registrou nada — e tem ${a.compromissos_abertos} compromisso(s) na mão`
+          : "nunca registrou nada",
+      classe: "selo selo-falta",
+    };
+  }
+
+  const dias = Math.floor(
+    (Date.now() - new Date(a.ultimo_registro).getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  if (dias > 30) {
+    return {
+      estado: "parou",
+      frase: `último registro há ${dias} dias`,
+      classe: "selo selo-neutro",
+    };
+  }
+
+  return {
+    estado: "ativo",
+    frase: `${a.registros_30d} registro(s) em 30 dias`,
+    classe: "selo selo-ok",
+  };
+}

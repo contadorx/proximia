@@ -119,6 +119,30 @@ begin
   end if;
   raise notice '8. sem sessão de usuário, o serviço continua resolvendo — a varredura depende disso';
 
+  -- O mesmo critério vale para o score: sem sessão é serviço, e serviço
+  -- calcula. Isto quebrou uma carga inicial feita pelo editor de SQL, e o
+  -- teste existe para não quebrar de novo.
+  declare
+    v_ciclo uuid; v_dim uuid; v_perg uuid; v_aval uuid; v_score numeric;
+  begin
+    insert into public.maturidade_ciclos (org_id, nome) values (v_org, 'ciclo-alcance')
+      returning id into v_ciclo;
+    insert into public.maturidade_dimensoes (org_id, nome, peso, ordem)
+      values (v_org, 'Dimensão de teste', 1, 1) returning id into v_dim;
+    insert into public.maturidade_perguntas (org_id, dimensao_id, texto, peso, ordem)
+      values (v_org, v_dim, 'Pergunta de teste', 1, 1) returning id into v_perg;
+    insert into public.maturidade_avaliacoes (org_id, carteira_id, ciclo_id)
+      values (v_org, v_cart, v_ciclo) returning id into v_aval;
+    insert into public.maturidade_respostas (org_id, avaliacao_id, pergunta_id, nota)
+      values (v_org, v_aval, v_perg, 4);
+
+    v_score := public.score_avaliacao(v_aval);
+    if v_score is distinct from 100.0 then
+      raise exception 'FALHOU: sem sessão, o score saiu % (esperava 100).', v_score;
+    end if;
+  end;
+  raise notice '9. o score também calcula sem sessão — carga por SQL não volta nula';
+
   delete from public.orgs where slug in ('alcance-sa', 'fora-sa');
 
   raise notice 'TODOS OS TESTES DE ALCANCE PASSARAM';

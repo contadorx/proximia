@@ -122,6 +122,9 @@ export default async function PaginaRelatorios({
           <Link className="botao botao-secundario" href="/relatorios/exportacao">
             Exportar dados
           </Link>
+          <Link className="botao botao-secundario" href="/relatorios/cobertura">
+            Cobertura por conta
+          </Link>
           <Link className="botao botao-secundario" href="/historico">
             Histórico completo
           </Link>

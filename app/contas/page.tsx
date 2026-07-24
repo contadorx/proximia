@@ -181,11 +181,11 @@ export default async function PaginaContas({
       </form>
 
       {contas.length === 0 ? (
-        <Vazio>
-          {filtrando
-            ? "Nenhuma conta encontrada com esses filtros."
-            : "Nenhuma conta cadastrada ainda. Comece pelas maiores de cada carteira."}
-        </Vazio>
+        <Vazio
+              acao={<Link className="botao botao-primario" href="/importacao">Importar por planilha</Link>}
+            >
+              Nenhuma conta ainda. Comece pelas que merecem gestão individual: em geral são poucas e respondem pela maior parte da receita.
+            </Vazio>
       ) : (
         <section className="painel">
           <div className="linha-titulo">

@@ -3,7 +3,7 @@ import { KeyRound, Layers, ShieldCheck, UserPlus } from "lucide-react";
 import { exigirOrg, exigirUsuario, podeAdministrar } from "@/lib/auth";
 import { listarCarteiras, nomePessoa } from "@/lib/carteiras";
 import { formatarData } from "@/lib/contas";
-import { MATRIZ, pessoasComAcesso } from "@/lib/acesso";
+import { MATRIZ, atividadeDaEquipe, lerAtividade, pessoasComAcesso } from "@/lib/acesso";
 import { PAPEIS, rotuloPapel, type Papel } from "@/lib/tipos";
 import { papeisOperacionais, responsabilidades } from "@/lib/responsabilidades";
 import { listarEquipe } from "@/lib/equipe";
@@ -32,7 +32,7 @@ export default async function PaginaAcesso({
   const usuario = await exigirUsuario();
 
   const supabase = criarClienteServidor();
-  const [pessoas, carteiras, papeis, vinculos, equipe, { data: vinculosCarteira }] =
+  const [pessoas, carteiras, papeis, vinculos, equipe, { data: vinculosCarteira }, atividade] =
     await Promise.all([
       pessoasComAcesso(org.orgId),
       listarCarteiras(org.orgId),
@@ -43,6 +43,7 @@ export default async function PaginaAcesso({
         .from("carteira_membros")
         .select("carteira_id, user_id")
         .eq("org_id", org.orgId),
+      atividadeDaEquipe(org.orgId),
     ]);
 
   // Responsabilidade aponta para a pessoa da equipe; o acesso, para o
@@ -60,6 +61,8 @@ export default async function PaginaAcesso({
   const semResponsabilidade = ativos.filter(
     (p) => p.papel !== "leitura_ampla" && p.carteiras_respondidas === 0,
   );
+
+  const atividadePorPessoa = new Map(atividade.map((a) => [a.user_id, a]));
 
   return (
     <>
@@ -176,6 +179,26 @@ export default async function PaginaAcesso({
                           .filter(Boolean)
                           .join(" · ")}
                       </span>
+                      {/* Atividade, não presença: último registro e volume no
+                          mês. É o que sustenta a conversa do gestor com a
+                          equipe — contagem de cliques seria vigilância e não
+                          ajudaria ninguém a conversar. */}
+                      {(() => {
+                        const a = atividadePorPessoa.get(p.user_id);
+                        if (!a || !p.ativo) return null;
+                        const leitura = lerAtividade(a);
+                        return (
+                          <span
+                            className={
+                              leitura.estado === "ativo"
+                                ? "celula-sub"
+                                : "celula-sub texto-alerta"
+                            }
+                          >
+                            {leitura.frase}
+                          </span>
+                        );
+                      })()}
                     </td>
 
                     <td>
