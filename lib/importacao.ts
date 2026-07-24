@@ -48,6 +48,11 @@ export const MODELOS: Record<
       { chave: "potencial_origem", rotulo: "potencial_origem", ajuda: "obrigatório se houver potencial" },
       { chave: "potencial_data", rotulo: "potencial_data" },
       { chave: "valor_capturado", rotulo: "valor_capturado" },
+      { chave: "receita_atual", rotulo: "receita_atual",
+        ajuda: "o que o cliente já paga hoje — não é potencial nem captura" },
+      { chave: "receita_origem", rotulo: "receita_origem",
+        ajuda: "obrigatório se houver receita" },
+      { chave: "receita_data", rotulo: "receita_data" },
       {
         chave: "responsavel",
         rotulo: "responsavel",
@@ -306,6 +311,19 @@ export function validar(
       const capturado = num("valor_capturado");
       if (capturado === undefined) return;
 
+      // Receita atual segue a mesma regra do potencial: número sem
+      // procedência não entra. São quantidades diferentes — o que se paga
+      // hoje, o que ainda pode vir, o que já foi confirmado — e nenhuma
+      // delas se soma às outras.
+      const receita = num("receita_atual");
+      if (receita === undefined) return;
+      const receitaOrigem = texto(linha.receita_origem);
+      if (receita !== null && !receitaOrigem) {
+        return falhar("há receita_atual sem receita_origem. Todo número entra com procedência.");
+      }
+      const receitaData = dt("receita_data");
+      if (receitaData === undefined) return;
+
       const resp = responsavelDe("responsavel");
       if (resp === undefined) return;
 
@@ -322,6 +340,9 @@ export function validar(
         potencial_data:
           potencial === null ? null : (potencialData ?? new Date().toISOString().slice(0, 10)),
         valor_capturado: capturado,
+        receita_atual: receita,
+        receita_origem: receita === null ? null : receitaOrigem,
+        receita_data: receita === null ? null : receitaData,
         responsavel_id: resp.id,
         responsavel_nome: resp.nome,
         observacoes: texto(linha.observacoes),

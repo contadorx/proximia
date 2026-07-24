@@ -41,6 +41,11 @@ export type Conta = {
   /** Procedência dos dados cadastrais, quando vieram de consulta pública. */
   dados_receita_em: string | null;
   dados_receita_origem: string | null;
+
+  /** O que o cliente já paga. Não soma com potencial nem com capturado. */
+  receita_atual: number | null;
+  receita_origem: string | null;
+  receita_data: string | null;
 };
 
 export type Contato = {
@@ -54,7 +59,7 @@ export type Contato = {
 };
 
 const CAMPOS =
-  "id, carteira_id, nome, razao_social, documento, segmento, relacao, criticidade, status, responsavel_id, potencial_bruto, potencial_origem, potencial_data, valor_capturado, capturado_confirmado_em, observacoes, atualizado_em, dados_receita_em, dados_receita_origem";
+  "id, carteira_id, nome, razao_social, documento, segmento, relacao, criticidade, status, responsavel_id, potencial_bruto, potencial_origem, potencial_data, valor_capturado, capturado_confirmado_em, observacoes, atualizado_em, dados_receita_em, dados_receita_origem, receita_atual, receita_origem, receita_data";
 
 /** Teto de linhas por consulta. Quando a lista bate nele, a tela avisa. */
 export const LIMITE_CONTAS = 300;

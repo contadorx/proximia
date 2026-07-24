@@ -213,6 +213,9 @@ export default async function PaginaContas({
                   </span>
                 </span>
                 <span className="par-valores">
+                  {c.receita_atual !== null && (
+                    <span className="dado">hoje {formatarValor(c.receita_atual)}</span>
+                  )}
                   <span className="valor-teto">teto {formatarValor(c.potencial_bruto)}</span>
                   <span className="valor-capturado">capt. {formatarValor(c.valor_capturado)}</span>
                 </span>

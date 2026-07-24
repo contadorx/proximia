@@ -44,6 +44,29 @@ export async function conferirArquivo(formData: FormData) {
   const obrigatorias = MODELOS[tipo].colunas.filter((c) => c.obrigatoria).map((c) => c.chave);
   const faltando = obrigatorias.filter((c) => !cabecalho.includes(c));
   if (faltando.length > 0) {
+    // Antes de acusar o arquivo, verifica se ele casa com OUTRO modelo.
+    //
+    // O erro mais comum aqui não é planilha errada: é modelo errado no
+    // seletor. Mandar "confira o arquivo" quando o arquivo está certo faz
+    // a pessoa mexer no que estava bom — e o produto sabia a resposta o
+    // tempo todo, porque basta olhar o cabeçalho.
+    const combina = (Object.keys(MODELOS) as TipoImportacao[]).filter(
+      (t) =>
+        t !== tipo &&
+        MODELOS[t].colunas
+          .filter((c) => c.obrigatoria)
+          .every((c) => cabecalho.includes(c.chave)),
+    );
+
+    if (combina.length > 0) {
+      comErro(
+        "/importacao",
+        `Este arquivo não parece ser de ${MODELOS[tipo].rotulo.toLowerCase()} — faltam as colunas ${faltando.join(", ")}. ` +
+          `Pelo cabeçalho, ele é de ${combina.map((t) => MODELOS[t].rotulo.toLowerCase()).join(" ou ")}. ` +
+          `Troque a opção no topo e envie de novo.`,
+      );
+    }
+
     comErro(
       "/importacao",
       `Faltam colunas obrigatórias no cabeçalho: ${faltando.join(", ")}. Baixe o modelo e confira.`,

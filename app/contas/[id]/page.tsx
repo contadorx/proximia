@@ -200,6 +200,29 @@ export default async function PaginaConta({
 
       <section className="painel">
         <h2>Potencial e realizado</h2>
+        {conta.receita_atual !== null && (
+          <>
+            <div className="cartoes">
+              <div className="cartao">
+                <p className="olho">Receita atual</p>
+                <p className="cartao-valor">{formatarValor(conta.receita_atual)}</p>
+                <p className="cartao-nota">
+                  {[conta.receita_origem, conta.receita_data ? formatarData(conta.receita_data) : null]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              </div>
+            </div>
+            <p className="nota">
+              {/* As três quantidades vivem em blocos separados de propósito.
+                  Juntá-las num total daria um número que não significa
+                  nada: o que se paga hoje, o que ainda pode vir e o que já
+                  foi confirmado são naturezas diferentes. */}
+              <strong>Receita atual é o que o cliente já paga</strong> — não entra no potencial nem
+              na captura, e não se soma a eles.
+            </p>
+          </>
+        )}
         <div className="dois-valores">
           <div>
             <p className="olho">Potencial estimado</p>

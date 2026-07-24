@@ -37,7 +37,14 @@ export default async function PaginaImportacao({
     .limit(20);
 
   const anteriores = (data ?? []) as Importacao[];
-  const tipoEscolhido = (searchParams.tipo as TipoImportacao) ?? "carteiras";
+  // Sem padrão: a escolha precisa ser deliberada.
+  //
+  // Antes isto vinha com "carteiras" marcado. Quem escolhia o arquivo e
+  // enviava sem tocar no seletor recebia "faltam colunas obrigatórias:
+  // nome" — mensagem correta para o modelo errado, e que manda conferir o
+  // arquivo quando o arquivo estava certo. O erro era da tela, e a tela
+  // culpava o usuário.
+  const tipoEscolhido = (searchParams.tipo as TipoImportacao) ?? "";
 
   return (
     <>
@@ -58,13 +65,17 @@ export default async function PaginaImportacao({
           <div className="formulario-linha">
             <label className="campo">
               <span>O que está importando</span>
-              <select name="tipo" defaultValue={tipoEscolhido}>
+              <select name="tipo" defaultValue={tipoEscolhido} required>
+                <option value="">Escolha o que está importando…</option>
                 {(Object.keys(MODELOS) as TipoImportacao[]).map((t) => (
                   <option key={t} value={t}>
                     {MODELOS[t].rotulo} — {MODELOS[t].explicacao}
                   </option>
                 ))}
               </select>
+              <small>
+                Precisa combinar com o arquivo: o cabeçalho é conferido contra o modelo escolhido.
+              </small>
             </label>
             <label className="campo">
               <span>Arquivo CSV</span>
