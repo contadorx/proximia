@@ -47,6 +47,7 @@ import { Capturas } from "@/components/capturas";
 import { classeFase, formatarPayback, listarOportunidades, rotuloFase } from "@/lib/oportunidades";
 import { BotaoEnviar } from "@/components/botao-enviar";
 import { criarClienteServidor } from "@/lib/supabase/server";
+import { cuidadoDaConta, itensDaConta, lerCuidado } from "@/lib/cuidado";
 import { FormAcao } from "@/components/form-acao";
 import { CampoCnpj, CampoValor } from "@/components/campos";
 
@@ -107,6 +108,11 @@ export default async function PaginaConta({
     .maybeSingle();
   const enriquecimentoLigado =
     (orgConfig as { enriquecimento_cnpj: boolean } | null)?.enriquecimento_cnpj === true;
+
+  const [cuidado, itensCuidado] = await Promise.all([
+    cuidadoDaConta(conta.id),
+    itensDaConta(conta.id),
+  ]);
 
   const [catalogo, marcadas, papeis, posturas] = await Promise.all([
     classificacoes(org.orgId),
@@ -330,6 +336,50 @@ export default async function PaginaConta({
           <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
             Cada linha é um fato registrado, com a origem a um clique. Não há nota nem fórmula —
             a maturidade da carteira continua sendo o único score do produto.
+          </p>
+        </section>
+      )}
+
+      {itensCuidado.length > 0 && (
+        <section className="painel">
+          <div className="linha-titulo">
+            <h2>Cuidado da conta</h2>
+            <span className={lerCuidado(cuidado?.indice).classe}>
+              {lerCuidado(cuidado?.indice).rotulo}
+            </span>
+          </div>
+
+          <p className="nota" style={{ marginTop: 0 }}>
+            {cuidado
+              ? `${cuidado.cumpridos} de ${cuidado.criterios} itens do checklist desta operação estão verdadeiros nesta conta.`
+              : "Sem régua configurada."}
+          </p>
+
+          {/* Os itens sempre aparecem. Um índice sem a lista do que falta
+              seria número sem procedência — e o produto recusa isso em
+              todo lugar, inclusive aqui. */}
+          <ul className="lista-estado">
+            {itensCuidado.map((i) => (
+              <li key={i.criterio_id}>
+                <span className="rotulo">
+                  {i.rotulo}
+                  {i.descricao && <span className="dica">{i.descricao}</span>}
+                </span>
+                <span className="dica" style={{ whiteSpace: "nowrap" }}>
+                  peso {i.peso}
+                </span>
+                <span className={i.cumprido ? "selo selo-ok" : "selo selo-falta"}>
+                  {i.cumprido ? "sim" : "não"}
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
+            Este índice <strong>não prevê perda nem estima risco</strong>: ele diz quanto do
+            checklist que a sua operação definiu está cumprido aqui. Todo item é verificado pelo
+            próprio sistema — nada depende de julgamento — e os pesos são seus, ajustáveis em{" "}
+            <Link href="/configuracoes/cuidado">Configurações</Link>.
           </p>
         </section>
       )}

@@ -735,6 +735,11 @@ export default async function PaginaConfiguracoes({
                   dica: "Ramo, natureza, porte — as dimensões que a sua operação usa",
                 },
                 {
+                  href: "/configuracoes/cuidado",
+                  titulo: "Cuidado da conta",
+                  dica: "O checklist que define conta bem cuidada — e o peso de cada item",
+                },
+                {
                   href: "/configuracoes/decisao",
                   titulo: "Papéis na decisão",
                   dica: "Quem decide, quem influencia e como cada um se posiciona",

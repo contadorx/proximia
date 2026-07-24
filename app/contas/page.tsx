@@ -12,6 +12,7 @@ import {
   rotuloRelacao,
 } from "@/lib/contas";
 import { criarConta, excluirContasEmLote } from "@/app/acoes/contas";
+import { cuidadoDaOrg, lerCuidado } from "@/lib/cuidado";
 import { BotaoExcluir } from "@/components/botao-excluir";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
@@ -41,7 +42,7 @@ export default async function PaginaContas({
   };
 }) {
   const org = await exigirOrg();
-  const [carteiras, contas, contratos, avisosAbertos, compromissosAbertos] = await Promise.all([
+  const [carteiras, contas, contratos, avisosAbertos, compromissosAbertos, cuidados] = await Promise.all([
     listarCarteiras(org.orgId),
     listarContas({
       orgId: org.orgId,
@@ -58,7 +59,10 @@ export default async function PaginaContas({
     listarContratos({ orgId: org.orgId }),
     listarAlertas({ orgId: org.orgId, status: "aberto" }),
     listarCompromissos({ orgId: org.orgId, status: "aberto" }),
+    cuidadoDaOrg(org.orgId),
   ]);
+
+  const cuidadoDe = new Map(cuidados.map((c) => [c.conta_id, c.indice]));
 
   // Sinais na triagem: o que faz abrir a ficha aparece antes de abrir.
   // Aqui não entra "dias sem registro" — exigiria uma consulta de
@@ -259,6 +263,14 @@ export default async function PaginaContas({
                       .join(" · ")}
                   </span>
                 </span>
+                {cuidadoDe.has(c.id) && (
+                  <span
+                    className={lerCuidado(cuidadoDe.get(c.id)).classe}
+                    title="Cuidado da conta: quanto do checklist da operação está cumprido"
+                  >
+                    {lerCuidado(cuidadoDe.get(c.id)).rotulo}
+                  </span>
+                )}
                 <span className="par-valores">
                   {c.receita_atual !== null && (
                     <span className="dado">hoje {formatarValor(c.receita_atual)}</span>
