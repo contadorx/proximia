@@ -151,3 +151,75 @@ export function quadrante(score: number | null, potencial: number, medianaPotenc
   if (alta && !muito) return { nome: "Sustentar", explicacao: "Base boa, potencial menor." };
   return { nome: "Observar", explicacao: "Pouco potencial e base frágil." };
 }
+
+/* ------------------------------------------------------------------ */
+/* Plano de avanço                                                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Lacunas de uma avaliação, com quanto cada uma devolve ao score.
+ *
+ * A ordenação é por `pontos_recuperaveis`, e isso é o ponto: a pergunta
+ * que rende mais não é a de nota mais baixa, é a que combina nota baixa
+ * com peso alto. A conta usa a régua que o próprio assinante montou.
+ */
+export type Lacuna = {
+  avaliacao_id: string;
+  carteira_id: string;
+  pergunta_id: string;
+  pergunta: string;
+  dimensao: string;
+  nota: number;
+  peso_combinado: number;
+  pontos_recuperaveis: number;
+};
+
+export async function lacunasDaAvaliacao(avaliacaoId: string): Promise<Lacuna[]> {
+  const supabase = criarClienteServidor();
+  const { data, error } = await supabase
+    .from("maturidade_lacuna")
+    .select(
+      "avaliacao_id, carteira_id, pergunta_id, pergunta, dimensao, nota, peso_combinado, pontos_recuperaveis",
+    )
+    .eq("avaliacao_id", avaliacaoId)
+    .order("pontos_recuperaveis", { ascending: false });
+
+  if (error) {
+    console.error("[maturidade] falha ao ler lacunas:", error.message);
+    return [];
+  }
+  return (data ?? []) as Lacuna[];
+}
+
+export type ItemPlano = {
+  id: string;
+  pergunta_id: string;
+  pergunta: string;
+  dimensao: string;
+  acao: string;
+  dono_id: string | null;
+  prazo: string | null;
+  status: string;
+  nota_origem: number;
+  nota_atual: number | null;
+  ciclo_atual: string | null;
+  movimento: string;
+  compromisso_id: string | null;
+};
+
+export async function planoDaCarteira(carteiraId: string): Promise<ItemPlano[]> {
+  const supabase = criarClienteServidor();
+  const { data, error } = await supabase
+    .from("maturidade_plano_situacao")
+    .select(
+      "id, pergunta_id, pergunta, dimensao, acao, dono_id, prazo, status, nota_origem, nota_atual, ciclo_atual, movimento, compromisso_id",
+    )
+    .eq("carteira_id", carteiraId)
+    .order("criado_em", { ascending: false });
+
+  if (error) {
+    console.error("[maturidade] falha ao ler o plano:", error.message);
+    return [];
+  }
+  return (data ?? []) as ItemPlano[];
+}

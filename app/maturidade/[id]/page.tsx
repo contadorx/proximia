@@ -11,8 +11,14 @@ import {
   respostasDaAvaliacao,
   resultados as listarResultados,
   scoresPorDimensao,
+  lacunasDaAvaliacao,
+  planoDaCarteira,
 } from "@/lib/maturidade";
 import { concluirAvaliacao, reabrirAvaliacao, salvarRespostas } from "@/app/acoes/maturidade";
+import { criarItemPlano } from "@/app/acoes/plano";
+import { listarEquipe } from "@/lib/equipe";
+import { Modal } from "@/components/modal";
+import { Seletor } from "@/components/seletor";
 import { Vazio } from "@/components/intro-secao";
 import { BotaoEnviar } from "@/components/botao-enviar";
 import { criarClienteServidor } from "@/lib/supabase/server";
@@ -46,6 +52,13 @@ export default async function PaginaAvaliacao({
         .eq("id", params.id)
         .maybeSingle(),
     ]);
+
+  const [lacunas, plano, equipe] = await Promise.all([
+    lacunasDaAvaliacao(avaliacao.avaliacao_id),
+    planoDaCarteira(avaliacao.carteira_id),
+    listarEquipe(org.orgId),
+  ]);
+  const jaNoPlano = new Set(plano.map((i) => i.pergunta_id));
   const observacoes = ((detalhe as { observacoes: string | null } | null)?.observacoes ?? "").trim();
 
   const editavel = podeEscrever(org.papel) && avaliacao.status === "rascunho";
@@ -246,6 +259,126 @@ export default async function PaginaAvaliacao({
           <h2>Observações da avaliação</h2>
           <p className="nota" style={{ marginBottom: 0 }}>
             {observacoes}
+          </p>
+        </section>
+      )}
+
+      {/* ---------- plano de avanço ---------- */}
+      <section className="painel">
+        <div className="linha-titulo">
+          <h2>Por onde avançar</h2>
+          <span className="passos-contagem">
+            {lacunas.length} lacuna(s) · ordenadas pelo que devolvem ao score
+          </span>
+        </div>
+
+        <p className="nota" style={{ marginTop: 0 }}>
+          {/* A prioridade não é opinião: sai da régua que a operação
+              montou. Pergunta de peso alto com nota baixa devolve mais
+              pontos que três de peso baixo — e a conta está feita. */}
+          A ordem é <strong>calculada</strong>: cada lacuna mostra quantos pontos do score ela
+          devolve se for levada ao máximo, usando o peso da pergunta e o da dimensão que vocês
+          definiram. A de cima não é a de nota mais baixa — é a que rende mais.
+        </p>
+
+        {lacunas.length === 0 ? (
+          <Vazio>Nenhuma lacuna nesta avaliação: todas as perguntas estão no máximo.</Vazio>
+        ) : (
+          <ul className="lista-estado">
+            {lacunas.map((l) => (
+              <li key={l.pergunta_id}>
+                <span className="rotulo">
+                  {l.pergunta}
+                  <span className="dica">
+                    {l.dimensao} · nota {l.nota} de 4 · peso {l.peso_combinado}
+                  </span>
+                </span>
+                <span className="selo selo-neutro" title="pontos do score que esta lacuna devolve">
+                  +{l.pontos_recuperaveis}
+                </span>
+                {jaNoPlano.has(l.pergunta_id) ? (
+                  <span className="selo selo-ok">no plano</span>
+                ) : (
+                  editavel && (
+                    <Modal
+                      rotulo="Planejar"
+                      titulo="Incluir no plano de avanço"
+                      descricao={l.pergunta}
+                      variante="link"
+                    >
+                      <form action={criarItemPlano} className="formulario">
+                        <input type="hidden" name="avaliacao_id" value={avaliacao.avaliacao_id} />
+                        <input type="hidden" name="pergunta_id" value={l.pergunta_id} />
+                        <label className="campo">
+                          <span>O que será feito</span>
+                          <textarea name="acao" rows={3} required maxLength={400} autoFocus />
+                          <small>
+                            Uma ação concreta, não uma intenção. Ela vira compromisso na carteira.
+                          </small>
+                        </label>
+                        <div className="formulario-linha">
+                          <Seletor
+                            nome="dono_id"
+                            rotulo="Dono"
+                            opcoes={equipe.map((e) => ({ valor: e.id, rotulo: e.nome }))}
+                            vazio="Definir depois"
+                          />
+                          <label className="campo">
+                            <span>Prazo</span>
+                            <input type="date" name="prazo" />
+                          </label>
+                        </div>
+                        <BotaoEnviar>Incluir no plano</BotaoEnviar>
+                      </form>
+                    </Modal>
+                  )
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {plano.length > 0 && (
+        <section className="painel">
+          <div className="linha-titulo">
+            <h2>Plano em andamento</h2>
+            <span className="passos-contagem">{plano.length} item(ns)</span>
+          </div>
+          <ul className="lista-estado">
+            {plano.map((i) => (
+              <li key={i.id}>
+                <span className="rotulo">
+                  {i.acao}
+                  <span className="dica">
+                    {[
+                      i.pergunta,
+                      `nota na origem: ${i.nota_origem}`,
+                      i.nota_atual !== null ? `agora: ${i.nota_atual} (${i.ciclo_atual})` : null,
+                      i.prazo ? `prazo ${i.prazo}` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                </span>
+                <span
+                  className={
+                    i.movimento === "melhorou"
+                      ? "selo selo-ok"
+                      : i.movimento === "piorou"
+                        ? "selo selo-falta"
+                        : "selo selo-neutro"
+                  }
+                >
+                  {i.movimento}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
+            Cada item guarda a nota de quando a lacuna foi vista. No ciclo seguinte, a comparação é
+            automática — é isso que transforma um diagnóstico anual em ciclo, em vez de dois
+            retratos soltos.
           </p>
         </section>
       )}
