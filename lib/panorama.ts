@@ -14,6 +14,14 @@ export type ResumoCarteira = {
   contas_potencial: number;
   contas_potencial_protecao: number;
   contas_capturado: number;
+
+  /** O que os clientes desta carteira já pagam. Não soma com potencial
+   *  nem com capturado — é a base que a gestão precisa manter. */
+  base_sob_gestao: number;
+  base_protecao: number;
+  contas_com_receita: number;
+  base_referencia: string | null;
+
   frentes_abertas: number;
   frentes_casos: number;
   frentes_potencial: number;
@@ -106,6 +114,9 @@ export function totaisGerais(linhas: ResumoCarteira[]) {
         Number(r.frentes_potencial_protecao) +
         Number(r.contas_potencial_protecao ?? 0),
       capturado: t.capturado + Number(r.frentes_capturado) + Number(r.contas_capturado),
+      // Base entra como total próprio, nunca somada às outras duas.
+      base: t.base + Number(r.base_sob_gestao ?? 0),
+      contasComReceita: t.contasComReceita + Number(r.contas_com_receita ?? 0),
       oportunidades: t.oportunidades + Number(r.oportunidades_abertas),
       investimento: t.investimento + Number(r.oportunidades_investimento),
       resultadoMensal: t.resultadoMensal + Number(r.oportunidades_resultado),
@@ -116,6 +127,8 @@ export function totaisGerais(linhas: ResumoCarteira[]) {
     {
       carteiras: 0,
       contas: 0,
+      base: 0,
+      contasComReceita: 0,
       frentes: 0,
       casos: 0,
       potencial: 0,

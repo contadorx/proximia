@@ -178,10 +178,19 @@ export default async function PaginaPanorama({
                 <p className="cartao-nota">contas e frentes de defesa — fora do teto ao lado</p>
               </div>
             )}
+            {t.base > 0 && (
+              <div className="cartao">
+                <p className="olho">Base sob gestão</p>
+                <p className="cartao-valor">{formatarValor(t.base)}</p>
+                <p className="cartao-nota">
+                  o que os clientes já pagam · {t.contasComReceita} conta(s) com o número informado
+                </p>
+              </div>
+            )}
             <div className="cartao">
               <p className="olho">Capturado</p>
               <p className="cartao-valor capturado">{formatarValor(t.capturado)}</p>
-              <p className="cartao-nota">confirmado, não se soma ao teto</p>
+              <p className="cartao-nota">confirmado, não se soma ao teto nem à base</p>
             </div>
             <div className="cartao">
               <p className="olho">Investimento em análise</p>
@@ -288,6 +297,7 @@ export default async function PaginaPanorama({
                       <th className="numero">Frentes</th>
                       <th className="numero">Oportunidades</th>
                       <th className="numero">Potencial</th>
+                      <th className="numero">Base sob gestão</th>
                       <th className="numero">Capturado</th>
                       <th>Atenção</th>
                       <th className="numero">Parada há</th>
@@ -332,6 +342,17 @@ export default async function PaginaPanorama({
                           </td>
                           <td className="numero dado valor-teto">
                             {formatarValor(Number(r.frentes_potencial) + Number(r.contas_potencial))}
+                          </td>
+                          <td className="numero dado">
+                            {Number(r.base_sob_gestao) > 0
+                              ? formatarValor(Number(r.base_sob_gestao))
+                              : "—"}
+                            {Number(r.contas_com_receita) > 0 &&
+                              Number(r.contas_com_receita) < Number(r.contas_total) && (
+                                <span className="celula-sub">
+                                  {r.contas_com_receita} de {r.contas_total} contas
+                                </span>
+                              )}
                           </td>
                           <td className="numero dado valor-capturado">
                             {formatarValor(Number(r.frentes_capturado) + Number(r.contas_capturado))}

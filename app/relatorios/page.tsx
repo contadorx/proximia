@@ -6,6 +6,7 @@ import { formatarValor } from "@/lib/contas";
 import { capturaMensal, capturaSemData } from "@/lib/captura";
 import { rotuloTipo as rotuloRegistro, TIPOS_REGISTRO } from "@/lib/registros";
 import { fasesConfiguradas } from "@/lib/pipeline";
+import { panorama, totaisGerais } from "@/lib/panorama";
 import {
   alertasMensais,
   alinhar,
@@ -48,7 +49,7 @@ export default async function PaginaRelatorios({
   // O filtro de carteira vale para TODAS as seções. Antes, captura e
   // tempo por etapa ignoravam o recorte em silêncio — quem filtrava uma
   // carteira lia dois números da rede inteira sem aviso.
-  const [carteiras, serie, semData, alertas, esforco, defasagem, conversaoFases, vencimentos, conversao, etapas, fotos, fases] =
+  const [carteiras, serie, semData, alertas, esforco, defasagem, conversaoFases, resumoCarteiras, vencimentos, conversao, etapas, fotos, fases] =
     await Promise.all([
       listarCarteiras(org.orgId),
       capturaMensal(org.orgId, 12, filtro),
@@ -57,6 +58,7 @@ export default async function PaginaRelatorios({
       esforcoMensal(org.orgId, filtro),
       defasagemPorCarteira(org.orgId, filtro),
       conversaoPorFase(org.orgId, filtro),
+      panorama(org.orgId, "nome"),
       vencimentosMensais(org.orgId, filtro),
       conversaoPorCarteira(org.orgId, filtro),
       temposPorEtapa(org.orgId, filtro),
@@ -83,6 +85,7 @@ export default async function PaginaRelatorios({
   const esforcoPorMes = alinhar(esforco, doze, (l) => Number(l.quantidade));
   const geral = leituraGeral(defasagem);
   const taxasPorFase = agregarPorFase(conversaoFases, fases.map((f) => f.fase));
+  const totais = totaisGerais(resumoCarteiras);
   const totalEsforco = esforcoPorMes.reduce((a, b) => a + b, 0);
 
   const calendario = proximos.map((m) => {
@@ -304,6 +307,43 @@ export default async function PaginaRelatorios({
           )}
         </section>
       </div>
+
+      {/* ---------- base sob gestão ---------- */}
+      {totais.base > 0 && (
+        <section className="painel">
+          <div className="linha-titulo">
+            <h2>Base sob gestão</h2>
+            <span className="passos-contagem">
+              {totais.contasComReceita} conta(s) com receita informada
+            </span>
+          </div>
+
+          <div className="cartoes">
+            <div className="cartao">
+              <p className="olho">O que os clientes já pagam</p>
+              <p className="cartao-valor">{formatarValor(totais.base)}</p>
+              <p className="cartao-nota">soma das contas ativas com receita informada</p>
+            </div>
+            <div className="cartao">
+              <p className="olho">Confirmado no período</p>
+              <p className="cartao-valor capturado">{formatarValor(totais.capturado)}</p>
+              <p className="cartao-nota">captura de iniciativas — número à parte da base</p>
+            </div>
+          </div>
+
+          <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
+            {/* O produto mostra os dois e não divide um pelo outro. A razão
+                seria fácil de calcular e viraria placar por unidade — que é
+                meta com outro nome, e é o que este produto recusa. */}
+            Manter o que já existe é trabalho de gestão tanto quanto capturar valor novo: contrato
+            que vence sem renegociação e cliente que migra para fonte própria são perdas que não
+            aparecem em lugar nenhum se a base não estiver à vista.{" "}
+            <strong>Os dois números não se somam e não se dividem</strong> — a base é o que se
+            defende, a captura é o que se conquistou, e comparar as duas é leitura de quem lê, não
+            conta do sistema.
+          </p>
+        </section>
+      )}
 
       {/* ---------- conversão observada por fase ---------- */}
       <section className="painel">
