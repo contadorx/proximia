@@ -70,6 +70,9 @@ export async function listarContas(opcoes: {
   carteiraId?: string;
   carteiras?: string[];
   relacoes?: string[];
+  criticidades?: string[];
+  /** Ordenação da lista. Nome é o padrão: é como se procura alguém. */
+  ordem?: "nome" | "receita" | "potencial" | "capturado" | "recentes";
 }): Promise<Conta[]> {
   const supabase = criarClienteServidor();
   let consulta = supabase.from("contas").select(CAMPOS).eq("org_id", opcoes.orgId);
@@ -77,6 +80,7 @@ export async function listarContas(opcoes: {
   if (opcoes.carteiraId) consulta = consulta.eq("carteira_id", opcoes.carteiraId);
   if (opcoes.carteiras?.length) consulta = consulta.in("carteira_id", opcoes.carteiras);
   if (opcoes.relacoes?.length) consulta = consulta.in("relacao", opcoes.relacoes);
+  if (opcoes.criticidades?.length) consulta = consulta.in("criticidade", opcoes.criticidades);
 
   const busca = (opcoes.busca ?? "").trim();
   if (busca) {
@@ -87,7 +91,22 @@ export async function listarContas(opcoes: {
         : consulta.or(`nome.ilike.%${busca}%,razao_social.ilike.%${busca}%`);
   }
 
-  const { data, error } = await consulta.order("nome").limit(LIMITE_CONTAS);
+  // Ordenar por valor coloca quem pesa mais no topo — é o que a
+  // coordenação quer ver ao abrir a lista. Nulos vão para o fim: conta
+  // sem o número informado não é conta de valor zero, e misturar as duas
+  // faria a lista mentir.
+  const ORDEM = {
+    nome: { coluna: "nome", desc: false },
+    receita: { coluna: "receita_atual", desc: true },
+    potencial: { coluna: "potencial_bruto", desc: true },
+    capturado: { coluna: "valor_capturado", desc: true },
+    recentes: { coluna: "atualizado_em", desc: true },
+  } as const;
+
+  const escolhida = ORDEM[opcoes.ordem ?? "nome"];
+  const { data, error } = await consulta
+    .order(escolhida.coluna, { ascending: !escolhida.desc, nullsFirst: false })
+    .limit(LIMITE_CONTAS);
   if (error) {
     console.error("[contas] falha ao listar:", error.message);
     return [];

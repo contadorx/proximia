@@ -16,7 +16,7 @@ import { Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
 import { BotaoExcluir } from "@/components/botao-excluir";
 import { excluirFrente } from "@/app/acoes/exclusoes";
-import { Pencil } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { Historico } from "@/components/historico";
 import { Anexos } from "@/components/anexos";
 import { Compromissos } from "@/components/compromissos";
@@ -130,12 +130,38 @@ export default async function PaginaFrente({
       </section>
 
       <section className="painel">
-        <h2>Base de trabalho</h2>
+        {/* O formulário de incluir link ficava sempre aberto no rodapé da
+            seção, com dois campos e um botão — a base de trabalho ocupava
+            meia tela para guardar dois endereços. Agora ele mora num
+            modal no cabeçalho, e a seção volta a ser o que é: uma lista
+            curta de atalhos. */}
+        <div className="linha-titulo">
+          <h2>Base de trabalho</h2>
+          {editavel && (
+            <Modal
+              rotulo="Incluir link"
+              titulo="Incluir link da base de trabalho"
+              descricao="A planilha, a consulta ou a pasta continua onde está — aqui fica só o endereço."
+              variante="link"
+              icone={<Plus size={13} />}
+            >
+              <form action={incluirLink} className="formulario">
+                <input type="hidden" name="id" value={frente.id} />
+                <label className="campo">
+                  <span>Nome do link</span>
+                  <input type="text" name="rotulo" required maxLength={80} placeholder="Planilha de trabalho" autoFocus />
+                </label>
+                <label className="campo">
+                  <span>Endereço</span>
+                  <input type="url" name="url" required placeholder="https://" />
+                </label>
+                <BotaoEnviar>Incluir link</BotaoEnviar>
+              </form>
+            </Modal>
+          )}
+        </div>
         {links.length === 0 ? (
-          <Vazio>
-            Nenhum link ainda. A planilha, a consulta ou a pasta com os casos continua onde está —
-            aqui fica só o endereço, para quem abrir a frente chegar nela em um clique.
-          </Vazio>
+          <Vazio>Nenhum link ainda — atalhos para a planilha ou a consulta desta frente.</Vazio>
         ) : (
           <ul className="lista-estado">
             {links.map((l, i) => (
@@ -160,20 +186,6 @@ export default async function PaginaFrente({
           </ul>
         )}
 
-        {editavel && (
-          <form action={incluirLink} className="formulario formulario-linha" style={{ marginTop: 18 }}>
-            <input type="hidden" name="id" value={frente.id} />
-            <label className="campo">
-              <span>Nome do link</span>
-              <input type="text" name="rotulo" required maxLength={80} placeholder="Planilha de trabalho" />
-            </label>
-            <label className="campo">
-              <span>Endereço</span>
-              <input type="url" name="url" required placeholder="https://" />
-            </label>
-            <BotaoEnviar variante="secundario">Incluir link</BotaoEnviar>
-          </form>
-        )}
       </section>
 
       {editavel && (

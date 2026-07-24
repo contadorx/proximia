@@ -30,7 +30,7 @@ export const dynamic = "force-dynamic";
 export default async function PaginaMaturidade({
   searchParams,
 }: {
-  searchParams: { erro?: string; ok?: string; ciclo?: string };
+  searchParams: { erro?: string; ok?: string; ciclo?: string; eixo?: string };
 }) {
   const org = await exigirOrg();
 
@@ -103,8 +103,21 @@ export default async function PaginaMaturidade({
   // que não ter gráfico.
   const maiorBase = Math.max(0, ...todosPontos.map((p) => p.base));
   const temPotencial = maiorPotencial > 0 && pontos.some((p) => p.potencial > 0);
-  const temBase = !temPotencial && maiorBase > 0 && pontos.some((p) => p.base > 0);
-  const eixoBase = temBase;
+  const haBase = maiorBase > 0 && pontos.some((p) => p.base > 0);
+
+  // Qual eixo, e por que a base é o padrão quando existe.
+  //
+  // A matriz nasceu maturidade × potencial — a leitura de quem procura
+  // onde crescer. Mas uma ferramenta de gestão de grandes clientes cuida
+  // de duas coisas, e a outra é DEFENDER o que já existe. Base × maturidade
+  // responde a pergunta que só essa combinação responde: onde a receita
+  // que já entra encontra a menor estrutura para percebê-la sair.
+  //
+  // Por isso, havendo base, ela é o padrão — e o potencial continua a um
+  // clique. Quem quiser a leitura de crescimento troca o eixo.
+  const eixoPedido = searchParams.eixo === "potencial" ? "potencial" : searchParams.eixo === "base" ? "base" : null;
+  const eixoBase = eixoPedido ? eixoPedido === "base" && haBase : haBase;
+  const temBase = haBase;
   const temEixo = temPotencial || temBase;
 
   const valorEixo = (p: { potencial: number; base: number }) =>
@@ -257,9 +270,27 @@ export default async function PaginaMaturidade({
                     : "Maturidade por carteira"}
               </h2>
               <span className="passos-contagem">
-                {temEixo
-                  ? `corte na mediana · ${pontos.length} carteiras`
-                  : `${pontos.length} carteiras avaliadas`}
+                {haBase && temPotencial ? (
+                  <>
+                    <Link
+                      className={eixoBase ? "link-acao ativo" : "link-acao"}
+                      href={`/maturidade?eixo=base${searchParams.ciclo ? `&ciclo=${searchParams.ciclo}` : ""}`}
+                    >
+                      base sob gestão
+                    </Link>
+                    {" · "}
+                    <Link
+                      className={!eixoBase ? "link-acao ativo" : "link-acao"}
+                      href={`/maturidade?eixo=potencial${searchParams.ciclo ? `&ciclo=${searchParams.ciclo}` : ""}`}
+                    >
+                      potencial
+                    </Link>
+                  </>
+                ) : temEixo ? (
+                  `corte na mediana · ${pontos.length} carteiras`
+                ) : (
+                  `${pontos.length} carteiras avaliadas`
+                )}
               </span>
             </div>
 

@@ -2961,3 +2961,31 @@ input[aria-invalid="true"] {
   margin: 0;
   flex: 1 1 320px;
 }
+
+/* ---------------- grupos de configuração ---------------- */
+
+/* Configurações crescia por acréscimo e virou uma pilha de blocos sem
+   hierarquia. Estes títulos não movem nada de lugar — dão ao olho um
+   ponto de parada a cada assunto, que é o que faltava. */
+.grupo-config {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 34px 0 -2px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--g200);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--navy);
+}
+
+.grupo-config span {
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--g500);
+}

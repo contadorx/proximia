@@ -138,6 +138,12 @@ export default async function PaginaConfiguracoes({
       {searchParams.erro && <p className="aviso aviso-erro">{searchParams.erro}</p>}
       {searchParams.ok && <p className="aviso aviso-ok">{searchParams.ok}</p>}
 
+      {/* ---------------- Acesso ---------------- */}
+      <p className="grupo-config">
+        Acesso
+        <span>quem entra, com qual papel e em quais carteiras</span>
+      </p>
+
       <section className="painel">
         <div className="linha-titulo">
           <h2>Acesso e permissões</h2>
@@ -281,6 +287,12 @@ export default async function PaginaConfiguracoes({
           </ul>
         )}
       </section>
+
+      {/* ---------------- Catálogos da operação ---------------- */}
+      <p className="grupo-config">
+        Catálogos da operação
+        <span>o vocabulário que a sua operação usa</span>
+      </p>
 
       <section className="painel">
         <div className="linha-titulo">
@@ -456,6 +468,12 @@ export default async function PaginaConfiguracoes({
         )}
       </section>
 
+      {/* ---------------- Dados ---------------- */}
+      <p className="grupo-config">
+        Dados
+        <span>o que entra, o que sai e o que fica guardado</span>
+      </p>
+
       <section className="painel">
         <div className="linha-titulo">
           <h2>Consulta pública de CNPJ</h2>
@@ -517,6 +535,12 @@ export default async function PaginaConfiguracoes({
           )}
         </p>
       </section>
+
+      {/* ---------------- Comunicação ---------------- */}
+      <p className="grupo-config">
+        Comunicação
+        <span>o que o produto envia, e para quem</span>
+      </p>
 
       <section className="painel">
         <div className="linha-titulo">
@@ -589,6 +613,12 @@ export default async function PaginaConfiguracoes({
           </p>
         )}
       </section>
+
+      {/* ---------------- Sua conta e a organização ---------------- */}
+      <p className="grupo-config">
+        Sua conta e a organização
+        <span>dados de quem usa e da instalação</span>
+      </p>
 
       <section className="painel">
         <div className="linha-titulo">

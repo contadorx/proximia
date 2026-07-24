@@ -35,6 +35,9 @@ export default async function PaginaContas({
     busca?: string;
     carteira?: string | string[];
     relacao?: string | string[];
+    criticidade?: string | string[];
+    ordem?: string;
+    ok?: string;
   };
 }) {
   const org = await exigirOrg();
@@ -45,6 +48,12 @@ export default async function PaginaContas({
       busca: searchParams.busca,
       carteiras: paraLista(searchParams.carteira),
       relacoes: paraLista(searchParams.relacao),
+      criticidades: paraLista(searchParams.criticidade),
+      ordem: (["nome", "receita", "potencial", "capturado", "recentes"] as const).includes(
+        searchParams.ordem as never,
+      )
+        ? (searchParams.ordem as "nome" | "receita" | "potencial" | "capturado" | "recentes")
+        : "nome",
     }),
     listarContratos({ orgId: org.orgId }),
     listarAlertas({ orgId: org.orgId, status: "aberto" }),
@@ -71,7 +80,10 @@ export default async function PaginaContas({
   // dele; apagar trezentas contas de uma vez não é operação de rotina.
   const podeApagarEmLote = podeEscrever(org.papel) && org.papel !== "ponto_focal";
   const nomeCarteira = (id: string) => carteiras.find((c) => c.id === id)?.nome ?? "—";
-  const filtrando = Boolean(searchParams.busca) || temFiltro(searchParams.carteira, searchParams.relacao);
+  const filtrando =
+    Boolean(searchParams.busca) ||
+    temFiltro(searchParams.carteira, searchParams.relacao, searchParams.criticidade) ||
+    Boolean(searchParams.ordem && searchParams.ordem !== "nome");
   const opcoesCarteira = carteiras.map((c) => ({
     valor: c.id,
     rotulo: c.nome,
@@ -150,6 +162,7 @@ export default async function PaginaContas({
       </IntroSecao>
 
       {searchParams.erro && <p className="aviso aviso-erro">{searchParams.erro}</p>}
+      {searchParams.ok && <p className="aviso aviso-ok">{searchParams.ok}</p>}
 
       <form className="filtros" method="get">
         <label className="campo">
@@ -167,6 +180,26 @@ export default async function PaginaContas({
           opcoes={opcoesCarteira}
           inicial={paraLista(searchParams.carteira)}
         />
+        <SeletorMultiplo
+          nome="criticidade"
+          rotulo="Criticidade"
+          opcoes={[
+            { valor: "alta", rotulo: "Alta" },
+            { valor: "media", rotulo: "Média" },
+            { valor: "baixa", rotulo: "Baixa" },
+          ]}
+          inicial={paraLista(searchParams.criticidade)}
+        />
+        <label className="campo">
+          <span>Ordenar por</span>
+          <select name="ordem" defaultValue={searchParams.ordem ?? "nome"}>
+            <option value="nome">Nome</option>
+            <option value="receita">Maior receita atual</option>
+            <option value="potencial">Maior potencial</option>
+            <option value="capturado">Maior capturado</option>
+            <option value="recentes">Alteradas recentemente</option>
+          </select>
+        </label>
         <SeletorMultiplo
           nome="relacao"
           rotulo="Relação"
