@@ -234,6 +234,17 @@ export default async function PaginaPainel({
       <PrimeirosPassos passos={passos} />
 
       <div className="cartoes">
+        {/* A base vem primeiro: manter o que já existe é metade do
+            trabalho de gestão, e é a metade que não aparecia. */}
+        {tg.base > 0 && (
+          <div className="cartao">
+            <p className="olho">Base sob gestão</p>
+            <p className="cartao-valor">{formatarValor(tg.base)}</p>
+            <p className="cartao-nota">
+              o que os clientes já pagam · {tg.contasComReceita} conta(s) informada(s)
+            </p>
+          </div>
+        )}
         <div className="cartao">
           <p className="olho">Capturado no mês</p>
           <p className="cartao-valor capturado">{formatarValor(mesAtual)}</p>

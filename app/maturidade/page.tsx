@@ -66,6 +66,7 @@ export default async function PaginaMaturidade({
       etiqueta: l.codigo ?? l.nome.slice(0, 12),
       score,
       potencial,
+      base: Number(l.base_sob_gestao ?? 0),
       q: quadrante(score, potencial, mediana),
     };
   });
@@ -75,6 +76,19 @@ export default async function PaginaMaturidade({
   // avaliada. São coisas diferentes e viram listas diferentes.
   const pontos = todosPontos.filter((p) => p.score !== null);
   const semAvaliacao = todosPontos.filter((p) => p.score === null);
+
+  // A leitura que a matriz sozinha não dá: quanto de receita já existente
+  // está sob responsabilidade de unidades pouco maduras. Não é previsão de
+  // perda — é a conta de exposição, e ela só faz sentido porque base e
+  // maturidade são medidas independentes.
+  const CORTE_MATURIDADE = 50;
+  const baseTotal = todosPontos.reduce((t, p) => t + p.base, 0);
+  const baseExposta = pontos
+    .filter((p) => (p.score ?? 0) < CORTE_MATURIDADE)
+    .reduce((t, p) => t + p.base, 0);
+  const carteirasExpostas = pontos.filter(
+    (p) => (p.score ?? 0) < CORTE_MATURIDADE && p.base > 0,
+  ).length;
 
   // Enquanto não houver potencial registrado em contas e frentes, o eixo
   // horizontal não tem o que mostrar — e a matriz vira uma fileira grudada
@@ -240,7 +254,7 @@ export default async function PaginaMaturidade({
                           href={`/carteiras/${p.id}`}
                           className="matriz-ponto"
                           style={{ left: `${x}%`, bottom: `${y}%`, zIndex: i + 1 }}
-                          title={`${p.nome} · maturidade ${p.score} · potencial ${formatarValor(p.potencial)} · ${p.q.nome}`}
+                          title={`${p.nome} · maturidade ${p.score} · potencial ${formatarValor(p.potencial)}${p.base > 0 ? ` · base sob gestão ${formatarValor(p.base)}` : ""} · ${p.q.nome}`}
                         >
                           {p.etiqueta}
                         </Link>
@@ -279,6 +293,38 @@ export default async function PaginaMaturidade({
                   registrado, para que o eixo tenha origem rastreável.
                 </p>
               </>
+            )}
+
+            {baseTotal > 0 && (
+              <div className="cartoes" style={{ marginTop: 16 }}>
+                <div className="cartao">
+                  <p className="olho">Base sob gestão avaliada</p>
+                  <p className="cartao-valor">{formatarValor(baseTotal)}</p>
+                  <p className="cartao-nota">receita que estas carteiras já mantêm</p>
+                </div>
+                <div className="cartao">
+                  <p className="olho">Sob maturidade abaixo de {CORTE_MATURIDADE}%</p>
+                  <p className={baseExposta > 0 ? "cartao-valor alerta" : "cartao-valor"}>
+                    {formatarValor(baseExposta)}
+                  </p>
+                  <p className="cartao-nota">
+                    {carteirasExpostas} carteira(s) · não é previsão de perda, é exposição
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {baseExposta > 0 && (
+              <p className="nota" style={{ marginTop: 12 }}>
+                {/* A leitura que a matriz sozinha não dá. Base e maturidade
+                    são medidas independentes — uma vem do faturamento, a
+                    outra da avaliação da unidade — e por isso cruzá-las diz
+                    alguma coisa. */}
+                <strong>Onde a receita já existente encontra a menor estrutura.</strong> Maturidade
+                baixa não significa que a receita vai cair; significa que, se cair, a unidade tem
+                menos processo para perceber e reagir. É a conta de onde a manutenção da base pesa
+                mais — e ela não se soma a potencial nenhum.
+              </p>
             )}
 
             {semAvaliacao.length > 0 && (

@@ -552,7 +552,7 @@ export default async function PaginaConta({
       </section>
 
       {editavel && (
-        <Modal rotulo="Editar conta" titulo="Editar conta" descricao="Potencial exige origem declarada." largo icone={<Pencil size={15} />} variante="secundario">
+        <Modal rotulo="Editar conta" titulo="Editar conta" descricao="Receita atual e potencial exigem origem declarada. São quantidades diferentes e não se somam." largo icone={<Pencil size={15} />} variante="secundario">
           <FormAcao action={atualizarConta}>
             <input type="hidden" name="id" value={conta.id} />
 
@@ -617,6 +617,32 @@ export default async function PaginaConta({
               <label className="campo">
                 <span>Segmento</span>
                 <input type="text" name="segmento" defaultValue={conta.segmento ?? ""} maxLength={80} />
+              </label>
+            </div>
+
+            {/* Receita atual vem antes do potencial de propósito: é o que
+                se sabe do cliente hoje, e é o que a gestão precisa manter.
+                O potencial é hipótese sobre o que ainda pode vir. */}
+            <div className="formulario-linha">
+              <CampoValor
+                nome="receita_atual"
+                rotulo="Receita atual (o que já paga)"
+                inicial={conta.receita_atual}
+              />
+              <label className="campo">
+                <span>Origem da receita</span>
+                <input
+                  type="text"
+                  name="receita_origem"
+                  defaultValue={conta.receita_origem ?? ""}
+                  maxLength={160}
+                  placeholder="qual base, qual extração"
+                />
+                <small>Obrigatório se houver receita — todo número entra com procedência.</small>
+              </label>
+              <label className="campo">
+                <span>Referência</span>
+                <input type="date" name="receita_data" defaultValue={conta.receita_data ?? ""} />
               </label>
             </div>
 

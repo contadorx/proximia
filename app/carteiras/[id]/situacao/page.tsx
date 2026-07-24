@@ -68,6 +68,11 @@ export default async function PaginaSituacao({
     frentes.reduce((t, f) => t + Number(f.valor_capturado ?? 0), 0) +
     contas.reduce((t, c) => t + Number(c.valor_capturado ?? 0), 0);
 
+  // A base que esta carteira mantém. Vai na folha porque manter é metade
+  // do trabalho — e numa reunião de unidade é a primeira pergunta.
+  const base = contas.reduce((t, c) => t + Number(c.receita_atual ?? 0), 0);
+  const contasComReceita = contas.filter((c) => c.receita_atual !== null).length;
+
   const responsavel = pessoas.find((p) => p.id === carteira.responsavel_id);
   const autor = (id: string) => nomePessoa(acharPessoa(pessoas, id));
   const nomeConta = (id: string) => contas.find((c) => c.id === id)?.nome ?? "conta";
@@ -130,6 +135,15 @@ export default async function PaginaSituacao({
             <p className="olho">Frentes abertas</p>
             <p className="dado numero-folha">{frentesAbertas.length}</p>
           </div>
+          {base > 0 && (
+            <div>
+              <p className="olho">Base sob gestão</p>
+              <p className="dado numero-folha">{formatarValor(base)}</p>
+              <p className="folha-nota">
+                o que já se paga · {contasComReceita} de {contas.length} contas
+              </p>
+            </div>
+          )}
           <div>
             <p className="olho">Potencial estimado (captura)</p>
             <p className="dado numero-folha valor-teto">{formatarValor(potencial)}</p>

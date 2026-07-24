@@ -34,6 +34,13 @@ function montarDados(formData: FormData) {
   const origem = textoDe(formData, "potencial_origem");
   const dataPotencial = textoDe(formData, "potencial_data");
 
+  // Receita atual segue a mesma regra do potencial: número entra com
+  // procedência. São quantidades diferentes — o que se paga hoje, o que
+  // ainda pode vir — e nenhuma delas se soma à outra.
+  const receita = numeroDe(formData, "receita_atual");
+  const receitaOrigem = textoDe(formData, "receita_origem");
+  const receitaData = textoDe(formData, "receita_data");
+
   return {
     documento: digitos,
     dados: {
@@ -49,23 +56,32 @@ function montarDados(formData: FormData) {
       // Sem data informada, vale hoje: estimativa precisa de referência no tempo.
       potencial_data:
         potencial === null ? null : (dataPotencial ?? new Date().toISOString().slice(0, 10)),
+      receita_atual: receita,
+      receita_origem: receita === null ? null : receitaOrigem,
+      receita_data:
+        receita === null ? null : (receitaData ?? new Date().toISOString().slice(0, 10)),
       // valor_capturado é soma dos lançamentos de captura: não se escreve aqui.
     },
     potencial,
     origem,
+    receita,
+    receitaOrigem,
   };
 }
 
 export async function criarConta(_estado: EstadoAcao, formData: FormData): Promise<EstadoAcao> {
   const org = await exigirOrg();
   const carteiraId = String(formData.get("carteira_id") ?? "");
-  const { documento, dados, potencial, origem } = montarDados(formData);
+  const { documento, dados, potencial, origem, receita, receitaOrigem } = montarDados(formData);
 
   if (!dados.nome) return { erro: "Informe o nome da conta." };
   if (!carteiraId) return { erro: "Escolha a carteira desta conta." };
   if (documento && !cnpjValido(documento)) return { erro: "CNPJ inválido. Confira os dígitos." };
   if (potencial !== null && !origem) {
     return { erro: "Informe de onde veio a estimativa de potencial." };
+  }
+  if (receita !== null && !receitaOrigem) {
+    return { erro: "Informe de onde veio a receita atual — qual base, qual extração." };
   }
 
   const supabase = criarClienteServidor();
@@ -85,12 +101,15 @@ export async function atualizarConta(_estado: EstadoAcao, formData: FormData): P
   await exigirOrg();
   const id = String(formData.get("id") ?? "");
   const rota = `/contas/${id}`;
-  const { documento, dados, potencial, origem } = montarDados(formData);
+  const { documento, dados, potencial, origem, receita, receitaOrigem } = montarDados(formData);
 
   if (!dados.nome) return { erro: "Informe o nome da conta." };
   if (documento && !cnpjValido(documento)) return { erro: "CNPJ inválido. Confira os dígitos." };
   if (potencial !== null && !origem) {
     return { erro: "Informe de onde veio a estimativa de potencial." };
+  }
+  if (receita !== null && !receitaOrigem) {
+    return { erro: "Informe de onde veio a receita atual — qual base, qual extração." };
   }
 
   const supabase = criarClienteServidor();
