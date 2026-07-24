@@ -131,6 +131,141 @@ export default async function PaginaConta({
   const id = conta.id;
   const carteira = carteiras.find((c) => c.id === conta.carteira_id);
 
+  // O botão de editar vivia no rodapé, depois de contatos, contratos,
+  // capturas e histórico — quem abria a ficha para corrigir um dado
+  // rolava a página inteira procurando. Editar é ação de cabeçalho: fica
+  // onde a pessoa olha primeiro.
+  const editarConta = editavel ? (
+        <Modal rotulo="Editar conta" titulo="Editar conta" descricao="Receita atual e potencial exigem origem declarada. São quantidades diferentes e não se somam." largo icone={<Pencil size={15} />} variante="secundario">
+          <FormAcao action={atualizarConta}>
+            <input type="hidden" name="id" value={conta.id} />
+
+            <div className="formulario-linha">
+              <label className="campo">
+                <span>Nome</span>
+                <input type="text" name="nome" defaultValue={conta.nome} required maxLength={160} />
+              </label>
+              <label className="campo">
+                <span>Razão social</span>
+                <input
+                  type="text"
+                  name="razao_social"
+                  defaultValue={conta.razao_social ?? ""}
+                  maxLength={160}
+                />
+              </label>
+              {/* Mesmo campo da criação: máscara e conferência de dígitos.
+                  Editar não pode ser menos cuidadoso do que criar. */}
+              <CampoCnpj inicial={conta.documento} />
+            </div>
+
+            <div className="formulario-linha">
+              <label className="campo">
+                <span>Relação</span>
+                <select name="relacao" defaultValue={conta.relacao}>
+                  {RELACOES.map((r) => (
+                    <option key={r.valor} value={r.valor}>
+                      {r.rotulo}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="campo">
+                <span>Criticidade</span>
+                <select name="criticidade" defaultValue={conta.criticidade}>
+                  {CRITICIDADES.map((c) => (
+                    <option key={c.valor} value={c.valor}>
+                      {c.rotulo}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="campo">
+                <span>Situação</span>
+                <select name="status" defaultValue={conta.status}>
+                  <option value="ativa">Ativa</option>
+                  <option value="encerrada">Encerrada</option>
+                </select>
+              </label>
+              <label className="campo">
+                <span>Responsável</span>
+                <select name="responsavel_id" defaultValue={conta.responsavel_id ?? ""}>
+                  <option value="">Sem responsável</option>
+                  {pessoas.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {nomePessoa(p)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="campo">
+                <span>Segmento</span>
+                <input type="text" name="segmento" defaultValue={conta.segmento ?? ""} maxLength={80} />
+              </label>
+            </div>
+
+            {/* Receita atual vem antes do potencial de propósito: é o que
+                se sabe do cliente hoje, e é o que a gestão precisa manter.
+                O potencial é hipótese sobre o que ainda pode vir. */}
+            <div className="formulario-linha">
+              <CampoValor
+                nome="receita_atual"
+                rotulo="Receita atual (o que já paga)"
+                inicial={conta.receita_atual}
+              />
+              <label className="campo">
+                <span>Origem da receita</span>
+                <input
+                  type="text"
+                  name="receita_origem"
+                  defaultValue={conta.receita_origem ?? ""}
+                  maxLength={160}
+                  placeholder="qual base, qual extração"
+                />
+                <small>Obrigatório se houver receita — todo número entra com procedência.</small>
+              </label>
+              <label className="campo">
+                <span>Referência</span>
+                <input type="date" name="receita_data" defaultValue={conta.receita_data ?? ""} />
+              </label>
+            </div>
+
+            <div className="formulario-linha">
+              <CampoValor
+                nome="potencial_bruto"
+                rotulo="Potencial estimado"
+                inicial={conta.potencial_bruto}
+              />
+              <label className="campo">
+                <span>Origem da estimativa</span>
+                <input
+                  type="text"
+                  name="potencial_origem"
+                  defaultValue={conta.potencial_origem ?? ""}
+                  maxLength={160}
+                  placeholder="de onde veio esse número"
+                />
+              </label>
+              <label className="campo">
+                <span>Data da apuração</span>
+                <input type="date" name="potencial_data" defaultValue={conta.potencial_data ?? ""} />
+              </label>
+            </div>
+              <p className="nota">
+                O valor capturado não é mais editado aqui: ele é a soma dos lançamentos registrados
+                no bloco &ldquo;Capturado&rdquo;, cada um com data, autor e comprovação.
+              </p>
+
+            <label className="campo">
+              <span>Observações</span>
+              <textarea name="observacoes" rows={4} defaultValue={conta.observacoes ?? ""} />
+            </label>
+
+            <BotaoEnviar>Salvar alterações</BotaoEnviar>
+          </FormAcao>
+        </Modal>
+  ) : null;
+
   return (
     <>
       <p className="olho">
@@ -145,6 +280,7 @@ export default async function PaginaConta({
       <div className="cabeca-pagina">
         <h1>{conta.nome}</h1>
         <div className="cabeca-acoes nao-imprimir">
+          {editarConta}
           {/* O dossiê é a versão de reunião desta ficha: mesmo dado,
               recortado por período e sem controle de edição. */}
           {editavel && enriquecimentoLigado && conta.documento && (
@@ -551,136 +687,6 @@ export default async function PaginaConta({
         )}
       </section>
 
-      {editavel && (
-        <Modal rotulo="Editar conta" titulo="Editar conta" descricao="Receita atual e potencial exigem origem declarada. São quantidades diferentes e não se somam." largo icone={<Pencil size={15} />} variante="secundario">
-          <FormAcao action={atualizarConta}>
-            <input type="hidden" name="id" value={conta.id} />
-
-            <div className="formulario-linha">
-              <label className="campo">
-                <span>Nome</span>
-                <input type="text" name="nome" defaultValue={conta.nome} required maxLength={160} />
-              </label>
-              <label className="campo">
-                <span>Razão social</span>
-                <input
-                  type="text"
-                  name="razao_social"
-                  defaultValue={conta.razao_social ?? ""}
-                  maxLength={160}
-                />
-              </label>
-              {/* Mesmo campo da criação: máscara e conferência de dígitos.
-                  Editar não pode ser menos cuidadoso do que criar. */}
-              <CampoCnpj inicial={conta.documento} />
-            </div>
-
-            <div className="formulario-linha">
-              <label className="campo">
-                <span>Relação</span>
-                <select name="relacao" defaultValue={conta.relacao}>
-                  {RELACOES.map((r) => (
-                    <option key={r.valor} value={r.valor}>
-                      {r.rotulo}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="campo">
-                <span>Criticidade</span>
-                <select name="criticidade" defaultValue={conta.criticidade}>
-                  {CRITICIDADES.map((c) => (
-                    <option key={c.valor} value={c.valor}>
-                      {c.rotulo}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="campo">
-                <span>Situação</span>
-                <select name="status" defaultValue={conta.status}>
-                  <option value="ativa">Ativa</option>
-                  <option value="encerrada">Encerrada</option>
-                </select>
-              </label>
-              <label className="campo">
-                <span>Responsável</span>
-                <select name="responsavel_id" defaultValue={conta.responsavel_id ?? ""}>
-                  <option value="">Sem responsável</option>
-                  {pessoas.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {nomePessoa(p)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="campo">
-                <span>Segmento</span>
-                <input type="text" name="segmento" defaultValue={conta.segmento ?? ""} maxLength={80} />
-              </label>
-            </div>
-
-            {/* Receita atual vem antes do potencial de propósito: é o que
-                se sabe do cliente hoje, e é o que a gestão precisa manter.
-                O potencial é hipótese sobre o que ainda pode vir. */}
-            <div className="formulario-linha">
-              <CampoValor
-                nome="receita_atual"
-                rotulo="Receita atual (o que já paga)"
-                inicial={conta.receita_atual}
-              />
-              <label className="campo">
-                <span>Origem da receita</span>
-                <input
-                  type="text"
-                  name="receita_origem"
-                  defaultValue={conta.receita_origem ?? ""}
-                  maxLength={160}
-                  placeholder="qual base, qual extração"
-                />
-                <small>Obrigatório se houver receita — todo número entra com procedência.</small>
-              </label>
-              <label className="campo">
-                <span>Referência</span>
-                <input type="date" name="receita_data" defaultValue={conta.receita_data ?? ""} />
-              </label>
-            </div>
-
-            <div className="formulario-linha">
-              <CampoValor
-                nome="potencial_bruto"
-                rotulo="Potencial estimado"
-                inicial={conta.potencial_bruto}
-              />
-              <label className="campo">
-                <span>Origem da estimativa</span>
-                <input
-                  type="text"
-                  name="potencial_origem"
-                  defaultValue={conta.potencial_origem ?? ""}
-                  maxLength={160}
-                  placeholder="de onde veio esse número"
-                />
-              </label>
-              <label className="campo">
-                <span>Data da apuração</span>
-                <input type="date" name="potencial_data" defaultValue={conta.potencial_data ?? ""} />
-              </label>
-            </div>
-              <p className="nota">
-                O valor capturado não é mais editado aqui: ele é a soma dos lançamentos registrados
-                no bloco &ldquo;Capturado&rdquo;, cada um com data, autor e comprovação.
-              </p>
-
-            <label className="campo">
-              <span>Observações</span>
-              <textarea name="observacoes" rows={4} defaultValue={conta.observacoes ?? ""} />
-            </label>
-
-            <BotaoEnviar>Salvar alterações</BotaoEnviar>
-          </FormAcao>
-        </Modal>
-      )}
 
       <Capturas
         entidadeTipo="conta"

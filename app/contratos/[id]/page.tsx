@@ -56,6 +56,118 @@ export default async function PaginaContrato({
   const u = urgencia(contrato);
   const alertas = clausulasEmAlerta(clausulas);
 
+  // Esta ficha não tinha cabeçalho de ações: o editar ficava no fim, depois
+  // das cláusulas e do histórico. Contrato é a tela que mais se abre para
+  // corrigir uma data — o botão precisa estar onde o olho chega primeiro.
+  const editarContrato = editavel ? (
+        <Modal rotulo="Editar contrato" titulo="Editar contrato" descricao="A janela de renegociação é recalculada sozinha." largo icone={<Pencil size={15} />} variante="secundario">
+          <FormAcao action={atualizarContrato}>
+            <input type="hidden" name="id" value={contrato.id} />
+
+            <div className="formulario-linha">
+              <label className="campo">
+                <span>Número</span>
+                <input type="text" name="numero" defaultValue={contrato.numero ?? ""} maxLength={60} />
+              </label>
+              <label className="campo">
+                <span>Tipo</span>
+                <input type="text" name="tipo" defaultValue={contrato.tipo ?? ""} maxLength={60} />
+              </label>
+              <label className="campo">
+                <span>Modalidade</span>
+                <input
+                  type="text"
+                  name="modalidade"
+                  defaultValue={contrato.modalidade ?? ""}
+                  maxLength={60}
+                />
+              </label>
+              <label className="campo">
+                <span>Situação</span>
+                <select name="status" defaultValue={contrato.status}>
+                  {STATUS_CONTRATO.map((s) => (
+                    <option key={s.valor} value={s.valor}>
+                      {s.rotulo}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="formulario-linha">
+              <label className="campo">
+                <span>Início</span>
+                <input type="date" name="inicio" defaultValue={contrato.inicio ?? ""} />
+              </label>
+              <label className="campo">
+                <span>Fim</span>
+                <input type="date" name="fim" defaultValue={contrato.fim ?? ""} />
+              </label>
+              <label className="campo">
+                <span>Aviso prévio (dias)</span>
+                <input
+                  type="number"
+                  name="aviso_previa_dias"
+                  min={0}
+                  max={730}
+                  defaultValue={contrato.aviso_previa_dias}
+                />
+              </label>
+              <label className="campo campo-marcador">
+                <span>Renovação automática</span>
+                <input
+                  type="checkbox"
+                  name="renovacao_automatica"
+                  defaultChecked={contrato.renovacao_automatica}
+                />
+              </label>
+            </div>
+
+            <div className="formulario-linha">
+              <CampoValor nome="valor_base" rotulo="Valor base" inicial={contrato.valor_base} />
+              <label className="campo">
+                <span>Periodicidade</span>
+                <select name="periodicidade" defaultValue={contrato.periodicidade ?? ""}>
+                  <option value="">Não definida</option>
+                  {PERIODICIDADES.map((p) => (
+                    <option key={p.valor} value={p.valor}>
+                      {p.rotulo}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="campo">
+                <span>Natureza do benefício</span>
+                <input
+                  type="text"
+                  name="natureza_beneficio"
+                  defaultValue={contrato.natureza_beneficio ?? ""}
+                  maxLength={120}
+                />
+              </label>
+            </div>
+
+            <label className="campo">
+              <span>Link do documento</span>
+              <input
+                type="url"
+                name="link_documento"
+                defaultValue={contrato.link_documento ?? ""}
+                placeholder="endereço no repositório oficial"
+              />
+              <small>O arquivo fica no seu repositório. Aqui guardamos o link rastreável.</small>
+            </label>
+
+            <label className="campo">
+              <span>Observações</span>
+              <textarea name="observacoes" rows={4} defaultValue={contrato.observacoes ?? ""} />
+            </label>
+
+            <BotaoEnviar>Salvar alterações</BotaoEnviar>
+          </FormAcao>
+        </Modal>
+  ) : null;
+
   return (
     <>
       <p className="olho">
@@ -67,7 +179,10 @@ export default async function PaginaContrato({
           </>
         )}
       </p>
-      <h1>{contrato.numero ?? "Contrato sem número"}</h1>
+      <div className="cabeca-pagina">
+        <h1>{contrato.numero ?? "Contrato sem número"}</h1>
+        {editarContrato && <div className="cabeca-acoes">{editarContrato}</div>}
+      </div>
 
       {searchParams.erro && <p className="aviso aviso-erro">{searchParams.erro}</p>}
       {searchParams.ok && <p className="aviso aviso-ok">{searchParams.ok}</p>}
@@ -237,114 +352,6 @@ export default async function PaginaContrato({
         )}
       </section>
 
-      {editavel && (
-        <Modal rotulo="Editar contrato" titulo="Editar contrato" descricao="A janela de renegociação é recalculada sozinha." largo icone={<Pencil size={15} />} variante="secundario">
-          <FormAcao action={atualizarContrato}>
-            <input type="hidden" name="id" value={contrato.id} />
-
-            <div className="formulario-linha">
-              <label className="campo">
-                <span>Número</span>
-                <input type="text" name="numero" defaultValue={contrato.numero ?? ""} maxLength={60} />
-              </label>
-              <label className="campo">
-                <span>Tipo</span>
-                <input type="text" name="tipo" defaultValue={contrato.tipo ?? ""} maxLength={60} />
-              </label>
-              <label className="campo">
-                <span>Modalidade</span>
-                <input
-                  type="text"
-                  name="modalidade"
-                  defaultValue={contrato.modalidade ?? ""}
-                  maxLength={60}
-                />
-              </label>
-              <label className="campo">
-                <span>Situação</span>
-                <select name="status" defaultValue={contrato.status}>
-                  {STATUS_CONTRATO.map((s) => (
-                    <option key={s.valor} value={s.valor}>
-                      {s.rotulo}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            <div className="formulario-linha">
-              <label className="campo">
-                <span>Início</span>
-                <input type="date" name="inicio" defaultValue={contrato.inicio ?? ""} />
-              </label>
-              <label className="campo">
-                <span>Fim</span>
-                <input type="date" name="fim" defaultValue={contrato.fim ?? ""} />
-              </label>
-              <label className="campo">
-                <span>Aviso prévio (dias)</span>
-                <input
-                  type="number"
-                  name="aviso_previa_dias"
-                  min={0}
-                  max={730}
-                  defaultValue={contrato.aviso_previa_dias}
-                />
-              </label>
-              <label className="campo campo-marcador">
-                <span>Renovação automática</span>
-                <input
-                  type="checkbox"
-                  name="renovacao_automatica"
-                  defaultChecked={contrato.renovacao_automatica}
-                />
-              </label>
-            </div>
-
-            <div className="formulario-linha">
-              <CampoValor nome="valor_base" rotulo="Valor base" inicial={contrato.valor_base} />
-              <label className="campo">
-                <span>Periodicidade</span>
-                <select name="periodicidade" defaultValue={contrato.periodicidade ?? ""}>
-                  <option value="">Não definida</option>
-                  {PERIODICIDADES.map((p) => (
-                    <option key={p.valor} value={p.valor}>
-                      {p.rotulo}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="campo">
-                <span>Natureza do benefício</span>
-                <input
-                  type="text"
-                  name="natureza_beneficio"
-                  defaultValue={contrato.natureza_beneficio ?? ""}
-                  maxLength={120}
-                />
-              </label>
-            </div>
-
-            <label className="campo">
-              <span>Link do documento</span>
-              <input
-                type="url"
-                name="link_documento"
-                defaultValue={contrato.link_documento ?? ""}
-                placeholder="endereço no repositório oficial"
-              />
-              <small>O arquivo fica no seu repositório. Aqui guardamos o link rastreável.</small>
-            </label>
-
-            <label className="campo">
-              <span>Observações</span>
-              <textarea name="observacoes" rows={4} defaultValue={contrato.observacoes ?? ""} />
-            </label>
-
-            <BotaoEnviar>Salvar alterações</BotaoEnviar>
-          </FormAcao>
-        </Modal>
-      )}
       <Anexos
         entidadeTipo="contrato"
         entidadeId={contrato.id}

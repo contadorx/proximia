@@ -90,10 +90,33 @@ export default async function PaginaMaturidade({
     (p) => (p.score ?? 0) < CORTE_MATURIDADE && p.base > 0,
   ).length;
 
-  // Enquanto não houver potencial registrado em contas e frentes, o eixo
-  // horizontal não tem o que mostrar — e a matriz vira uma fileira grudada
-  // na esquerda. Nesse caso mostramos o ranking, que é honesto e útil.
+  // O eixo horizontal se adapta ao dado que existe.
+  //
+  // A matriz nasceu como maturidade × potencial. Só que uma operação pode
+  // ter carregado a base de clientes sem estimar potencial nenhum — e aí
+  // a matriz sumia, deixando só um ranking. A base sob gestão serve ao
+  // mesmo propósito e, para a manutenção da carteira, responde melhor:
+  // onde a receita que já existe encontra a menor estrutura.
+  //
+  // A ordem é: potencial se houver, senão base. O título e o rótulo do
+  // eixo dizem qual está em uso — trocar a régua em silêncio seria pior
+  // que não ter gráfico.
+  const maiorBase = Math.max(0, ...todosPontos.map((p) => p.base));
   const temPotencial = maiorPotencial > 0 && pontos.some((p) => p.potencial > 0);
+  const temBase = !temPotencial && maiorBase > 0 && pontos.some((p) => p.base > 0);
+  const eixoBase = temBase;
+  const temEixo = temPotencial || temBase;
+
+  const valorEixo = (p: { potencial: number; base: number }) =>
+    eixoBase ? p.base : p.potencial;
+  const maiorEixo = eixoBase ? maiorBase : maiorPotencial;
+  const medianaEixo = eixoBase
+    ? (() => {
+        const ordenada = pontos.map((p) => p.base).sort((a, b) => a - b);
+        return ordenada.length ? ordenada[Math.floor(ordenada.length / 2)] : 0;
+      })()
+    : mediana;
+  const rotuloEixo = eixoBase ? "BASE SOB GESTÃO" : "POTENCIAL ESTIMADO";
   const ranking = [...pontos].sort((a, b) => Number(b.score) - Number(a.score));
 
   const semQuestionario = dimensoes.length === 0;
@@ -226,15 +249,23 @@ export default async function PaginaMaturidade({
 
           <section className="painel">
             <div className="linha-titulo">
-              <h2>{temPotencial ? "Maturidade × potencial" : "Maturidade por carteira"}</h2>
+              <h2>
+                {temPotencial
+                  ? "Maturidade × potencial"
+                  : temBase
+                    ? "Maturidade × base sob gestão"
+                    : "Maturidade por carteira"}
+              </h2>
               <span className="passos-contagem">
-                {temPotencial ? "corte no potencial mediano" : `${pontos.length} carteiras avaliadas`}
+                {temEixo
+                  ? `corte na mediana · ${pontos.length} carteiras`
+                  : `${pontos.length} carteiras avaliadas`}
               </span>
             </div>
 
             {pontos.length === 0 ? (
               <Vazio>Nenhuma carteira avaliada ainda neste ciclo.</Vazio>
-            ) : temPotencial ? (
+            ) : temEixo ? (
               <>
                 <div className="matriz">
                   <div className="matriz-rotulo-y">maturidade</div>
@@ -246,7 +277,7 @@ export default async function PaginaMaturidade({
                     ))}
 
                     {pontos.map((p, i) => {
-                      const x = Math.min(94, (p.potencial / maiorPotencial) * 88 + 4);
+                      const x = Math.min(94, (valorEixo(p) / (maiorEixo || 1)) * 88 + 4);
                       const y = Math.min(92, Number(p.score) * 0.86 + 4);
                       return (
                         <Link
@@ -254,19 +285,32 @@ export default async function PaginaMaturidade({
                           href={`/carteiras/${p.id}`}
                           className="matriz-ponto"
                           style={{ left: `${x}%`, bottom: `${y}%`, zIndex: i + 1 }}
-                          title={`${p.nome} · maturidade ${p.score} · potencial ${formatarValor(p.potencial)}${p.base > 0 ? ` · base sob gestão ${formatarValor(p.base)}` : ""} · ${p.q.nome}`}
+                          title={`${p.nome} · maturidade ${p.score}${p.potencial > 0 ? ` · potencial ${formatarValor(p.potencial)}` : ""}${p.base > 0 ? ` · base sob gestão ${formatarValor(p.base)}` : ""} · ${p.q.nome}`}
                         >
                           {p.etiqueta}
                         </Link>
                       );
                     })}
                   </div>
-                  <div className="matriz-rotulo-x">potencial estimado</div>
+                  <div className="matriz-rotulo-x">
+                    {eixoBase ? "base sob gestão" : "potencial estimado"}
+                  </div>
                 </div>
 
                 <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
-                  Acelerar: base pronta e muito a capturar. Estruturar: muito a capturar, base ainda
-                  frágil. Sustentar: base boa, potencial menor. Observar: pouco de cada.
+                  {eixoBase ? (
+                    <>
+                      O eixo horizontal está mostrando a <strong>base sob gestão</strong> — o que os
+                      clientes de cada carteira já pagam — porque ainda não há potencial estimado
+                      registrado. Quanto mais à direita e mais abaixo, mais receita existente sob
+                      menos estrutura. Assim que houver potencial, o eixo passa a mostrá-lo.
+                    </>
+                  ) : (
+                    <>
+                      Acelerar: base pronta e muito a capturar. Estruturar: muito a capturar, base
+                      ainda frágil. Sustentar: base boa, potencial menor. Observar: pouco de cada.
+                    </>
+                  )}
                 </p>
               </>
             ) : (

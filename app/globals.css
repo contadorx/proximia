@@ -2878,3 +2878,86 @@ input[aria-invalid="true"] {
   font-size: 13px;
   line-height: 1;
 }
+
+/* ---------------- avisos agrupados por tipo ---------------- */
+
+/* Blocos que abrem e fecham com <details>: sem JavaScript, e o estado
+   sobrevive à navegação porque é do próprio navegador. */
+.grupo-aviso {
+  border: 1px solid var(--g200);
+  border-radius: var(--r-p);
+  margin-bottom: 10px;
+  background: var(--branco);
+}
+
+.grupo-aviso > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.grupo-aviso > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Seta própria: gira ao abrir, e diz de que lado está o conteúdo. */
+.grupo-aviso > summary::before {
+  content: "›";
+  font-size: 17px;
+  line-height: 1;
+  color: var(--g400);
+  transition: transform 0.12s ease;
+}
+
+.grupo-aviso[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.grupo-aviso-titulo {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.grupo-aviso-contagem {
+  font-size: 12px;
+  color: var(--g500);
+  white-space: nowrap;
+}
+
+.grupo-aviso > .lista-estado {
+  padding: 0 16px 8px;
+  border-top: 1px solid var(--g200);
+}
+
+/* ---------------- seleção em lote ---------------- */
+
+.marcador-lote {
+  margin-right: 4px;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--navy);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.rodape-lote {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--g200);
+}
+
+.rodape-lote .nota {
+  margin: 0;
+  flex: 1 1 320px;
+}

@@ -302,3 +302,55 @@ export async function enriquecerPorCnpj(formData: FormData) {
     )}`,
   );
 }
+
+/**
+ * Exclusão em lote.
+ *
+ * A tela manda os identificadores marcados; as travas vivem no banco
+ * (migration 0054): alcance, teto de 500 e — a mais importante — conta
+ * com captura confirmada não é apagada, porque captura é evento com
+ * autor e comprovação, e apagar em lote o que alguém confirmou é perda
+ * que não se desfaz.
+ *
+ * A resposta diz o que foi feito E o que foi recusado. Apagar o que dá e
+ * silenciar o resto seria pior que não apagar nada.
+ */
+export async function excluirContasEmLote(formData: FormData) {
+  await exigirOrg();
+  const ids = formData.getAll("ids").map(String).filter(Boolean);
+
+  if (ids.length === 0) {
+    redirect(`/contas?erro=${encodeURIComponent("Marque ao menos uma conta.")}`);
+  }
+
+  const supabase = criarClienteServidor();
+  const { data, error } = await supabase.rpc("excluir_contas_em_lote", { p_ids: ids });
+
+  if (error) {
+    redirect(`/contas?erro=${encodeURIComponent(traduzir(error.message, error.code))}`);
+  }
+
+  const r = (Array.isArray(data) ? data[0] : data) as {
+    apagadas: number;
+    recusadas_captura: number;
+    recusadas_acesso: number;
+    nomes_recusados: string[] | null;
+  } | null;
+
+  const partes: string[] = [];
+  partes.push(`${r?.apagadas ?? 0} conta(s) apagada(s).`);
+
+  if ((r?.recusadas_captura ?? 0) > 0) {
+    const nomes = (r?.nomes_recusados ?? []).slice(0, 3).join(", ");
+    partes.push(
+      `${r?.recusadas_captura} preservada(s) por terem captura confirmada${nomes ? `: ${nomes}` : ""}` +
+        ` — apague uma a uma se for mesmo o caso.`,
+    );
+  }
+  if ((r?.recusadas_acesso ?? 0) > 0) {
+    partes.push(`${r?.recusadas_acesso} fora do seu alcance.`);
+  }
+
+  revalidatePath("/contas");
+  redirect(`/contas?ok=${encodeURIComponent(partes.join(" "))}`);
+}

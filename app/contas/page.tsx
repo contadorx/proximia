@@ -11,7 +11,8 @@ import {
   listarContas,
   rotuloRelacao,
 } from "@/lib/contas";
-import { criarConta } from "@/app/acoes/contas";
+import { criarConta, excluirContasEmLote } from "@/app/acoes/contas";
+import { BotaoExcluir } from "@/components/botao-excluir";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
 import { Seletor, SeletorMultiplo } from "@/components/seletor";
@@ -66,6 +67,9 @@ export default async function PaginaContas({
     });
 
   const podeCriar = podeEscrever(org.papel) && carteiras.length > 0;
+  // Exclusão em lote é para quem administra. Ponto focal opera a carteira
+  // dele; apagar trezentas contas de uma vez não é operação de rotina.
+  const podeApagarEmLote = podeEscrever(org.papel) && org.papel !== "ponto_focal";
   const nomeCarteira = (id: string) => carteiras.find((c) => c.id === id)?.nome ?? "—";
   const filtrando = Boolean(searchParams.busca) || temFiltro(searchParams.carteira, searchParams.relacao);
   const opcoesCarteira = carteiras.map((c) => ({
@@ -201,9 +205,19 @@ export default async function PaginaContas({
               chegar ao restante.
             </p>
           )}
+          <form action={excluirContasEmLote}>
           <ul className="lista-estado">
             {contas.map((c) => (
               <li key={c.id}>
+                {podeApagarEmLote && (
+                  <input
+                    type="checkbox"
+                    name="ids"
+                    value={c.id}
+                    className="marcador-lote"
+                    aria-label={`Selecionar ${c.nome}`}
+                  />
+                )}
                 <span className="rotulo">
                   <Link href={`/contas/${c.id}`}>{c.nome}</Link>
                   <span className="dica">
@@ -241,6 +255,20 @@ export default async function PaginaContas({
               </li>
             ))}
           </ul>
+
+          {podeApagarEmLote && (
+            <div className="rodape-lote">
+              <BotaoExcluir
+                rotulo="Excluir selecionadas"
+                aviso="Não há como desfazer. Contas com captura confirmada são preservadas e a tela dirá quais."
+              />
+              <span className="nota">
+                Conta com captura confirmada não é apagada em lote — captura tem autor e
+                comprovação, e apagá-la em massa é perda que não se desfaz.
+              </span>
+            </div>
+          )}
+          </form>
         </section>
       )}
 

@@ -8,6 +8,8 @@ import {
   pessoasDaOrganizacao,
   STATUS_CARTEIRA,
 } from "@/lib/carteiras";
+import { formatarValor } from "@/lib/contas";
+import { panorama } from "@/lib/panorama";
 import { criarCarteira } from "@/app/acoes/carteiras";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
 import { Modal } from "@/components/modal";
@@ -23,9 +25,10 @@ export default async function PaginaCarteiras({
   searchParams: { erro?: string };
 }) {
   const org = await exigirOrg();
-  const [carteiras, pessoas] = await Promise.all([
+  const [carteiras, pessoas, resumo] = await Promise.all([
     listarCarteiras(org.orgId),
     pessoasDaOrganizacao(org.orgId),
+    panorama(org.orgId, "nome"),
   ]);
   const podeCriar = podeEscrever(org.papel) && org.papel !== "ponto_focal";
 
@@ -110,6 +113,10 @@ export default async function PaginaCarteiras({
             {carteiras.map((c) => {
               const faixa = faixaMaturidade(c.score_maturidade);
               const responsavel = pessoas.find((p) => p.id === c.responsavel_id);
+              // A lista mostrava só código, região e responsável — nada
+              // sobre o que a carteira carrega. Quem abre esta tela quer
+              // decidir onde entrar, e para isso precisa ver o tamanho.
+              const r = resumo.find((x) => x.carteira_id === c.id);
               return (
                 <li key={c.id}>
                   <span className="rotulo">
@@ -123,6 +130,35 @@ export default async function PaginaCarteiras({
                         .filter(Boolean)
                         .join(" · ") || "sem código, região ou responsável"}
                     </span>
+                    {r && (
+                      <span className="dica">
+                        {[
+                          `${r.contas_total} conta(s)`,
+                          Number(r.frentes_abertas) > 0
+                            ? `${r.frentes_abertas} frente(s)`
+                            : null,
+                          Number(r.oportunidades_abertas) > 0
+                            ? `${r.oportunidades_abertas} oportunidade(s)`
+                            : null,
+                          Number(r.base_sob_gestao) > 0
+                            ? `base ${formatarValor(Number(r.base_sob_gestao))}`
+                            : null,
+                          Number(r.contas_potencial) + Number(r.frentes_potencial) > 0
+                            ? `potencial ${formatarValor(
+                                Number(r.contas_potencial) + Number(r.frentes_potencial),
+                              )}`
+                            : null,
+                          Number(r.contratos_vencidos) > 0
+                            ? `${r.contratos_vencidos} contrato(s) vencido(s)`
+                            : null,
+                          Number(r.compromissos_atrasados) > 0
+                            ? `${r.compromissos_atrasados} atrasado(s)`
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </span>
+                    )}
                   </span>
                   {c.score_maturidade !== null && (
                     <span className="selo selo-neutro" title={faixa ?? undefined}>

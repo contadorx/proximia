@@ -169,6 +169,29 @@ export default async function PaginaPendencias({
         (ordem[b.severidade as keyof typeof ordem] ?? 3),
     );
   const avisosAltos = avisos.filter((a) => a.severidade === "alta").length;
+
+  // Avisos agrupados por TIPO, em blocos que abrem e fecham.
+  //
+  // Numa lista corrida, contrato vencido, carteira parada e conta sem
+  // decisor disputam a mesma atenção — e são assuntos diferentes, que se
+  // resolvem com pessoas diferentes. Agrupados, a pessoa escolhe o tema e
+  // trata em bloco. O primeiro grupo abre; os demais ficam fechados, para
+  // a tela caber numa olhada.
+  const gruposAviso = (() => {
+    const mapa = new Map<string, typeof avisos>();
+    for (const a of avisos) {
+      const lista = mapa.get(a.tipo) ?? [];
+      lista.push(a);
+      mapa.set(a.tipo, lista);
+    }
+    return [...mapa.entries()]
+      .map(([tipo, itens]) => ({
+        tipo,
+        itens,
+        altos: itens.filter((x) => x.severidade === "alta").length,
+      }))
+      .sort((a, b) => b.altos - a.altos || b.itens.length - a.itens.length);
+  })();
   const avisosSemDono = avisosTodos.filter((a) => !a.dono_id).length;
 
   const rotuloLente =
@@ -542,80 +565,96 @@ export default async function PaginaPendencias({
           </Vazio>
         ) : (
           <>
-            <ul className="lista-estado">
-              {avisos.map((a) => (
-                <li key={a.id}>
-                  <span className="rotulo">
-                    {a.entidade_tipo && a.entidade_id ? (
-                      <Link href={caminhoEntidade(a.entidade_tipo, a.entidade_id)}>{a.titulo}</Link>
-                    ) : (
-                      a.titulo
-                    )}
-                    <span className="dica">
-                      {[
-                        ROTULO_TIPO[a.tipo],
-                        nomeCarteira(a.carteira_id),
-                        a.dono_id ? `responde: ${nome(a.dono_id)}` : "sem responsável",
-                        (a.observadores ?? []).includes(equipeId) && a.dono_id !== equipeId
-                          ? "você acompanha"
-                          : null,
-                        a.detalhe,
-                        `desde ${formatarData(a.criado_em.slice(0, 10))}`,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </span>
+            {gruposAviso.map((g, indice) => (
+              <details
+                className="grupo-aviso"
+                key={g.tipo}
+                open={indice === 0}
+              >
+                <summary>
+                  <span className="grupo-aviso-titulo">{ROTULO_TIPO[g.tipo as never]}</span>
+                  <span className="grupo-aviso-contagem">
+                    {g.itens.length}
+                    {g.altos > 0 ? ` · ${g.altos} de severidade alta` : ""}
                   </span>
-                  <span className={classeSeveridade(a.severidade)}>
-                    {a.severidade === "alta"
-                      ? "Alta"
-                      : a.severidade === "atencao"
-                        ? "Atenção"
-                        : "Informativa"}
-                  </span>
-                  {editavel && a.status === "aberto" && (
-                    <Modal
-                      rotulo="Reatribuir"
-                      titulo="Quem responde por este aviso"
-                      descricao="Os demais responsáveis pela carteira continuam acompanhando."
-                      variante="link"
-                      icone={<UserCog size={13} />}
-                    >
-                      <form action={reatribuirAlerta} className="formulario">
-                        <input type="hidden" name="id" value={a.id} />
-                        <input type="hidden" name="volta" value={volta} />
-                        <Seletor
-                          nome="dono_id"
-                          rotulo="Responsável"
-                          opcoes={pessoas.map((p) => ({ valor: p.id, rotulo: nomePessoa(p) }))}
-                          inicial={a.dono_id ?? ""}
-                          vazio="Sem responsável"
-                        />
-                        <BotaoEnviar>Salvar</BotaoEnviar>
-                      </form>
-                    </Modal>
-                  )}
-                  {editavel && a.status === "aberto" && (
-                    <form action={silenciarAlerta}>
-                      <input type="hidden" name="id" value={a.id} />
-                      <input type="hidden" name="volta" value={volta} />
-                      <button className="link-acao" type="submit">
-                        Silenciar
-                      </button>
-                    </form>
-                  )}
-                  {editavel && a.status === "silenciado" && (
-                    <form action={reabrirAlerta}>
-                      <input type="hidden" name="id" value={a.id} />
-                      <input type="hidden" name="volta" value={volta} />
-                      <button className="link-acao" type="submit">
-                        Reabrir
-                      </button>
-                    </form>
-                  )}
-                </li>
-              ))}
-            </ul>
+                </summary>
+                <ul className="lista-estado">
+                  {g.itens.map((a) => (
+                    <li key={a.id}>
+                      <span className="rotulo">
+                        {a.entidade_tipo && a.entidade_id ? (
+                          <Link href={caminhoEntidade(a.entidade_tipo, a.entidade_id)}>{a.titulo}</Link>
+                        ) : (
+                          a.titulo
+                        )}
+                        <span className="dica">
+                          {[
+                            // O tipo virou título do bloco: repetir aqui
+                            // seria ruído.
+                            nomeCarteira(a.carteira_id),
+                            a.dono_id ? `responde: ${nome(a.dono_id)}` : "sem responsável",
+                            (a.observadores ?? []).includes(equipeId) && a.dono_id !== equipeId
+                              ? "você acompanha"
+                              : null,
+                            a.detalhe,
+                            `desde ${formatarData(a.criado_em.slice(0, 10))}`,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
+                      </span>
+                      <span className={classeSeveridade(a.severidade)}>
+                        {a.severidade === "alta"
+                          ? "Alta"
+                          : a.severidade === "atencao"
+                            ? "Atenção"
+                            : "Informativa"}
+                      </span>
+                      {editavel && a.status === "aberto" && (
+                        <Modal
+                          rotulo="Reatribuir"
+                          titulo="Quem responde por este aviso"
+                          descricao="Os demais responsáveis pela carteira continuam acompanhando."
+                          variante="link"
+                          icone={<UserCog size={13} />}
+                        >
+                          <form action={reatribuirAlerta} className="formulario">
+                            <input type="hidden" name="id" value={a.id} />
+                            <input type="hidden" name="volta" value={volta} />
+                            <Seletor
+                              nome="dono_id"
+                              rotulo="Responsável"
+                              opcoes={pessoas.map((p) => ({ valor: p.id, rotulo: nomePessoa(p) }))}
+                              inicial={a.dono_id ?? ""}
+                              vazio="Sem responsável"
+                            />
+                            <BotaoEnviar>Salvar</BotaoEnviar>
+                          </form>
+                        </Modal>
+                      )}
+                      {editavel && a.status === "aberto" && (
+                        <form action={silenciarAlerta}>
+                          <input type="hidden" name="id" value={a.id} />
+                          <input type="hidden" name="volta" value={volta} />
+                          <button className="link-acao" type="submit">
+                            Silenciar
+                          </button>
+                        </form>
+                      )}
+                      {editavel && a.status === "silenciado" && (
+                        <form action={reabrirAlerta}>
+                          <input type="hidden" name="id" value={a.id} />
+                          <input type="hidden" name="volta" value={volta} />
+                          <button className="link-acao" type="submit">
+                            Reabrir
+                          </button>
+                        </form>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ))}
             {avisosTodos.length >= LIMITE_ALERTAS && (
               <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
                 Mostrando os {LIMITE_ALERTAS} mais recentes. Filtre por carteira ou severidade para

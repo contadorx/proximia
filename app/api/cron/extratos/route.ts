@@ -72,13 +72,35 @@ export async function GET(requisicao: Request) {
     cadencia: string;
   }[];
 
+  // ------------------------------------------------------------------
+  // Dois modos, uma rotina só.
+  //
+  // Varrer alertas é barato e vale de hora em hora: contrato entra em
+  // janela, compromisso vence, carteira para — quanto antes o aviso
+  // aparecer, mais tempo há para agir. Já extrato e resumo por e-mail
+  // são envio: de hora em hora viram spam e a pessoa desliga a
+  // notificação, que é o pior desfecho possível.
+  //
+  // Por isso `?modo=avisos` faz só a varredura, e o modo completo (o
+  // padrão) faz varredura + foto + envios. O agendamento em vercel.json
+  // chama o primeiro de hora em hora e o segundo uma vez por dia.
+  // ------------------------------------------------------------------
+  const modo = new URL(requisicao.url).searchParams.get("modo") === "avisos"
+    ? "avisos"
+    : "completo";
+  const soAvisos = modo === "avisos";
+
   // Período fechado: do mesmo dia do ciclo anterior até ontem.
   const fim = new Date();
   fim.setDate(fim.getDate() - 1);
 
   // Abre o diário da execução. Sem isto, uma rotina que não roda é
   // indistinguível de uma que rodou e não tinha nada a fazer.
-  const { data: execucaoId } = await supabase.rpc("rotina_iniciar", { p_rotina: "extratos" });
+  // O diário separa as duas: assim "a varredura não rodou" e "o envio não
+  // rodou" são perguntas diferentes, com respostas diferentes.
+  const { data: execucaoId } = await supabase.rpc("rotina_iniciar", {
+    p_rotina: soAvisos ? "avisos" : "extratos",
+  });
 
   // Falhas acumuladas, por organização. Só identificador e mensagem
   // técnica — nada de nome de conta ou valor sai daqui.
@@ -142,9 +164,12 @@ export async function GET(requisicao: Request) {
     // A foto do mês é atualizada a cada passagem: até o mês fechar, o
     // retrato é do dia. Depois disso ele congela e vira série. É o passo
     // cuja falha silenciosa deixa buraco permanente no histórico.
-    await passo("tirar_foto", () =>
-      supabase.rpc("tirar_foto", { p_org: o.id, p_referencia: null }),
-    );
+    // Foto é retrato do dia: uma por dia, no modo completo.
+    if (!soAvisos) {
+      await passo("tirar_foto", () =>
+        supabase.rpc("tirar_foto", { p_org: o.id, p_referencia: null }),
+      );
+    }
 
     if (errosDaOrg.length === 0) {
       orgsOk += 1;
@@ -167,7 +192,12 @@ export async function GET(requisicao: Request) {
   // quem não tem nada para agir não recebe nada.
   const resumos: { pessoa: string; status: string }[] = [];
   try {
-    const { data: orgs } = await supabase.from("orgs").select("id, nome");
+    // No modo avisos nada é enviado: a varredura já aconteceu acima, e é
+    // ela que interessa de hora em hora. Lista vazia faz os laços abaixo
+    // não terem o que percorrer — sem desvio de fluxo por exceção.
+    const { data: orgs } = soAvisos
+      ? { data: [] as { id: string; nome: string }[] }
+      : await supabase.from("orgs").select("id, nome");
     const endereco = new URL(requisicao.url).origin;
 
     // Trava de reenvio. O extrato por carteira já se protege sozinho
@@ -299,7 +329,8 @@ export async function GET(requisicao: Request) {
 
   // Limpeza do que não ajuda mais: erro de trinta dias atrás não
   // diagnostica nada e vira custo de armazenamento.
-  await supabase.rpc("limpar_erros_antigos", { p_dias: 30 });
+  // Limpeza é diária: não faz sentido de hora em hora.
+  if (!soAvisos) await supabase.rpc("limpar_erros_antigos", { p_dias: 30 });
 
   // Fecha o diário. A situação é derivada: ok, parcial ou falhou.
   await supabase.rpc("rotina_concluir", {

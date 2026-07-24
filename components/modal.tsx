@@ -10,10 +10,23 @@ const FOCAVEIS =
 /**
  * Formulario dentro de modal, aberto por botao.
  *
- * O modal fecha sozinho quando a acao termina com sucesso: toda acao
- * redireciona ao final, e a mudanca de endereco e o sinal. Erro de
- * validacao nao muda o endereco — a mensagem aparece dentro do formulario
- * e o preenchimento fica (ver FormAcao).
+ * O modal fecha sozinho quando a acao termina com sucesso. Erro de
+ * validacao nao fecha — a mensagem aparece dentro do formulario e o
+ * preenchimento fica (ver FormAcao).
+ *
+ * COMO O SUCESSO E DETECTADO, E POR QUE NAO E SO O ENDERECO
+ *
+ * A versao anterior comparava o endereco: toda acao redireciona ao final,
+ * entao mudanca de endereco significava sucesso. Funcionava na primeira
+ * vez e falhava na segunda — salvar duas pessoas seguidas produz a MESMA
+ * URL (mesma rota, mesma mensagem de ok), o endereco nao muda, e o modal
+ * ficava aberto dando a impressao de que nada aconteceu.
+ *
+ * Agora o sinal e outro: quando a acao do servidor conclui, o React
+ * re-renderiza o modal com `children` novos (a arvore vem do componente
+ * de servidor, revalidada). Guardamos a identidade dos filhos no momento
+ * do envio; se ela mudar, a acao terminou. Endereco diferente continua
+ * fechando tambem — os dois sinais somados cobrem os dois casos.
  *
  * Foco gerenciado de verdade: ao abrir, entra no dialogo; Tab circula
  * dentro dele; ao fechar, volta para o botao que abriu. Sem isso,
@@ -46,6 +59,10 @@ export function Modal({
   const gatilho = useRef<HTMLButtonElement>(null);
   const caixa = useRef<HTMLDivElement>(null);
 
+  // Identidade dos filhos no instante do envio. Muda quando o servidor
+  // responde e a arvore e recriada.
+  const [filhosAoEnviar, setFilhosAoEnviar] = useState<React.ReactNode | null>(null);
+
   useEffect(() => {
     if (aberto) setEnderecoAoAbrir(enderecoAtual);
     // Registrado só na abertura: é a referência de comparação.
@@ -55,9 +72,35 @@ export function Modal({
   useEffect(() => {
     if (aberto && enderecoAoAbrir !== null && enderecoAtual !== enderecoAoAbrir) {
       setAberto(false);
+      setFilhosAoEnviar(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enderecoAtual]);
+
+  // Segundo sinal: a arvore do servidor foi recriada depois do envio.
+  useEffect(() => {
+    if (aberto && filhosAoEnviar !== null && children !== filhosAoEnviar) {
+      setAberto(false);
+      setFilhosAoEnviar(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [children]);
+
+  // Erro de validacao volta sem recriar a arvore, entao o modal segue
+  // aberto com a mensagem — que e o comportamento desejado.
+  useEffect(() => {
+    if (!aberto) {
+      setFilhosAoEnviar(null);
+      return;
+    }
+    const caixaAtual = caixa.current;
+    if (!caixaAtual) return;
+
+    const aoEnviar = () => setFilhosAoEnviar(children);
+    caixaAtual.addEventListener("submit", aoEnviar);
+    return () => caixaAtual.removeEventListener("submit", aoEnviar);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aberto, children]);
 
   useEffect(() => {
     if (!aberto) return;

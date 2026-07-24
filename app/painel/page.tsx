@@ -11,6 +11,7 @@ import { listarCompromissos, precisaAtencao, situacao } from "@/lib/compromissos
 import { listarAlertas } from "@/lib/alertas";
 import { capturaMensal, capturaSemData, variacao } from "@/lib/captura";
 import { panorama, totaisGerais } from "@/lib/panorama";
+import { resultados as resultadosMaturidade } from "@/lib/maturidade";
 import { minhaEquipeId } from "@/lib/equipe";
 import { faixa } from "@/lib/maturidade";
 import { IntroSecao, Vazio } from "@/components/intro-secao";
@@ -40,6 +41,7 @@ export default async function PaginaPainel({
     resumo,
     equipeId,
     { data: contaOrg },
+    avaliacoes,
   ] = await Promise.all([
     listarCarteiras(org.orgId),
     listarContas({ orgId: org.orgId }),
@@ -57,6 +59,7 @@ export default async function PaginaPainel({
       .select("assinatura_status")
       .eq("id", org.orgId)
       .maybeSingle(),
+    resultadosMaturidade(org.orgId),
   ]);
   const situacaoConta = (contaOrg as { assinatura_status: string } | null)?.assinatura_status;
 
@@ -86,7 +89,28 @@ export default async function PaginaPainel({
 
   /* ---------- distribuição de maturidade ---------- */
 
-  const avaliadas = carteiras.filter((c) => c.score_maturidade !== null);
+  // O painel mostrava só o score PUBLICADO — o que a carteira carimba ao
+  // concluir a avaliação. Com 18 avaliações importadas e nenhuma
+  // concluída, o bloco ficava vazio e parecia que a maturidade não
+  // existia. Agora vale o publicado e, na falta dele, o calculado a
+  // partir das respostas já registradas. A diferença é dita na tela:
+  // avaliação em andamento não é a mesma coisa que resultado fechado.
+  const scoreCalculado = new Map<string, number>();
+  for (const r of avaliacoes) {
+    if (r.score !== null && r.score !== undefined) {
+      const atual = scoreCalculado.get(r.carteira_id);
+      if (atual === undefined) scoreCalculado.set(r.carteira_id, Number(r.score));
+    }
+  }
+
+  const comScore = carteiras.map((c) => ({
+    ...c,
+    score: c.score_maturidade ?? scoreCalculado.get(c.id) ?? null,
+    publicado: c.score_maturidade !== null,
+  }));
+
+  const avaliadas = comScore.filter((c) => c.score !== null);
+  const emAndamento = avaliadas.filter((c) => !c.publicado).length;
   const faixas = [
     { rotulo: "Avançada", classe: "ok", quantidade: 0 },
     { rotulo: "Intermediária", classe: "neutra", quantidade: 0 },
@@ -94,10 +118,22 @@ export default async function PaginaPainel({
     { rotulo: "Inicial", classe: "alerta", quantidade: 0 },
   ];
   for (const c of avaliadas) {
-    const nome = faixa(c.score_maturidade).rotulo;
+    const nome = faixa(c.score).rotulo;
     const alvo = faixas.find((f) => f.rotulo === nome);
     if (alvo) alvo.quantidade += 1;
   }
+
+  /* ---------- oportunidades: o que está em jogo ---------- */
+
+  // Retorno mensal estimado das oportunidades ainda abertas. É estimativa
+  // declarada — não é receita, não é captura, e por isso aparece com a
+  // cor de teto, junto do investimento que a acompanha.
+  const abertas = oportunidades.filter(
+    (o) => o.fase !== "concluida" && o.fase !== "descartada",
+  );
+  const oportunidadesAbertas = abertas.length;
+  const retornoEmAberto = abertas.reduce((t, o) => t + Number(o.resultado_mensal ?? 0), 0);
+  const investimentoEmAberto = abertas.reduce((t, o) => t + Number(o.investimento ?? 0), 0);
 
   /* ---------- funil de oportunidades ---------- */
 
@@ -252,6 +288,18 @@ export default async function PaginaPainel({
             {varCaptura?.texto ?? "sem captura confirmada no período"}
           </p>
         </div>
+        {retornoEmAberto > 0 && (
+          <div className="cartao">
+            <p className="olho">Retorno em análise</p>
+            <p className="cartao-valor teto">{formatarValor(retornoEmAberto)}</p>
+            <p className="cartao-nota">
+              {oportunidadesAbertas} oportunidade(s) aberta(s) · resultado mensal estimado
+              {investimentoEmAberto > 0
+                ? ` · ${formatarValor(investimentoEmAberto)} de investimento`
+                : ""}
+            </p>
+          </div>
+        )}
         <div className="cartao">
           <p className="olho">Potencial estimado (captura)</p>
           <p className="cartao-valor teto">{formatarValor(potencialTotal)}</p>
@@ -316,6 +364,14 @@ export default async function PaginaPainel({
               <Distribuicao faixas={faixas} />
               <p className="nota" style={{ marginTop: 14, marginBottom: 0 }}>
                 {avaliadas.length} de {carteiras.length} carteiras avaliadas.
+                {emAndamento > 0 && (
+                  <>
+                    {" "}
+                    <strong>{emAndamento} ainda em andamento</strong> — o score já é calculado a
+                    partir das respostas registradas, mas só vira resultado publicado quando a
+                    avaliação for concluída em <Link href="/maturidade">Maturidade</Link>.
+                  </>
+                )}
               </p>
             </>
           )}
